@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant - Gracewise</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/ai-assistant.css">
+    <script src="js/auth.js" defer></script>
+    <script src="js/ai-assistant.js" defer></script>
+</head>
+<body>
+    <!-- Mobile Menu Toggle -->
+    <div class="mobile-menu-toggle">
+        <i class="fas fa-bars"></i>
+    </div>
+    
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay"></div>
+    
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <img src="assest/logo/main_logo.png" alt="Gracewise Logo">
+        </div>
+        <nav class="nav-menu">
+            <a href="index.html" class="nav-item">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </a>
+            <a href="dashboard.html" class="nav-item">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item active">
+                <i class="fas fa-robot"></i>
+                <span>AI Assistant</span>
+            </a>
+            <a href="devotional.html" class="nav-item">
+                <i class="fas fa-heart"></i>
+                <span>Devotionals</span>
+            </a>
+            <a href="progress.html" class="nav-item">
+                <i class="fas fa-chart-line"></i>
+                <span>Child progress</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Planners</span>
+            </a>
+            <a href="curriculum.html" class="nav-item">
+                <i class="fas fa-book"></i>
+                <span>Curriculum</span>
+            </a>
+        </nav>
+        <div class="sidebar-bottom">
+            <a href="#" class="upgrade-card" onclick="openPremiumModal()">
+                <i class="fas fa-crown"></i>
+                <span>Upgrade to Pro</span>
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+            <a href="#" class="nav-item" onclick="auth.logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="What do you want to learn">
+            </div>
+            <div class="header-right">
+                <div class="profile">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face" alt="Profile">
+                    <span>Jason Doulo</span>
+                </div>
+                <div class="date">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span id="current-date">Jan 15, 2024</span>
+                </div>
+                <div class="notification">
+                    <i class="fas fa-bell"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- AI Assistant Content -->
+        <div class="dashboard-content">
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message bot-message">
+                        <div class="message-avatar">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="message-content">
+                            <p>Hello! I'm your AI learning assistant. How can I help you today?</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chat-input-container">
+                    <div class="chat-input-wrapper">
+                        <input type="text" placeholder="Ask me anything..." class="chat-input" id="chatInput">
+                        <button class="send-btn" id="sendBtn">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Premium Modal -->
+    <div id="premiumModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closePremiumModal()">&times;</span>
+            <div class="premium-container">
+                <div class="premium-form">
+                    <h1>Get Premium Plan+</h1>
+                    
+                    <div class="billing-info">
+                        <h2>Billing information</h2>
+                        
+                        <div class="form-group">
+                            <label for="firstName">First Name</label>
+                            <input type="text" id="firstName" placeholder="Arham hashmi">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="country">Country</label>
+                            <select id="country">
+                                <option>Pakistan</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-method">
+                        <h2>Payment Method</h2>
+                        
+                        <div class="payment-option">
+                            <input type="radio" id="card" name="payment" checked>
+                            <label for="card">Card</label>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cardholder">Cardholder</label>
+                            <input type="text" id="cardholder" placeholder="Name on card">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cardNumber">Card number</label>
+                            <input type="text" id="cardNumber" placeholder="0000 0000 0000 0000">
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="expiry">Expiration date</label>
+                                <input type="text" id="expiry" placeholder="MM/YY">
+                            </div>
+                            <div class="form-group">
+                                <label for="cvv">Security Code</label>
+                                <input type="text" id="cvv" placeholder="CVV">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="premium-plan-info">
+                    <h2>Plan Info</h2>
+                    
+                    <div class="features">
+                        <h3>With Pro you get</h3>
+                        <ul>
+                            <li>Sed ut perspiciatis unde omnis iste natus error sit</li>
+                            <li>Sed ut perspiciatis unde omnis iste natus error sit</li>
+                            <li>Sed ut perspiciatis unde omnis iste natus error sit</li>
+                            <li>Sed ut perspiciatis unde omnis iste natus error sit</li>
+                            <li>Sed ut perspiciatis unde omnis iste natus error sit</li>
+                            <li>Sed ut perspiciatis unde omnis iste natus error sit</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="billing-section">
+                        <h3>Billing</h3>
+                        <div class="billing-toggle">
+                            <span>Monthly</span>
+                            <label class="switch">
+                                <input type="checkbox">
+                                <span class="slider"></span>
+                            </label>
+                            <span>Annual</span>
+                            <span class="price">66,000.00 PKR/month</span>
+                        </div>
+                        
+                        <div class="charged-today">
+                            <span>Charged today</span>
+                            <span class="amount">66,000.00 PKR/month</span>
+                        </div>
+                        
+                        <button class="confirm-btn">Confirm and Pay</button>
+                        
+                        <p class="terms">By clicking "Confirm and pay", you agree to our <a href="#">Terms of use</a>.<br>
+                        Automatic monthly renewal. Your subscription will automatically renew every month for a single payment of 66,000.00 PKR.<br>
+                        Cancel. You can cancel your renewal anytime from <a href="#">Subscription > Plan</a>.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/dashboard.js"></script>
+    <script>
+        // Mobile menu functionality
+        const mobileToggle = document.querySelector('.mobile-menu-toggle');
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.querySelector('.mobile-overlay');
+        const body = document.body;
+
+        function toggleMobileMenu() {
+            sidebar.classList.toggle('mobile-open');
+            overlay.classList.toggle('active');
+            body.classList.toggle('menu-open');
+        }
+
+        mobileToggle.addEventListener('click', toggleMobileMenu);
+        overlay.addEventListener('click', toggleMobileMenu);
+
+        // Update date
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+        
+        // Premium Modal Functions
+        function openPremiumModal() {
+            document.getElementById('premiumModal').style.display = 'block';
+        }
+        
+        function closePremiumModal() {
+            document.getElementById('premiumModal').style.display = 'none';
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('premiumModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

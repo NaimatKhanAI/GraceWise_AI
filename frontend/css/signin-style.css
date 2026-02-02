@@ -1,0 +1,349 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #F5F3F0 0%, #E8E4DF 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.signin-container {
+    display: flex;
+    width: 100%;
+    max-width: 900px;
+    height: 600px;
+    overflow: hidden;
+    margin: 0 auto;
+}
+
+.signin-left {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+
+.student-image {
+    width: 100%;
+    max-width: 900px;
+    height: auto;
+    object-fit: contain;
+}
+
+.signin-right {
+    flex: 1;
+    padding: 60px 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.signin-form {
+    width: 100%;
+    max-width: 320px;
+}
+
+.signin-form h1 {
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 30px;
+    text-align: left;
+}
+
+.input-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.input-group input {
+    width: 100% !important;
+    padding: 15px 20px;
+    border: 2px solid #e1e5e9 !important;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #333;
+    background: white !important;
+    transition: all 0.3s ease;
+}
+
+/* Remove browser autocomplete styling */
+.input-group input:-webkit-autofill,
+.input-group input:-webkit-autofill:hover,
+.input-group input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px white inset !important;
+    -webkit-text-fill-color: #333 !important;
+    background: white !important;
+}
+
+.input-group input:autofill {
+    background: white !important;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: #D4A574;
+    background: white;
+}
+
+.input-group input::placeholder {
+    color: #666;
+    font-weight: 400;
+}
+
+.password-group {
+    position: relative;
+}
+
+.eye-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #999;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    text-align: center;
+}
+
+.eye-icon.slashed::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 1px;
+    background: #999;
+    transform: rotate(45deg);
+    top: 50%;
+    left: 50%;
+    margin-left: -10px;
+    margin-top: -0.5px;
+}
+
+.signin-btn {
+    width: 100%;
+    padding: 15px;
+    background: #D4A574;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: background 0.3s ease;
+}
+
+.signin-btn:hover {
+    background: #c19660;
+}
+
+.forgot-link {
+    text-align: right;
+    font-size: 14px;
+    color: #D4A574;
+    margin-bottom: 25px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.forgot-link:hover {
+    text-decoration: underline;
+}
+
+.divider {
+    text-align: center;
+    margin: 25px 0;
+    position: relative;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e1e5e9;
+}
+
+.divider span {
+    background: white;
+    padding: 0 15px;
+    color: #666;
+    font-size: 14px;
+}
+
+.google-btn {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e1e5e9;
+    border-radius: 4px;
+    background: white;
+    color: #333;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+}
+
+.google-btn:hover {
+    border-color: #D4A574;
+    background: #f8f9fa;
+}
+
+.google-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.signup-link {
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+}
+
+.signup-link a {
+    color: #D4A574;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.signup-link a:hover {
+    text-decoration: underline;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    .signin-container {
+        flex-direction: column;
+        width: 100%;
+        height: auto;
+        max-width: 100%;
+        min-height: auto;
+    }
+    
+    .signin-left {
+        padding: 20px;
+        order: 2;
+    }
+    
+    .student-image {
+        max-width: 200px;
+        max-height: 200px;
+    }
+    
+    .signin-right {
+        padding: 30px 20px;
+        order: 1;
+    }
+    
+    .signin-form {
+        max-width: 100%;
+    }
+    
+    .signin-form h1 {
+        font-size: 1.8rem;
+        text-align: center;
+        margin-bottom: 25px;
+    }
+    
+    .input-group {
+        margin-bottom: 16px;
+    }
+    
+    .input-group input {
+        padding: 12px 16px;
+        font-size: 13px;
+    }
+    
+    .signin-btn {
+        padding: 12px;
+        font-size: 14px;
+        margin-bottom: 16px;
+    }
+    
+    .forgot-link {
+        margin-bottom: 20px;
+        font-size: 13px;
+    }
+    
+    .google-btn {
+        padding: 10px;
+        font-size: 13px;
+        margin-bottom: 16px;
+    }
+    
+    .signup-link {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 5px;
+    }
+    
+    .signin-container {
+        width: 100%;
+    }
+    
+    .signin-left {
+        padding: 15px;
+    }
+    
+    .student-image {
+        max-width: 150px;
+        max-height: 150px;
+    }
+    
+    .signin-right {
+        padding: 25px 15px;
+    }
+    
+    .signin-form h1 {
+        font-size: 1.6rem;
+        margin-bottom: 20px;
+    }
+    
+    .input-group input {
+        padding: 10px 14px;
+        font-size: 12px;
+    }
+    
+    .signin-btn {
+        padding: 10px;
+        font-size: 13px;
+    }
+    
+    .google-btn {
+        padding: 8px;
+        font-size: 12px;
+    }
+    
+    .forgot-link,
+    .signup-link {
+        font-size: 12px;
+    }
+}

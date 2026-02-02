@@ -1,0 +1,42 @@
+Flask
+Flask-SQLAlchemy
+Flask-Migrate
+Flask-CORS
+Flask-JWT-Extended
+pymysql
+stripe
+python-dotenv
+werkzeug
+
+# Core
+streamlit
+
+# LangChain stack (unified)
+langchain
+langchain-core
+langchain-community
+langchain-groq
+langchain-openai
+langchain-chroma
+langchain-text-splitters
+pydantic
+
+langchain-huggingface
+sentence-transformers
+transformers
+torch
+
+# Vector store
+chromadb
+
+# PDF loading
+pypdf
+
+# Embeddings
+sentence-transformers
+huggingface-hub
+torch
+
+# Numerical backend
+numpy
+streamlit

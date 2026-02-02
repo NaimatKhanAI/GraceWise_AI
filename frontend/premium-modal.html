@@ -1,0 +1,97 @@
+<!-- Premium Modal -->
+<div id="premiumModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closePremiumModal()">&times;</span>
+        <div class="premium-container">
+            <div class="premium-form">
+                <h1>Get Premium Plan+</h1>
+                
+                <div class="billing-info">
+                    <h2>Billing information</h2>
+                    
+                    <div class="form-group">
+                        <label for="firstName">First Name</label>
+                        <input type="text" id="firstName" placeholder="Arham hashmi">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="country">Country</label>
+                        <select id="country">
+                            <option>Pakistan</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="payment-method">
+                    <h2>Payment Method</h2>
+                    
+                    <div class="payment-option">
+                        <input type="radio" id="card" name="payment" checked>
+                        <label for="card">Card</label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cardholder">Cardholder</label>
+                        <input type="text" id="cardholder" placeholder="Name on card">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cardNumber">Card number</label>
+                        <input type="text" id="cardNumber" placeholder="0000 0000 0000 0000">
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="expiry">Expiration date</label>
+                            <input type="text" id="expiry" placeholder="MM/YY">
+                        </div>
+                        <div class="form-group">
+                            <label for="cvv">Security Code</label>
+                            <input type="text" id="cvv" placeholder="CVV">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="premium-plan-info">
+                <h2>Plan Info</h2>
+                
+                <div class="features">
+                    <h3>With Pro you get</h3>
+                    <ul>
+                        <li>Sed ut perspiciatis unde omnis iste natus error sit</li>
+                        <li>Sed ut perspiciatis unde omnis iste natus error sit</li>
+                        <li>Sed ut perspiciatis unde omnis iste natus error sit</li>
+                        <li>Sed ut perspiciatis unde omnis iste natus error sit</li>
+                        <li>Sed ut perspiciatis unde omnis iste natus error sit</li>
+                        <li>Sed ut perspiciatis unde omnis iste natus error sit</li>
+                    </ul>
+                </div>
+                
+                <div class="billing-section">
+                    <h3>Billing</h3>
+                    <div class="billing-toggle">
+                        <span>Monthly</span>
+                        <label class="switch">
+                            <input type="checkbox">
+                            <span class="slider"></span>
+                        </label>
+                        <span>Annual</span>
+                        <span class="price">66,000.00 PKR/month</span>
+                    </div>
+                    
+                    <div class="charged-today">
+                        <span>Charged today</span>
+                        <span class="amount">66,000.00 PKR/month</span>
+                    </div>
+                    
+                    <button class="confirm-btn">Confirm and Pay</button>
+                    
+                    <p class="terms">By clicking "Confirm and pay", you agree to our <a href="#">Terms of use</a>.<br>
+                    Automatic monthly renewal. Your subscription will automatically renew every month for a single payment of 66,000.00 PKR.<br>
+                    Cancel. You can cancel your renewal anytime from <a href="#">Subscription > Plan</a>.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

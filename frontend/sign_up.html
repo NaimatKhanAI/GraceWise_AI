@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Eduman</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/signup-style.css">
+    <script src="js/password-toggle.js" defer></script>
+    <script src="js/signup.js" defer></script>
+    <script src="js/auth.js" defer></script>
+</head>
+<body>
+    <div class="signup-container">
+        <div class="signup-left">
+            <img src="assest/signs_pic.png" alt="Happy Student" class="student-image">
+        </div>
+        
+        <div class="signup-right">
+            <div class="signup-form">
+                <h1>Signup</h1>
+                
+                <form id="signupForm">
+                    <div class="input-group">
+                        <input type="text" id="firstName" placeholder="First Name" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <input type="email" id="email" placeholder="Email" required>
+                    </div>
+                    
+                    <div class="input-group password-group">
+                        <input type="password" id="password" placeholder="Password" required>
+                        <span class="eye-icon">👁</span>
+                    </div>
+                    
+                    <div class="input-group password-group">
+                        <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+                        <span class="eye-icon">👁</span>
+                    </div>
+                    
+                    <button type="submit" class="signup-btn">Signup</button>
+                    
+                    <p class="login-link">Already have an account? <a href="sign_in.html">Log in</a></p>
+                    
+                    <div class="divider">
+                        <span>Or</span>
+                    </div>
+                    
+                    <button type="button" class="google-btn">
+                        <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="google-icon">
+                        Sign up with Google
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

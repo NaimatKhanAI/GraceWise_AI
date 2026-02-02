@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eduman - Online Learning Platform</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Header Section -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <img src="assest/logo/main_logo.png" alt="Logo" width="70" height="70">
+            </div>
+            <nav class="nav" id="mobileNav">
+                <ul>
+                    <li><a href="#home">Home</a></li>
+                    <li><a href="#courses">Courses <span class="dropdown-arrow">▼</span></a></li>
+                    <li><a href="dashboard.html">Dashboard</a></li>
+                    <li><a href="#newsletters">Newsletters</a></li>
+                </ul>
+            </nav>
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+                ☰
+            </button>
+            <button class="signup-btn" onclick="window.location.href='sign_up.html'">SIGN UP</button>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="container">
+            <div class="hero-content"> 
+                <div class="hero-left">
+                    <!-- Simple Picture -->
+                    <div class="left-picture">
+                        <img src="assest/home5.png" alt="Student">
+                    </div>
+                    
+                    <!-- Dots Pattern Top -->
+                    <div class="dots-pattern-top"></div>
+                    
+                    <!-- Main Images Stack -->
+                    <div class="images-stack">
+                        <div class="image-card main-teacher">
+                            <img src="assest/home3.png" alt="Teacher">
+                        </div>
+                    </div>
+                    
+                    <!-- Bottom Decorations -->
+                    <div class="bottom-decorations">
+                        <div class="triangle-yellow"></div>
+                        <div class="curved-line"></div>
+                    </div>
+                </div>
+                
+                <div class="hero-center">
+                    <h1>Confident Homeschooling, <span class="highlight"> Rooted in Faith</span> - with AI Help by Your Side</h1>
+                    
+                    <div class="search-container">
+                        <div class="search-bar">
+                            <input type="text" placeholder="Search courses..." id="searchInput">
+                            <button class="search-btn" onclick="performSearch()">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <circle cx="9" cy="9" r="7" stroke="white" stroke-width="2" fill="none"/>
+                                    <path d="m16 16 2 2" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="features-row">
+                        <div class="feature-item">
+                            <span>Free for physically<br>handicraft</span>
+                        </div>
+                        <div class="feature-item">
+                            <span>Course<br>certificate</span>
+                        </div>
+                        <div class="feature-item">
+                            <span>Easy to enroll<br>courses</span>
+                        </div>
+                    </div>
+                    
+                    <button class="main-cta-btn" onclick="checkUserAndRedirect()">SIGN IN</button>
+                </div>
+
+                <div class="hero-right">
+                    <!-- Top Arrow -->
+                    <div class="top-arrow">↗</div>
+                    
+                    <!-- Main Student Image -->
+                    <div class="student-main">
+                        <img src="assest/home4.png" alt="Happy Student">
+                    </div>
+                    
+                    <!-- Stats Card -->
+                    <div class="student-stats">
+                        <div class="rating-stars">
+                            <svg width="80" height="16" viewBox="0 0 80 16" fill="none">
+                                <path d="M8 1l1.5 4.5h4.5l-3.5 2.5 1.5 4.5L8 10l-3.5 2.5 1.5-4.5L2.5 5.5h4.5L8 1z" fill="#FFD700"/>
+                                <path d="M24 1l1.5 4.5h4.5l-3.5 2.5 1.5 4.5L24 10l-3.5 2.5 1.5-4.5L18.5 5.5h4.5L24 1z" fill="#FFD700"/>
+                                <path d="M40 1l1.5 4.5h4.5l-3.5 2.5 1.5 4.5L40 10l-3.5 2.5 1.5-4.5L34.5 5.5h4.5L40 1z" fill="#FFD700"/>
+                                <path d="M56 1l1.5 4.5h4.5l-3.5 2.5 1.5 4.5L56 10l-3.5 2.5 1.5-4.5L50.5 5.5h4.5L56 1z" fill="#FFD700"/>
+                                <path d="M72 1l1.5 4.5h4.5l-3.5 2.5 1.5 4.5L72 10l-3.5 2.5 1.5-4.5L66.5 5.5h4.5L72 1z" fill="#FFD700"/>
+                            </svg>
+                        </div>
+                        <p>More than 2,000+ students<br>enrolled around the world</p>
+                    </div>
+                    
+                    <!-- Bottom Decorations -->
+                    <div class="right-decorations">
+                        <div class="blue-arrow">↙</div>
+                        <div class="curved-element"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+   <!-- Stats Section -->
+    <section class="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-icon student-icon" style="display: flex !important; justify-content: center !important; align-items: center !important; width: 100% !important;">
+                        <img src="assest/icons/icon4.png" alt="Students" width="48" height="48">
+                    </div>
+                    <h3>68,806</h3>
+                    <p>Students Enrolled</p>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon class-icon" style="display: flex !important; justify-content: center !important; align-items: center !important; width: 100% !important;">
+                        <img src="assest/icons/icon3.png" alt="Classes" width="48" height="48">
+                    </div>
+                    <h3>5,740</h3>
+                    <p>Class Completed</p>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon instructor-icon" style="display: flex !important; justify-content: center !important; align-items: center !important; width: 100% !important;">
+                        <img src="assest/icons/icon1.png" alt="Instructors" width="48" height="48">
+                    </div>
+                    <h3>470+</h3>
+                    <p>Skilled Instructors</p>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon course-icon" style="display: flex !important; justify-content: center !important; align-items: center !important; width: 100% !important;">
+                        <img src="assest/icons/icon2.png" alt="Courses" width="48" height="48">
+                    </div>
+                    <h3>250+</h3>
+                    <p>Available Courses</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Students Choose Us Section -->
+    <section class="why-choose">
+        <div class="container">
+            <div class="why-choose-content">
+                <div class="why-choose-left">
+                    <h2>Does<span class="highlight-choose">  this </span> sound familiar?</h2>
+                    <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis.</p>
+                    
+                    <div class="features-list">
+                        <div class="feature-check">
+                            <span class="check-icon">✓</span>
+                            <span>Overwhelmed by too many curriculums and choices?</span>
+                        </div>
+                        <div class="feature-check">
+                            <span class="check-icon">✓</span>
+                            <span>Struggling to balance home, family, and school?</span>
+                        </div>
+                        <div class="feature-check">
+                            <span class="check-icon">✓</span>
+                            <span>Wondering how to keep Christ at the center of your homeschool?</span>
+                        </div>
+                        <div class="feature-check">
+                            <span class="check-icon">✓</span>
+                            <span>Feeling tired, behind, or unsure if you’re doing enough?</span>
+                        </div>
+                    </div>
+                    
+                    <button class="more-about-btn">Take the quiz</button>
+                </div>
+                
+                <div class="why-choose-right">
+                    <!-- Dots Pattern -->
+                    <div class="dots-decoration"></div>
+                    
+                    <!-- Striped Pattern -->
+                    <div class="stripes-decoration"></div>
+                    
+                    <!-- Plus Icon -->
+                    <div class="plus-decoration">+</div>
+                    
+                    <!-- Color Boxes -->
+                    <div class="color-block-yellow"></div>
+                    <div class="color-block-pink"></div>
+                    
+                    <!-- Single Home1 Image -->
+                    <div class="main-home-image">
+                        <img src="assest/home1.png" alt="Student with laptop">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Most Popular Courses Section -->
+    <section class="courses" id="courses">
+        <div class="container">
+            <div class="courses-header">
+                <span class="courses-label">Featured Courses</span>
+                <h2>Most Popular Courses</h2>
+            </div>
+            
+            <div class="courses-grid">
+                <!-- Course 1 -->
+                <div class="course-card">
+                    <div class="course-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#D4A574" stroke-width="2" stroke-linejoin="round"/>
+                            <path d="M2 17L12 22L22 17" stroke="#D4A574" stroke-width="2" stroke-linejoin="round"/>
+                            <path d="M2 12L12 17L22 12" stroke="#D4A574" stroke-width="2" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h3>Mechanical Engineering and Engineering Explained.</h3>
+                    <div class="course-meta">
+                        <span class="course-category">Design Thinking</span>
+                        <span class="course-price">$204.36</span>
+                    </div>
+                    <div class="course-stats">
+                        <span class="course-videos">▶ 56 videos</span>
+                        <span class="course-rating">⭐ 2.8k Reviews</span>
+                        <div class="instructor-avatar"></div>
+                    </div>
+                    <button class="join-btn">Join New</button>
+                </div>
+                
+                <!-- Course 2 -->
+                <div class="course-card">
+                    <div class="course-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke="#D4A574" stroke-width="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6" stroke="#D4A574" stroke-width="2"/>
+                            <line x1="8" y1="2" x2="8" y2="6" stroke="#D4A574" stroke-width="2"/>
+                            <line x1="3" y1="10" x2="21" y2="10" stroke="#D4A574" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <h3>The Challenge Of Global LearningIn Public Education.</h3>
+                    <div class="course-meta">
+                        <span class="course-category">Mechanical</span>
+                        <span class="course-price">$105.52</span>
+                    </div>
+                    <div class="course-stats">
+                        <span class="course-videos">▶ 56 videos</span>
+                        <span class="course-rating">⭐ 2.8k Reviews</span>
+                        <div class="instructor-avatar"></div>
+                    </div>
+                    <button class="join-btn">Join New</button>
+                </div>
+                
+                <!-- Course 3 -->
+                <div class="course-card">
+                    <div class="course-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#D4A574" stroke-width="2" stroke-linejoin="round"/>
+                            <path d="M2 17L12 22L22 17" stroke="#D4A574" stroke-width="2" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <h3>Become a UI/UX Designer Everything You need To Know.</h3>
+                    <div class="course-meta">
+                        <span class="course-category">Marketing</span>
+                        <span class="course-price">Free</span>
+                    </div>
+                    <div class="course-stats">
+                        <span class="course-videos">▶ 56 videos</span>
+                        <span class="course-rating">⭐ 2.8k Reviews</span>
+                        <div class="instructor-avatar"></div>
+                    </div>
+                    <button class="join-btn">Join New</button>
+                </div>
+            </div>
+            
+            <!-- CTA Banner -->
+            <div class="cta-banner">
+                <div class="cta-icon">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="white">
+                        <path d="M8.5 1L3 9h3.5l-1 6L11 7H7.5l1-6z" fill="white"/>
+                    </svg>
+                </div>
+                <div class="cta-content">
+                    <span class="cta-label">Let Us Help</span>
+                    <h3>Finding Your Right Courses</h3>
+                </div>
+                <button class="get-started-btn">Get started</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Partners Section -->
+    <section class="partners">
+        <div class="container">
+            <div class="partners-header">
+                <h2>Our <span class="highlight-partners">Global</span> Honorable Partners</h2>
+                <p>Global partners has been Publish the course you want, in the way you want always have of control.</p>
+            </div>
+            
+            <div class="partners-logos">
+                <div class="logo-item">
+                    <img src="assest/logo/logo1.png" alt="Partner Logo 1">
+                </div>
+                <div class="logo-item">
+                    <img src="assest/logo/logo2.png" alt="Partner Logo 2">
+                </div>
+                <div class="logo-item">
+                    <img src="assest/logo/logo3.png" alt="Partner Logo 3">
+                </div>
+                <div class="logo-item">
+                    <img src="assest/logo/logo4.png" alt="Partner Logo 4">
+                </div>
+                <div class="logo-item">
+                    <img src="assest/logo/logo5.png" alt="Partner Logo 5">
+                </div>
+                <div class="logo-item">
+                    <img src="assest/logo/logo6.png" alt="Partner Logo 6">
+                </div>
+                <div class="logo-item">
+                    <img src="assest/logo/logo7.png" alt="Partner Logo 7">
+                </div>
+                <div class="logo-item">
+                    <img src="assest/logo/logo8.png" alt="Partner Logo 8">
+                </div>
+                <div class="logo-item">
+                    <img src="assest/logo/logo9.png" alt="Partner Logo 9">
+                </div>
+                <div class="logo-item">
+                    <img src="assest/logo/logo10.png" alt="Partner Logo 10">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Online Certification Section -->
+    <section class="certification">
+        <div class="container">
+            <div class="certification-content">
+                <div class="certification-left">
+                    <span class="certification-label">Online Certification</span>
+                    <h2>You can be your own<br>Guiding star with our help!</h2>
+                    <p>They blend their knowledge and enthusiasm to communicate.</p>
+                    
+                    <div class="certification-buttons">
+                        <button class="play-btn">
+                            <span class="play-icon">▶</span>
+                            Play video
+                        </button>
+                        <button class="play-btn">Ridiculus</button>
+                        <button class="play-btn">Retrun</button>
+                    </div>
+                </div>
+                
+                <div class="certification-right">
+                    <div class="certification-image">
+                        <img src="assest/home2.png" alt="Student with laptop">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- News Section -->
+    <section class="news" id="newsletters">
+        <div class="container">
+            <div class="news-header">
+                <h2>Read Our <span class="highlight-news">Latest</span> Tech News</h2>
+            </div>
+            
+            <div class="news-grid">
+                <!-- News Card 1 -->
+                <div class="news-card">
+                    <div class="news-image">
+                        <img src="assest/img.png" alt="Tech News">
+                        <div class="news-category development">Development</div>
+                    </div>
+                    <div class="news-content">
+                        <div class="news-meta">
+                            <span class="news-date">📅 20 Jan 2020</span>
+                            <span class="news-author">👤 Brian Hoff</span>
+                        </div>
+                        <h3>Sed ut perspiciatis: unde omnis iste natus</h3>
+                        <button class="read-more-btn">Read More</button>
+                    </div>
+                </div>
+                
+                <!-- News Card 2 -->
+                <div class="news-card">
+                    <div class="news-image">
+                        <img src="assest/img.png" alt="Tech News">
+                        <div class="news-category business">Business</div>
+                    </div>
+                    <div class="news-content">
+                        <div class="news-meta">
+                            <span class="news-date">📅 20 Jan 2020</span>
+                            <span class="news-author">👤 Brian Hoff</span>
+                        </div>
+                        <h3>Sed ut perspiciatis: unde omnis iste natus</h3>
+                        <button class="read-more-btn">Read More</button>
+                    </div>
+                </div>
+                
+                <!-- News Card 3 -->
+                <div class="news-card">
+                    <div class="news-image">
+                        <img src="assest/img.png" alt="Tech News">
+                        <div class="news-category complaints">Complaints</div>
+                    </div>
+                    <div class="news-content">
+                        <div class="news-meta">
+                            <span class="news-date">📅 20 Jan 2020</span>
+                            <span class="news-author">👤 Brian Hoff</span>
+                        </div>
+                        <h3>Sed ut perspiciatis: unde omnis iste natus</h3>
+                        <button class="read-more-btn">Read More</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Transform Section -->
+    <section class="transform">
+        <div class="container">
+            <div class="transform-content">
+                <div class="transform-left">
+                    <span class="transform-label">Keep Your Skills</span>
+                    <h2>Transform Your life<br>Through Exclusive Education</h2>
+                    <button class="browse-courses-btn">Browse all courses</button>
+                </div>
+                
+                <div class="transform-right">
+                    <div class="laptop-mockup">
+                        <img src="assest/news.png" alt="Laptop with course interface">
+                        <div class="price-badge">
+                            <span class="price-text">Only</span>
+                            <span class="price-amount">$5</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+ 
+
+    <script src="js/script.js"></script>
+    <script src="js/search.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        function toggleMobileMenu() {
+            const nav = document.getElementById('mobileNav');
+            nav.classList.toggle('mobile-open');
+        }
+        
+        function checkUserAndRedirect() {
+            // Check if user is already logged in
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (currentUser) {
+                if (currentUser.isAdmin) {
+                    window.location.href = 'admin-dashboard.html';
+                } else {
+                    window.location.href = 'dashboard.html';
+                }
+            } else {
+                window.location.href = 'sign_in.html';
+            }
+        }
+        
+        // Close mobile menu when clicking on a link
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav a');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    const nav = document.getElementById('mobileNav');
+                    nav.classList.remove('mobile-open');
+                });
+            });
+        });
+    </script>
+
+    <!-- Footer Section -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <!-- Footer Left -->
+                <div class="footer-left">
+                    <div class="footer-logo">
+                        <img src="assest/logo/main_logo.png" alt="Logo" width="100" height="100">
+                    </div>
+                    <p class="footer-description">Great lesson ideas and lesson plans for ESL teachers! Educators can customize lessons as best plans to knowledge.</p>
+                    <div class="social-icons">
+                        <a href="#" class="social-icon facebook">f</a>
+                        <a href="#" class="social-icon twitter">t</a>
+                        <a href="#" class="social-icon instagram">@</a>
+                        <a href="#" class="social-icon linkedin">in</a>
+                    </div>
+                </div>
+                
+                <!-- Footer Links -->
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h4>Proper Guidelines</h4>
+                        <ul>
+                            <li><a href="#">Digital Library</a></li>
+                            <li><a href="#">Compare Us</a></li>
+                            <li><a href="#">Become Instructor</a></li>
+                            <li><a href="#">Build Career</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="footer-column">
+                        <h4>Development</h4>
+                        <ul>
+                            <li><a href="#">Business</a></li>
+                            <li><a href="#">Health & Fitness</a></li>
+                            <li><a href="#">Life Styles</a></li>
+                            <li><a href="#">Photography</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="footer-column">
+                        <h4>Global Partners</h4>
+                        <ul>
+                            <li><a href="#">Forum</a></li>
+                            <li><a href="#">Help & Support</a></li>
+                            <li><a href="#">Community</a></li>
+                            <li><a href="#">Documentation</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Footer Bottom -->
+            <div class="footer-bottom">
+                <div class="footer-bottom-content">
+                    <p class="copyright">© Copyrighted & Designed by</p>
+                    <div class="contact-info">
+                        <div class="phone-info">
+                            <span class="phone-icon">📞</span>
+                            <span class="phone-number">(987) 547587587</span>
+                        </div>
+                    </div>
+                    <div class="newsletter">
+                        <input type="email" placeholder="Enter Email" class="email-input">
+                        <button class="subscribe-btn">Subscribe</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

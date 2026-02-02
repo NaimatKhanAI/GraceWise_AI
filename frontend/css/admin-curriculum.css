@@ -1,0 +1,246 @@
+/* Admin Curriculum Styles */
+
+/* Dashboard Container */
+.dashboard-container {
+    padding: 32px;
+    flex: 1;
+    overflow-y: auto;
+    background-color: #faf9f7;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: calc(100vh - 80px);
+}
+
+/* Logo Size */
+.sidebar .logo img {
+    width: 180px;
+    height: 50px;
+    object-fit: contain;
+}
+        
+        /* Header Styles - Matching the image */
+        .header {
+            background: #faf9f7;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: flex-end; /* ✅ sab kuch RIGHT */
+            align-items: center;
+            gap: 24px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .profile {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 8px;
+            padding: 4px 8px;
+            background: transparent;
+            border: none;
+        }
+
+        .profile img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .profile span {
+            font-weight: 500;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        .notification {
+            color: #6b7280;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 6px;
+            background: transparent;
+            transition: color 0.2s ease;
+        }
+
+        .notification:hover {
+            color: #374151;
+        }
+
+        
+        .curriculum-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 1px solid #f1f5f9;
+            overflow: hidden;
+            width: 100%;
+            max-width: 1300px;
+            margin-top: 20px;
+        }
+        
+        .user-info {
+            background: white;
+            padding: 20px 32px;
+            border-bottom: 1px solid #f1f5f9;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 20px;
+            font-size: 14px;
+        }
+        
+        .user-info-item {
+            text-align: left;
+        }
+        
+        .user-info-label {
+            color: #9ca3af;
+            font-weight: 400;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        
+        .user-info-value {
+            color: #374151;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: capitalize;
+        }
+        
+        .status-active {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .curriculum-options {
+            padding: 40px 32px;
+        }
+        
+        .option-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 0;
+            border-bottom: none;
+        }
+        
+        .option-item:last-child {
+            border-bottom: none;
+            margin-bottom: 20px;
+        }
+        
+        .option-label {
+            font-size: 18px;
+            font-weight: 400;
+            color: #374151;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: #d1d5db;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        
+        .toggle-switch.active {
+            background: #10b981;
+        }
+        
+        .toggle-switch::before {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .toggle-switch.active::before {
+            transform: translateX(30px);
+        }
+        
+        .save-button {
+            width: 100%;
+            padding: 16px;
+            background: #c97e76;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            margin-top: 24px;
+        }
+        
+        .save-button:hover {
+            background: #b86d64;
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 16px;
+            }
+            
+            .curriculum-container {
+                max-width: 100%;
+                margin-top: 10px;
+            }
+            
+            .user-info {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+                padding: 16px 20px;
+            }
+            
+            .curriculum-options {
+                padding: 24px 20px;
+            }
+            
+            .option-item {
+                padding: 16px 0;
+            }
+            
+            .option-label {
+                font-size: 16px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .user-info {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                padding: 12px 16px;
+            }
+            
+            .curriculum-options {
+                padding: 20px 16px;
+            }
+            
+            .user-info-label {
+                font-size: 12px;
+            }
+            
+            .user-info-value {
+                font-size: 13px;
+            }
+            
+            .option-label {
+                font-size: 15px;
+            }
+        }

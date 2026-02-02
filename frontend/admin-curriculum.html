@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Curriculum - Gracewise</title>
+    <link rel="stylesheet" href="css/admin-sidebar.css">
+    <link rel="stylesheet" href="css/admin-curriculum.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="js/auth.js" defer></script>
+</head>
+<body>
+    <!-- Mobile Menu Toggle -->
+    <div class="mobile-menu-toggle">
+        <i class="fas fa-bars"></i>
+    </div>
+    
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay"></div>
+    
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <img src="assest/logo/main_logo.png" alt="Gracewise Logo">
+        </div>
+        <nav class="nav-menu">
+            <a href="admin-dashboard.html" class="nav-item">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="all-users.html" class="nav-item">
+                <i class="fas fa-users"></i>
+                <span>Users</span>
+            </a>
+            <a href="admin-curriculum.html" class="nav-item active">
+                <i class="fas fa-book"></i>
+                <span>Curriculum</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+
+            <div class="user-section">
+                <a href="#">
+                    <i class="fas fa-cog"></i>
+                    Settings</a>
+                <a href="#" onclick="auth.logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-right">
+                <div class="profile">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face" alt="Profile">
+                    <span>Admin</span>
+                </div>
+
+                <div class="notification">
+                    <i class="fas fa-bell"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- Curriculum Content -->
+        <div class="dashboard-container">
+            <div class="curriculum-container">
+                <!-- User Info Table -->
+                <div class="user-info">
+                    <div class="user-info-item">
+                        <div class="user-info-label">Customer Name</div>
+                        <div class="user-info-value">Jane Cooper</div>
+                    </div>
+                    <div class="user-info-item">
+                        <div class="user-info-label">Grade</div>
+                        <div class="user-info-value">6th</div>
+                    </div>
+                    <div class="user-info-item">
+                        <div class="user-info-label">Phone Number</div>
+                        <div class="user-info-value">(225) 555-0118</div>
+                    </div>
+                    <div class="user-info-item">
+                        <div class="user-info-label">Email</div>
+                        <div class="user-info-value">jane@microsoft.com</div>
+                    </div>
+                    <div class="user-info-item">
+                        <div class="user-info-label">Country</div>
+                        <div class="user-info-value">United States</div>
+                    </div>
+                    <div class="user-info-item">
+                        <div class="user-info-label">Status</div>
+                        <div class="user-info-value">
+                            <span class="status-badge status-active">Active</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Curriculum Options -->
+                <div class="curriculum-options">
+                    <div class="option-item">
+                        <span class="option-label">Child Progress</span>
+                        <div class="toggle-switch" onclick="toggleSwitch(this)"></div>
+                    </div>
+                    <div class="option-item">
+                        <span class="option-label">Planner</span>
+                        <div class="toggle-switch" onclick="toggleSwitch(this)"></div>
+                    </div>
+                    <div class="option-item">
+                        <span class="option-label">Curriculum</span>
+                        <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
+                    </div>
+                    
+                    <button class="save-button">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mobile menu functionality
+        const mobileToggle = document.querySelector('.mobile-menu-toggle');
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.querySelector('.mobile-overlay');
+        const body = document.body;
+
+        function toggleMobileMenu() {
+            sidebar.classList.toggle('mobile-open');
+            overlay.classList.toggle('active');
+            body.classList.toggle('menu-open');
+        }
+
+        mobileToggle.addEventListener('click', toggleMobileMenu);
+        overlay.addEventListener('click', toggleMobileMenu);
+
+        // Toggle switch functionality
+        function toggleSwitch(element) {
+            element.classList.toggle('active');
+        }
+
+        // Update date
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+    </script>
+</body>
+</html>
