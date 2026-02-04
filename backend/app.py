@@ -29,7 +29,11 @@ app = Flask(__name__)
 # Enable CORS for frontend communication
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-#Configure the database
+# #Configure the database
+# app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:@localhost/gracewise"
+# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///gracewise.db')
+
+
 app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:@localhost/gracewise"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 

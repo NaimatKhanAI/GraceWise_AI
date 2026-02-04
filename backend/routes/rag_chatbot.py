@@ -28,9 +28,11 @@ def allowed_file(filename):
 
 
 def documents_exist():
-    if not os.path.exists(UPLOAD_FOLDER):
-        return False
-    return any(name.endswith('.pdf') for name in os.listdir(UPLOAD_FOLDER))
+    for root, dirs, files in os.walk(UPLOAD_FOLDER):
+        for file in files:
+            if file.lower().endswith(".pdf"):
+                return True
+    return False
 
 
 # ==================== HEALTH CHECK ====================
@@ -131,21 +133,40 @@ def get_qa_chain():
         
     all_text = ""
     print(f"Loading PDFs from {PDF_DIR}...")
-    files = [f for f in os.listdir(PDF_DIR) if f.endswith(".pdf")]
+ 
+    files = []
+    for root, dirs, filenames in os.walk(PDF_DIR):
+        for name in filenames:
+            if name.lower().endswith(".pdf"):
+                files.append(os.path.join(root, name))
+    
+
     if not files:
         print("No PDF files found.")
         return None
 
-    for file_name in files:
-        print(f"Processing {file_name}...")
+    # for file_name in files:
+    #     print(f"Processing {file_name}...")
+    #     try:
+    #         reader = PdfReader(os.path.join(PDF_DIR, file_name))
+    #         for page in reader.pages:
+    #             text = page.extract_text()
+    #             if text:
+    #                 all_text += text + "\n"
+    #     except Exception as e:
+    #         print(f"Error reading {file_name}: {e}")
+
+    for file_path in files:
+        print(f"Processing {file_path}...")
         try:
-            reader = PdfReader(os.path.join(PDF_DIR, file_name))
+            reader = PdfReader(file_path)
             for page in reader.pages:
                 text = page.extract_text()
                 if text:
                     all_text += text + "\n"
         except Exception as e:
-            print(f"Error reading {file_name}: {e}")
+            print(f"Error reading {file_path}: {e}")
+
 
     if not all_text.strip():
         print("No text extracted from PDFs.")
@@ -281,7 +302,11 @@ def list_documents():
             return jsonify({"documents": [], "count": 0}), 200
         
         documents = []
-        for filename in os.listdir(UPLOAD_FOLDER):
+        for root, dirs, filenames in os.walk(UPLOAD_FOLDER):
+            for filename in filenames:
+                if filename.endswith(".pdf"):
+                    filepath = os.path.join(root, filename)
+
             if filename.endswith('.pdf'):
                 filepath = os.path.join(UPLOAD_FOLDER, filename)
                 size = os.path.getsize(filepath)
@@ -344,7 +369,11 @@ def rag_status():
         total_size = 0
         
         if os.path.exists(UPLOAD_FOLDER):
-            for filename in os.listdir(UPLOAD_FOLDER):
+            for root, dirs, filenames in os.walk(UPLOAD_FOLDER):
+                for filename in filenames:
+                    if filename.endswith(".pdf"):
+                        filepath = os.path.join(root, filename)
+
                 if filename.endswith('.pdf'):
                     doc_count += 1
                     filepath = os.path.join(UPLOAD_FOLDER, filename)
