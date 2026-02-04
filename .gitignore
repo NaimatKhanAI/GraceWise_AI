@@ -1,5 +1,4 @@
 .env
-documents
 check_db.py
 .venv
 __pycache__
