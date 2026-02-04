@@ -26,7 +26,9 @@ document.addEventListener('DOMContentLoaded', function() {
     searchBtn.addEventListener('click', function() {
         const searchTerm = searchInput.value.trim();
         if (searchTerm) {
-            alert(`Searching for: ${searchTerm}`);
+            if (typeof showInfo === 'function') {
+                showInfo(`Searching for: ${searchTerm}`);
+            }
             // Add actual search functionality here
         }
     });

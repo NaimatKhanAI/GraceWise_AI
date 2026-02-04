@@ -8,6 +8,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/signin-style.css">
+    <link rel="stylesheet" href="css/notifications.css">
+    <script src="js/notifications.js" defer></script>
     <script src="js/password-toggle.js" defer></script>
     <script src="js/auth.js" defer></script>
 </head>
@@ -60,10 +62,12 @@
             const result = await auth.login(email, password);
 
             if (result.success) {
-                alert(result.message);
-                auth.redirectAfterLogin();
+                showSuccess(result.message);
+                setTimeout(() => {
+                    auth.redirectAfterLogin();
+                }, 1000);
             } else {
-                alert(result.message);
+                showError(result.message);
             }
         });
     </script>

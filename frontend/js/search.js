@@ -4,12 +4,16 @@ function performSearch() {
     const searchTerm = searchInput.value.trim();
     
     if (searchTerm === '') {
-        alert('Please enter a search term');
+        if (typeof showWarning === 'function') {
+            showWarning('Please enter a search term');
+        }
         return;
     }
     
-    // For now, show alert with search term
-    alert('Searching for: "' + searchTerm + '"\\nSearch functionality will be implemented later');
+    // For now, show notification with search term
+    if (typeof showInfo === 'function') {
+        showInfo('Searching for: "' + searchTerm + '"\\nSearch functionality will be implemented later');
+    }
     
     // Clear the search input
     searchInput.value = '';

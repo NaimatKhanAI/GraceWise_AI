@@ -11,13 +11,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Validate passwords match
         if (password !== confirmPassword) {
-            alert('Passwords do not match!');
+            showError('Passwords do not match!');
             return;
         }
 
         // Validate password length
         if (password.length < 6) {
-            alert('Password must be at least 6 characters long!');
+            showWarning('Password must be at least 6 characters long!');
             return;
         }
 
@@ -30,10 +30,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const result = await auth.register(userData);
 
         if (result.success) {
-            alert(result.message);
-            window.location.href = 'sign_in.html';
+            showSuccess(result.message);
+            setTimeout(() => {
+                window.location.href = 'sign_in.html';
+            }, 1500);
         } else {
-            alert(result.message);
+            showError(result.message);
         }
     });
 });
