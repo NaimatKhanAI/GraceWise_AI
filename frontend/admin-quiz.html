@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Management - Gracewise</title>
+    <link rel="stylesheet" href="css/admin-sidebar.css">
+    <link rel="stylesheet" href="css/admin-dashboard.css">
+    <link rel="stylesheet" href="css/notifications.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="js/notifications.js" defer></script>
+    <script src="js/auth.js" defer></script>
+    <style>
+        .tab-container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 16px;
+            border-bottom: 2px solid #f1f1f1;
+            margin-bottom: 24px;
+        }
+
+        .tab-button {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            color: #718096;
+            font-weight: 500;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            color: #b59c61;
+            border-bottom-color: #b59c61;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .upload-area {
+            border: 2px dashed #d4af37;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            background: #faf9f7;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            background: #f5f3f0;
+        }
+
+        .upload-area.dragging {
+            background: #fff5f2;
+            border-color: #b59c61;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #b59c61;
+            margin-bottom: 16px;
+        }
+
+        .upload-text {
+            font-size: 16px;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            font-size: 14px;
+            color: #718096;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #b59c61, #d4af37);
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: transform 0.2s ease;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #b59c61;
+        }
+
+        .uploaded-files {
+            margin-top: 24px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            background: #b59c61;
+            color: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .generate-quiz-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .generate-quiz-btn:hover {
+            background: #218838;
+        }
+
+        .quiz-list {
+            margin-top: 24px;
+        }
+
+        .quiz-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border-left: 4px solid #b59c61;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+
+        .quiz-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .quiz-meta {
+            font-size: 14px;
+            color: #718096;
+        }
+
+        .quiz-stats {
+            display: flex;
+            gap: 24px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .quiz-stat {
+            font-size: 14px;
+            color: #718096;
+        }
+
+        .quiz-stat strong {
+            color: #2d3748;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <img src="assest/logo/main_logo.png" alt="Gracewise Logo">
+        </div>
+        <nav class="nav-menu">
+            <a href="admin-dashboard.html" class="nav-item">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="all-users.html" class="nav-item">
+                <i class="fas fa-users"></i>
+                <span>Users</span>
+            </a>
+            <a href="admin-curriculum.html" class="nav-item">
+                <i class="fas fa-book"></i>
+                <span>Curriculum</span>
+            </a>
+            <a href="admin-quiz.html" class="nav-item active">
+                <i class="fas fa-question-circle"></i>
+                <span>Quiz Management</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-section">
+                <a href="#">
+                    <i class="fas fa-cog"></i>
+                    Settings</a>
+                <a href="#" onclick="auth.logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search...">
+            </div>
+            <div class="header-right">
+                <div class="profile">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face" alt="Profile">
+                    <span>Admin</span>
+                </div>
+                <div class="date">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span id="current-date"></span>
+                </div>
+                <div class="notification">
+                    <i class="fas fa-bell"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard-container">
+            <div class="dashboard-header">
+                <h1>Quiz Management</h1>
+                <p class="welcome-text">Upload documents and generate quizzes for students</p>
+            </div>
+
+            <div class="tab-container">
+                <div class="tabs">
+                    <button class="tab-button active" data-tab="upload">
+                        <i class="fas fa-upload"></i> Upload Documents
+                    </button>
+                    <button class="tab-button" data-tab="generate">
+                        <i class="fas fa-magic"></i> Generate Quiz
+                    </button>
+                    <button class="tab-button" data-tab="manage">
+                        <i class="fas fa-list"></i> Manage Quizzes
+                    </button>
+                </div>
+
+                <!-- Upload Documents Tab -->
+                <div class="tab-content active" id="upload-tab">
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <p class="upload-text">Drag and drop your document here or click to browse</p>
+                        <p class="upload-hint">Supported formats: PDF, TXT, DOC, DOCX, MD (Max 50MB)</p>
+                        <p class="upload-hint" style="color: #e67e22; font-size: 12px; margin-top: 8px;">Note: Text files work best for quiz generation. PDF support coming soon.</p>
+                        <input type="file" class="file-input" id="fileInput" accept=".pdf,.txt,.doc,.docx,.md">
+                        <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                            Select File
+                        </button>
+                    </div>
+
+                    <div class="uploaded-files" id="uploadedFiles">
+                        <h3>Recently Uploaded Documents</h3>
+                        <!-- Files will be listed here -->
+                    </div>
+                </div>
+
+                <!-- Generate Quiz Tab -->
+                <div class="tab-content" id="generate-tab">
+                    <h3>Generate Quiz from Document</h3>
+                    <form id="generateQuizForm">
+                        <div class="form-group">
+                            <label>Select Document</label>
+                            <select id="documentSelect" required>
+                                <option value="">-- Select a document --</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Quiz Title</label>
+                            <input type="text" id="quizTitle" placeholder="Enter quiz title" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Quiz Description</label>
+                            <textarea id="quizDescription" rows="3" placeholder="Enter quiz description (optional)"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Number of Questions</label>
+                            <input type="number" id="numQuestions" min="3" max="20" value="5" required>
+                        </div>
+
+                        <button type="submit" class="upload-btn">
+                            <i class="fas fa-magic"></i> Generate Quiz
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Manage Quizzes Tab -->
+                <div class="tab-content" id="manage-tab">
+                    <h3>All Quizzes</h3>
+                    <div class="quiz-list" id="quizList">
+                        <!-- Quizzes will be listed here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Verify admin access - wrap in DOMContentLoaded to wait for deferred scripts
+        function verifyAdminAccess() {
+            if (typeof auth === 'undefined') {
+                // If auth is not defined yet, retry after a short delay
+                setTimeout(verifyAdminAccess, 100);
+                return;
+            }
+
+            if (!auth.isLoggedIn()) {
+                showWarning('You must be logged in to access this page');
+                setTimeout(() => {
+                    window.location.href = 'sign_in.html';
+                }, 1500);
+            } else if (!auth.currentUser || !auth.currentUser.is_admin) {
+                showError('Admin access required. You do not have permission to access this page.');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 2000);
+            }
+        }
+
+        // Run after deferred scripts are loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', verifyAdminAccess);
+        } else {
+            verifyAdminAccess();
+        }
+
+        // Set current date
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric', 
+            year: 'numeric' 
+        });
+
+        // Tab switching
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all tabs
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+                // Add active class to clicked tab
+                button.classList.add('active');
+                const tabId = button.getAttribute('data-tab') + '-tab';
+                document.getElementById(tabId).classList.add('active');
+
+                // Load data based on tab
+                if (button.getAttribute('data-tab') === 'upload') {
+                    loadUploadedFiles();
+                } else if (button.getAttribute('data-tab') === 'generate') {
+                    loadDocuments();
+                } else if (button.getAttribute('data-tab') === 'manage') {
+                    loadQuizzes();
+                }
+            });
+        });
+
+        // Drag and drop functionality
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => {
+                uploadArea.classList.add('dragging');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, () => {
+                uploadArea.classList.remove('dragging');
+            });
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileUpload(e.target.files[0]);
+            }
+        });
+
+        // Handle file upload
+        async function handleFileUpload(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const token = localStorage.getItem('accessToken');
+                
+                if (!token) {
+                    showError('You are not authenticated. Please login again.');
+                    return;
+                }
+                
+                console.log('Starting file upload with token:', token.substring(0, 20) + '...');
+                console.log('File:', file.name, 'Size:', file.size, 'Type:', file.type);
+                
+                const response = await fetch('http://127.0.0.1:5000/quiz/upload-document', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                if (response.ok) {
+                    showSuccess(data.message);
+                    loadUploadedFiles();
+                    loadDocuments();
+                    fileInput.value = ''; // Clear file input
+                } else {
+                    showError(data.message || `Upload failed: ${response.status} ${response.statusText}`);
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                showError('Upload failed: ' + error.message);
+            }
+        }
+
+        // Load uploaded files
+        async function loadUploadedFiles() {
+            try {
+                const token = localStorage.getItem('accessToken');
+                const response = await fetch('http://127.0.0.1:5000/quiz/uploaded-documents', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const documents = data.documents || [];
+                    
+                    if (documents.length === 0) {
+                        document.getElementById('uploadedFiles').innerHTML = '<h3>Recently Uploaded Documents</h3><p style="color: #718096;">No documents uploaded yet. Upload a document to get started</p>';
+                    } else {
+                        const filesHTML = `
+                            <h3>Recently Uploaded Documents</h3>
+                            ${documents.map((doc, index) => `
+                                <div class="file-item">
+                                    <div class="file-info">
+                                        <div class="file-icon">
+                                            <i class="fas fa-file"></i>
+                                        </div>
+                                        <div>
+                                            <strong>${doc.filename}</strong><br>
+                                            <small style="color: #718096;">${new Date(doc.uploaded_at).toLocaleDateString()}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        `;
+                        document.getElementById('uploadedFiles').innerHTML = filesHTML;
+                    }
+                } else {
+                    // Fallback for when endpoint doesn't exist yet
+                    document.getElementById('uploadedFiles').innerHTML = '<h3>Recently Uploaded Documents</h3><p style="color: #718096;">Upload a document to get started</p>';
+                }
+            } catch (error) {
+                document.getElementById('uploadedFiles').innerHTML = '<h3>Recently Uploaded Documents</h3><p style="color: #718096;">Upload a document to get started</p>';
+            }
+        }
+
+        // Load documents for quiz generation
+        async function loadDocuments() {
+            try {
+                const token = localStorage.getItem('accessToken');
+                const response = await fetch('http://127.0.0.1:5000/quiz/uploaded-documents', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const select = document.getElementById('documentSelect');
+                select.innerHTML = '<option value="">-- Select a document --</option>';
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const documents = data.documents || [];
+                    
+                    if (documents.length > 0) {
+                        documents.forEach(doc => {
+                            const option = document.createElement('option');
+                            option.value = doc.filepath;
+                            option.textContent = doc.filename;
+                            select.appendChild(option);
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading documents:', error);
+            }
+        }
+
+        // Generate quiz form submission
+        document.getElementById('generateQuizForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const documentPath = document.getElementById('documentSelect').value;
+            const title = document.getElementById('quizTitle').value;
+            const description = document.getElementById('quizDescription').value;
+            const numQuestions = document.getElementById('numQuestions').value;
+
+            if (!documentPath) {
+                showWarning('Please select a document');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('accessToken');
+                const response = await fetch('http://127.0.0.1:5000/quiz/generate-quiz', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        document_path: documentPath,
+                        title: title,
+                        description: description,
+                        num_questions: parseInt(numQuestions)
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess(data.message);
+                    document.getElementById('generateQuizForm').reset();
+                    // Switch to manage tab
+                    document.querySelector('[data-tab="manage"]').click();
+                } else {
+                    showError(data.message);
+                }
+            } catch (error) {
+                showError('Failed to generate quiz. Please try again.');
+            }
+        });
+
+        // Load quizzes
+        async function loadQuizzes() {
+            try {
+                const token = localStorage.getItem('accessToken');
+                const response = await fetch('http://127.0.0.1:5000/quiz/quizzes', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayQuizzes(data.quizzes);
+                } else {
+                    showError('Failed to load quizzes');
+                }
+            } catch (error) {
+                showError('Failed to load quizzes');
+            }
+        }
+
+        function displayQuizzes(quizzes) {
+            const quizList = document.getElementById('quizList');
+
+            if (!quizzes || quizzes.length === 0) {
+                quizList.innerHTML = '<p style="color: #718096;">No quizzes available. Generate one from the "Generate Quiz" tab.</p>';
+                return;
+            }
+
+            quizList.innerHTML = quizzes.map(quiz => `
+                <div class="quiz-card">
+                    <div class="quiz-header">
+                        <div>
+                            <div class="quiz-title">${quiz.title}</div>
+                            <div class="quiz-meta">
+                                ${quiz.description || 'No description'}
+                            </div>
+                            <div class="quiz-meta">
+                                <i class="fas fa-file"></i> ${quiz.document_name || 'N/A'}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quiz-stats">
+                        <div class="quiz-stat">
+                            <strong>${quiz.questions.length}</strong> Questions
+                        </div>
+                        <div class="quiz-stat">
+                            Created: ${new Date(quiz.created_at).toLocaleDateString()}
+                        </div>
+                        <div class="quiz-stat">
+                            Status: <strong style="color: ${quiz.is_active ? '#28a745' : '#dc3545'}">${quiz.is_active ? 'Active' : 'Inactive'}</strong>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Load initial data
+        loadUploadedFiles();
+    </script>
+</body>
+</html>

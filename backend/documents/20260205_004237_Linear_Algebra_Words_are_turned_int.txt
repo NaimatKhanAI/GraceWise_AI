@@ -1,0 +1,10 @@
+Linear Algebra: Words are turned into numerical vectors (embeddings) and matrices, allowing for semantic understanding through operations like dot products and matrix multiplication (e.g., in self-attention).
+
+Calculus: Derivatives (gradient descent) are crucial for training models, as they help adjust parameters to minimize errors.
+
+Probability & Statistics: Conditional probability helps predict the next word, while concepts like mean, variance, and standard deviation are fundamental.
+
+Functions: The general concept of functions and raising numbers to powers are used in transformations. 
+
+Vectors:
+Embedings:

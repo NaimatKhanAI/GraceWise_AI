@@ -391,3 +391,24 @@ def rag_status():
     except Exception as e:
         return jsonify({"message": f"Error: {str(e)}"}), 500
 
+
+# ==================== CREATE DOCUMENT EMBEDDINGS ====================
+def create_document_embeddings(filepath):
+    """Create embeddings for a newly uploaded document"""
+    global vector_data
+    
+    try:
+        print(f"Creating embeddings for: {filepath}")
+        
+        # Reset vector_data to force re-initialization with new document
+        vector_data = None
+        
+        # Trigger re-initialization
+        get_qa_chain()
+        
+        print(f"Embeddings created successfully for: {filepath}")
+        return True
+    
+    except Exception as e:
+        print(f"Error creating embeddings: {e}")
+        return False

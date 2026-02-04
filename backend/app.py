@@ -22,6 +22,7 @@ from routes.curriculum import curriculum_bp
 from models import db  # import db from models.py
 from routes.rag_chatbot import rag_bp 
 from routes.auth import auth_bp
+from routes.quiz import quiz_bp
 
 #Create Flask app
 app = Flask(__name__)
@@ -41,6 +42,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # JWT Configuration
 app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'your-secret-key-change-in-production')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = False
+app.config['JWT_TOKEN_LOCATION'] = ['headers']
+app.config['JWT_HEADER_NAME'] = 'Authorization'
+app.config['JWT_HEADER_TYPE'] = 'Bearer'
 
 #Initialize JWT
 jwt = JWTManager(app)
@@ -56,6 +60,7 @@ app.register_blueprint(child_progress_bp, url_prefix="/child_progress")
 app.register_blueprint(planner_bp, url_prefix="/planner")
 app.register_blueprint(curriculum_bp, url_prefix="/curriculum")
 app.register_blueprint(rag_bp, url_prefix="/rag")
+app.register_blueprint(quiz_bp, url_prefix="/quiz")
 
 #Create tables (optional, for first run)
 with app.app_context():
