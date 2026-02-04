@@ -83,7 +83,12 @@ class AuthSystem {
 
     // Redirect based on user type
     redirectAfterLogin() {
-        window.location.href = 'dashboard.html';
+        // Check if user is admin
+        if (this.currentUser && this.currentUser.is_admin) {
+            window.location.href = 'admin-dashboard.html';
+        } else {
+            window.location.href = 'dashboard.html';
+        }
     }
 
     // Check access permissions
@@ -92,7 +97,7 @@ class AuthSystem {
         const adminPages = ['admin-dashboard.html', 'all-users.html', 'admin-curriculum.html'];
         
         if (adminPages.includes(currentPage)) {
-            if (!this.isLoggedIn() || !this.currentUser.isAdmin) {
+            if (!this.isLoggedIn() || !this.currentUser.is_admin) {
                 alert('Access denied! Admin privileges required.');
                 window.location.href = 'index.html';
                 return false;

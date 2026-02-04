@@ -60,6 +60,29 @@ app.register_blueprint(rag_bp, url_prefix="/rag")
 #Create tables (optional, for first run)
 with app.app_context():
     db.create_all()
+    
+    # Initialize admin user
+    from models import User
+    admin_email = "admin@grace-wise.com"
+    admin = User.query.filter_by(email=admin_email).first()
+    
+    if not admin:
+        print("\n" + "="*50)
+        print("Creating admin user...")
+        print("="*50)
+        admin = User(
+            first_name="Admin",
+            last_name="User",
+            email=admin_email,
+            is_admin=True
+        )
+        admin.set_password("grace.admin@123")
+        db.session.add(admin)
+        db.session.commit()
+        print(f"Admin user created: {admin_email}")
+        print("="*50 + "\n")
+    else:
+        print(f"\nAdmin user already exists: {admin_email}\n")
 
 #Initialize RAG system on startup
 with app.app_context():
