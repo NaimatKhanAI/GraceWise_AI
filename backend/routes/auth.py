@@ -5,6 +5,13 @@ from datetime import timedelta
 
 auth_bp = Blueprint("auth", __name__)
 
+def get_user_id():
+    """Get user_id from JWT token and convert to int"""
+    user_id = get_jwt_identity()
+    if isinstance(user_id, str):
+        user_id = int(user_id)
+    return user_id
+
 # ==================== SIGNUP ====================
 @auth_bp.route("/signup", methods=["POST"])
 def signup():
@@ -79,7 +86,7 @@ def login():
         
         # Create access token
         access_token = create_access_token(
-            identity=user.id,
+            identity=str(user.id),  # Convert to string to ensure proper JWT encoding
             expires_delta=timedelta(days=30)
         )
         
@@ -99,7 +106,7 @@ def login():
 def get_current_user():
     """Get current logged-in user information"""
     try:
-        user_id = get_jwt_identity()
+        user_id = get_user_id()
         user = User.query.get(user_id)
         
         if not user:
@@ -117,7 +124,7 @@ def get_current_user():
 def update_user():
     """Update user information"""
     try:
-        user_id = get_jwt_identity()
+        user_id = get_user_id()
         user = User.query.get(user_id)
         
         if not user:
@@ -149,7 +156,7 @@ def update_user():
 def change_password():
     """Change user password"""
     try:
-        user_id = get_jwt_identity()
+        user_id = get_user_id()
         user = User.query.get(user_id)
         
         if not user:
