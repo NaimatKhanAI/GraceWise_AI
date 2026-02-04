@@ -1,7 +1,7 @@
 // Authentication System
 class AuthSystem {
     constructor() {
-        this.apiBaseUrl = 'http://72.62.35.115:5000';
+        this.apiBaseUrl = 'http://127.0.0.1:5000';
         this.currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
         this.accessToken = localStorage.getItem('accessToken') || null;
     }

@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const sendBtn = document.getElementById('sendBtn');
     const profileName = document.querySelector('.profile span');
 
-    const API_BASE_URL = 'http://72.62.35.115:5000';
+    const API_BASE_URL = 'http://127.0.0.1:5000';
 
     const currentUser = localStorage.getItem('currentUser');
     if (currentUser && profileName) {
