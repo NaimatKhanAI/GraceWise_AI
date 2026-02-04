@@ -83,12 +83,12 @@ body {
     left: 0;
     width: 0;
     height: 2px;
-    background: #D4A574;
+    background: #c97e76;
     transition: width 0.3s ease;
 }
 
 .nav a:hover {
-    color: #D4A574;
+    color: #c97e76;
 }
 
 .nav a:hover::after {
@@ -163,7 +163,7 @@ body {
     left: 50px;
     width: 150px;
     height: 150px;
-    background-image: radial-gradient(circle, #D4A574 2px, transparent 2px);
+    background-image: radial-gradient(circle, #c97e76 2px, transparent 2px);
     background-size: 20px 20px;
     opacity: 0.4;
 }
@@ -267,7 +267,7 @@ body {
 }
 
 .highlight {
-    color: #D4A574;
+    color: #c97e76;
     position: relative;
 }
 
@@ -306,7 +306,7 @@ body {
 }
 
 .search-btn {
-    background: #D4A574;
+    background: #c97e76;
     border: none;
     padding: 10px 14px;
     cursor: pointer;
@@ -458,7 +458,7 @@ body {
 }
 
 .highlight-choose {
-    color: #D4A574;
+    color: #c97e76;
     text-decoration: underline;
     text-decoration-color: #FFD700;
     text-underline-offset: 5px;
@@ -504,7 +504,7 @@ body {
 }
 
 .more-about-btn {
-    background: #D4A574;
+    background: #c97e76;
     color: white;
     border: none;
     padding: 12px 24px;
@@ -530,7 +530,7 @@ body {
     left: 0;
     width: 50px;
     height: 50px;
-    background-image: radial-gradient(circle, #D4A574 2px, transparent 2px);
+    background-image: radial-gradient(circle, #c97e76 2px, transparent 2px);
     background-size: 10px 10px;
     opacity: 0.6;
     z-index: 1;
@@ -578,7 +578,7 @@ body {
     left: 260px;
     width: 100px;
     height: 110px;
-    background: linear-gradient(135deg, #D4A574, #E6B885);
+    background: linear-gradient(135deg, #c97e76, #E6B885);
     border-radius: 15px;
     z-index: 3;
 }
@@ -768,7 +768,7 @@ body {
 .instructor-avatar {
     width: 20px;
     height: 20px;
-    background: #D4A574;
+    background: #c97e76;
     border-radius: 50%;
     margin-left: auto;
 }
@@ -791,14 +791,14 @@ body {
 }
 
 .join-btn:hover {
-    background: #D4A574;
-    border-color: #D4A574;
+    background: #c97e76;
+    border-color: #c97e76;
     color: white;
 }
 
 /* CTA Banner */
 .cta-banner {
-    background: linear-gradient(135deg, #D4A574 0%, #B8956A 100%);
+    background: linear-gradient(135deg, #c97e76 100%);
     border-radius: 5px;
     padding: 18px 24px;
     display: flex;
@@ -876,7 +876,7 @@ body {
 }
 
 .highlight-partners {
-    color: #D4A574;
+    color: #c97e76;
 }
 
 .partners-header p {
@@ -975,9 +975,9 @@ body {
 }
 
 .play-btn:hover {
-    background: #D4A574;
+    background: #c97e76;
     color: white;
-    border-color: #D4A574;
+    border-color: #c97e76;
 }
 
 .play-icon {
@@ -986,8 +986,8 @@ body {
 }
 
 .link-btn {
-    background: #D4A574;
-    border: 1px solid #D4A574;
+    background: #c97e76;
+    border: 1px solid #c97e76;
     color: white;
     font-size: 14px;
     font-weight: 500;
@@ -1035,7 +1035,7 @@ body {
 }
 
 .highlight-news {
-    color: #D4A574;
+    color: #c97e76;
 }
 
 .news-grid {
@@ -1153,7 +1153,7 @@ body {
 }
 
 .news-card:hover h3 {
-    color: #D4A574;
+    color: #c97e76;
 }
 
 .read-more-btn {
@@ -1170,9 +1170,9 @@ body {
 }
 
 .read-more-btn:hover {
-    background: #D4A574;
+    background: #c97e76;
     color: white;
-    border-color: #D4A574;
+    border-color: #c97e76;
 }
 
 /* Transform Section */
@@ -1215,7 +1215,7 @@ body {
 }
 
 .browse-courses-btn {
-    background: #D4A574;
+    background: #c97e76;
     color: white;
     border: none;
     padding: 8px 20px;
@@ -1365,7 +1365,7 @@ body {
 }
 
 .footer-column a:hover {
-    color: #D4A574;
+    color: #c97e76;
 }
 
 .footer-bottom {
@@ -1411,7 +1411,7 @@ body {
 }
 
 .subscribe-btn {
-    background: #D4A574;
+    background: #c97e76;
     color: white;
     border: none;
     padding: 8px 16px;
