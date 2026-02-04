@@ -98,8 +98,14 @@ class AuthSystem {
         
         if (adminPages.includes(currentPage)) {
             if (!this.isLoggedIn() || !this.currentUser.is_admin) {
-                alert('Access denied! Admin privileges required.');
-                window.location.href = 'index.html';
+                if (typeof showError === 'function') {
+                    showError('Access denied! Admin privileges required.');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1500);
+                } else {
+                    window.location.href = 'index.html';
+                }
                 return false;
             }
         }
@@ -107,8 +113,14 @@ class AuthSystem {
         const userPages = ['dashboard.html', 'curriculum.html', 'ai-assistant.html', 'devotional.html', 'progress.html'];
         if (userPages.includes(currentPage)) {
             if (!this.isLoggedIn()) {
-                alert('Please sign in to access this page.');
-                window.location.href = 'sign_in.html';
+                if (typeof showWarning === 'function') {
+                    showWarning('Please sign in to access this page.');
+                    setTimeout(() => {
+                        window.location.href = 'sign_in.html';
+                    }, 1500);
+                } else {
+                    window.location.href = 'sign_in.html';
+                }
                 return false;
             }
         }
