@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const sendBtn = document.getElementById('sendBtn');
     const profileName = document.querySelector('.profile span');
 
-    const API_BASE_URL = 'http://72.62.35.115:5000';
+    const API_BASE_URL = 'http://127.0.0.1:5000';
 
     const currentUser = localStorage.getItem('currentUser');
     if (currentUser && profileName) {
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const content = document.createElement('div');
         content.className = 'message-content';
         const p = document.createElement('p');
-        p.textContent = text;
+        p.innerHTML = marked.parse(text);
         content.appendChild(p);
         messageEl.appendChild(content);
 
@@ -83,7 +83,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (loadingEl) {
                 const content = loadingEl.querySelector('p');
-                if (content) content.textContent = answer;
+                if (content) content.innerHTML = marked.parse(answer);
+
             }
         } catch (error) {
             console.error('Chat error:', error);
