@@ -6,8 +6,10 @@
     <title>Admin Curriculum - Gracewise</title>
     <link rel="stylesheet" href="css/admin-sidebar.css">
     <link rel="stylesheet" href="css/admin-curriculum.css">
+    <link rel="stylesheet" href="css/toast.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="js/toast.js" defer></script>
     <script src="js/auth.js" defer></script>
 </head>
 <body>
@@ -44,7 +46,6 @@
         </nav>
 
         <div class="sidebar-footer">
-
             <div class="user-section">
                 <a href="#">
                     <i class="fas fa-cog"></i>
@@ -60,12 +61,14 @@
     <div class="main-content">
         <!-- Header -->
         <header class="header">
+            <div class="header-left">
+                <h1>Curriculum Management</h1>
+            </div>
             <div class="header-right">
                 <div class="profile">
                     <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face" alt="Profile">
                     <span>Admin</span>
                 </div>
-
                 <div class="notification">
                     <i class="fas fa-bell"></i>
                 </div>
@@ -74,55 +77,101 @@
 
         <!-- Curriculum Content -->
         <div class="dashboard-container">
-            <div class="curriculum-container">
-                <!-- User Info Table -->
-                <div class="user-info">
-                    <div class="user-info-item">
-                        <div class="user-info-label">Customer Name</div>
-                        <div class="user-info-value">Jane Cooper</div>
-                    </div>
-                    <div class="user-info-item">
-                        <div class="user-info-label">Grade</div>
-                        <div class="user-info-value">6th</div>
-                    </div>
-                    <div class="user-info-item">
-                        <div class="user-info-label">Phone Number</div>
-                        <div class="user-info-value">(225) 555-0118</div>
-                    </div>
-                    <div class="user-info-item">
-                        <div class="user-info-label">Email</div>
-                        <div class="user-info-value">jane@microsoft.com</div>
-                    </div>
-                    <div class="user-info-item">
-                        <div class="user-info-label">Country</div>
-                        <div class="user-info-value">United States</div>
-                    </div>
-                    <div class="user-info-item">
-                        <div class="user-info-label">Status</div>
-                        <div class="user-info-value">
-                            <span class="status-badge status-active">Active</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Curriculum Options -->
-                <div class="curriculum-options">
-                    <div class="option-item">
-                        <span class="option-label">Child Progress</span>
-                        <div class="toggle-switch" onclick="toggleSwitch(this)"></div>
-                    </div>
-                    <div class="option-item">
-                        <span class="option-label">Planner</span>
-                        <div class="toggle-switch" onclick="toggleSwitch(this)"></div>
-                    </div>
-                    <div class="option-item">
-                        <span class="option-label">Curriculum</span>
-                        <div class="toggle-switch active" onclick="toggleSwitch(this)"></div>
-                    </div>
-                    
-                    <button class="save-button">Save</button>
-                </div>
+            <!-- Action Bar -->
+            <div class="action-bar">
+                <button class="btn-primary" onclick="showCreateCurriculumModal()">
+                    <i class="fas fa-plus"></i> Create Curriculum
+                </button>
             </div>
+
+            <!-- Curriculum List -->
+            <div id="curriculumList" class="curriculum-list">
+                <!-- Curriculum items will be loaded here -->
+                <div class="loading">Loading curriculum...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Curriculum Modal -->
+    <div id="createCurriculumModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Curriculum</h2>
+                <span class="close" onclick="closeCreateCurriculumModal()">&times;</span>
+            </div>
+            <form id="createCurriculumForm" onsubmit="createCurriculum(event)">
+                <div class="form-group">
+                    <label>Title *</label>
+                    <input type="text" name="title" required placeholder="e.g., Mathematics">
+                </div>
+                <div class="form-group">
+                    <label>Description *</label>
+                    <textarea name="description" required placeholder="Brief description of the curriculum"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Age Group</label>
+                    <input type="text" name="age_group" placeholder="e.g., 6-8 years">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeCreateCurriculumModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Create Curriculum</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Module Modal -->
+    <div id="createModuleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Module</h2>
+                <span class="close" onclick="closeCreateModuleModal()">&times;</span>
+            </div>
+            <form id="createModuleForm" onsubmit="createModule(event)">
+                <input type="hidden" name="curriculum_id" id="moduleCurriculumId">
+                <div class="form-group">
+                    <label>Module Name *</label>
+                    <input type="text" name="name" required placeholder="e.g., Algebra Basics">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description" placeholder="Brief description of the module"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeCreateModuleModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Create Module</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Upload Lesson Modal -->
+    <div id="uploadLessonModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Upload Lesson</h2>
+                <span class="close" onclick="closeUploadLessonModal()">&times;</span>
+            </div>
+            <form id="uploadLessonForm" onsubmit="uploadLesson(event)">
+                <input type="hidden" name="module_id" id="lessonModuleId">
+                <div class="form-group">
+                    <label>Lesson Name *</label>
+                    <input type="text" name="name" required placeholder="e.g., Introduction to Equations">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea name="description" placeholder="Brief description of the lesson"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Upload File * (PDF or TXT)</label>
+                    <input type="file" name="file" id="lessonFile" accept=".pdf,.txt" required>
+                    <small>Maximum file size: 10MB</small>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeUploadLessonModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Upload Lesson</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -138,7 +187,6 @@
             overlay.classList.toggle('active');
             body.classList.toggle('menu-open');
             
-            // Toggle icon between bars and times
             const icon = mobileToggle.querySelector('i');
             if (sidebar.classList.contains('mobile-open')) {
                 icon.className = 'fas fa-times';
@@ -149,18 +197,7 @@
 
         mobileToggle.addEventListener('click', toggleMobileMenu);
         overlay.addEventListener('click', toggleMobileMenu);
-
-        // Toggle switch functionality
-        function toggleSwitch(element) {
-            element.classList.toggle('active');
-        }
-
-        // Update date
-        document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-        });
     </script>
+    <script src="js/admin-curriculum.js"></script>
 </body>
 </html>
