@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 import os
@@ -29,6 +29,12 @@ app = Flask(__name__)
 
 # Enable CORS for frontend communication
 CORS(app, resources={r"/*": {"origins": "*"}})
+
+# Always return OK for CORS preflight requests
+@app.before_request
+def handle_options_preflight():
+    if request.method == "OPTIONS":
+        return "", 200
 
 # #Configure the database
 # app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:@localhost/gracewise"
