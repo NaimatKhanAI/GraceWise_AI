@@ -199,9 +199,9 @@
                         </svg>
                     </div>
                     <div class="stat-info">
-                        <h3>47</h3>
-                        <p>Task Completed</p>
-                        <span class="stat-change">+12% from last week</span>
+                        <h3 id="progressQuizAttempts">0</h3>
+                        <p>Quiz Attempts</p>
+                        <span class="stat-change" id="progressBestScore">Best: 0%</span>
                     </div>
                 </div>
                 
@@ -212,9 +212,9 @@
                         </svg>
                     </div>
                     <div class="stat-info">
-                        <h3>87%</h3>
+                        <h3 id="progressAverageScore">0%</h3>
                         <p>Average Score</p>
-                        <span class="stat-change">+5% from last week</span>
+                        <span class="stat-change" id="progressAvgLabel">Updated</span>
                     </div>
                 </div>
                 
@@ -226,9 +226,9 @@
                         </svg>
                     </div>
                     <div class="stat-info">
-                        <h3>24.5</h3>
+                        <h3 id="progressStudyHours">0</h3>
                         <p>Study Hours</p>
-                        <span class="stat-change">This week</span>
+                        <span class="stat-change" id="progressAiSessions">AI Sessions: 0</span>
                     </div>
                 </div>
                 
@@ -239,9 +239,9 @@
                         </svg>
                     </div>
                     <div class="stat-info">
-                        <h3>8</h3>
-                        <p>Pending Tasks</p>
-                        <span class="stat-change">3 overdue</span>
+                        <h3 id="progressRecentCount">0</h3>
+                        <p>Recent Activities</p>
+                        <span class="stat-change" id="progressRecentLabel">This week</span>
                     </div>
                 </div>
             </div>
@@ -249,115 +249,14 @@
             <!-- Subject Performance -->
             <div class="performance-section">
                 <h2>Subject Performance</h2>
-                <div class="performance-list">
-                    <div class="performance-item">
-                        <span class="subject-name">Mathematics</span>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 92%"></div>
-                        </div>
-                        <span class="percentage">92%</span>
-                    </div>
-                    
-                    <div class="performance-item">
-                        <span class="subject-name">English</span>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 92%"></div>
-                        </div>
-                        <span class="percentage">92%</span>
-                    </div>
-                    
-                    <div class="performance-item">
-                        <span class="subject-name">History</span>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 92%"></div>
-                        </div>
-                        <span class="percentage">92%</span>
-                    </div>
-                    
-                    <div class="performance-item">
-                        <span class="subject-name">History</span>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 92%"></div>
-                        </div>
-                        <span class="percentage">92%</span>
-                    </div>
-                    
-                    <div class="performance-item">
-                        <span class="subject-name">History</span>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 92%"></div>
-                        </div>
-                        <span class="percentage">92%</span>
-                    </div>
-                    
-                    <div class="performance-item">
-                        <span class="subject-name">History</span>
-                        <div class="progress-bar">
-                            <div class="progress-fill" style="width: 92%"></div>
-                        </div>
-                        <span class="percentage">92%</span>
-                    </div>
+                <div class="performance-list" id="performanceList">
+                    <div class="no-data">No subject performance yet</div>
                 </div>
             </div>
 
             <!-- Recent Activities -->
-            <div class="activities-section">
-                <div class="activity-item">
-                    <div class="activity-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/>
-                        </svg>
-                    </div>
-                    <div class="activity-info">
-                        <h4>Algebra Practice - Chapter 5</h4>
-                        <p>Mathematics • Completed on Jan 6, 2025</p>
-                    </div>
-                    <div class="activity-score">95%</div>
-                    <div class="activity-status completed">Completed</div>
-                </div>
-                
-                <div class="activity-item">
-                    <div class="activity-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/>
-                        </svg>
-                    </div>
-                    <div class="activity-info">
-                        <h4>Algebra Practice - Chapter 5</h4>
-                        <p>Mathematics • Completed on Jan 6, 2025</p>
-                    </div>
-                    <div class="activity-score">85%</div>
-                    <div class="activity-status completed">Completed</div>
-                </div>
-                
-                <div class="activity-item">
-                    <div class="activity-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/>
-                        </svg>
-                    </div>
-                    <div class="activity-info">
-                        <h4>Algebra Practice - Chapter 5</h4>
-                        <p>Mathematics • Completed on Jan 6, 2025</p>
-                    </div>
-                    <div class="activity-score">95%</div>
-                    <div class="activity-status pending">Pending</div>
-                </div>
-                
-                <div class="activity-item">
-                    <div class="activity-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/>
-                        </svg>
-                    </div>
-                    <div class="activity-info">
-                        <h4>Algebra Practice - Chapter 5</h4>
-                        <p>Mathematics • Completed on Jan 6, 2025</p>
-                    </div>
-                    <div class="activity-score">95%</div>
-                    <div class="activity-status pending">Pending</div>
-                
-                </div>
+            <div class="activities-section" id="activitiesList">
+                <div class="no-data">No recent activities yet</div>
             </div>
         </div>
     </div>
@@ -460,6 +359,7 @@
         </div>
     </div>
     
+    <script src="js/progress.js"></script>
     <script>
         // Profile Modal Functions
         const avatarBtn = document.getElementById('avatarBtn');

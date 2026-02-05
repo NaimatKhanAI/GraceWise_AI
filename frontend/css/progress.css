@@ -200,6 +200,13 @@ body {
     color: #2d3748;
 }
 
+.no-data {
+    padding: 24px;
+    text-align: center;
+    color: #a0aec0;
+    font-size: 14px;
+}
+
 /* Progress Container */
 .progress-container {
     padding: 32px;

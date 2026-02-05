@@ -5,6 +5,53 @@ document.addEventListener('DOMContentLoaded', function () {
     const profileName = document.querySelector('.profile span');
 
     const API_BASE_URL = 'http://127.0.0.1:5000';
+    let aiSessionId = null;
+
+    function getAccessToken() {
+        return localStorage.getItem('accessToken') || auth?.accessToken;
+    }
+
+    async function startAiSession() {
+        try {
+            const token = getAccessToken();
+            if (!token) return;
+
+            const response = await fetch(`${API_BASE_URL}/dashboard/student/ai-sessions/start`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const data = await response.json();
+            aiSessionId = data.session_id || null;
+        } catch (error) {
+            console.error('AI session start error:', error);
+        }
+    }
+
+    async function endAiSession() {
+        try {
+            const token = getAccessToken();
+            if (!token || !aiSessionId) return;
+
+            await fetch(`${API_BASE_URL}/dashboard/student/ai-sessions/${aiSessionId}/end`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                keepalive: true
+            });
+        } catch (error) {
+            console.error('AI session end error:', error);
+        }
+    }
 
     const currentUser = localStorage.getItem('currentUser');
     if (currentUser && profileName) {
@@ -15,6 +62,8 @@ document.addEventListener('DOMContentLoaded', function () {
             profileName.textContent = 'User';
         }
     }
+
+    startAiSession();
 
     function appendMessage(text, sender) {
         const messageEl = document.createElement('div');
@@ -58,7 +107,7 @@ document.addEventListener('DOMContentLoaded', function () {
         sendBtn.disabled = true;
 
         try {
-            const token = localStorage.getItem('accessToken');
+            const token = getAccessToken();
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
 
@@ -117,4 +166,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
+    window.addEventListener('pagehide', endAiSession);
+    window.addEventListener('beforeunload', endAiSession);
 });

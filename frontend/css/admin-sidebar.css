@@ -235,6 +235,19 @@ body.menu-open {
     color: #374151;
 }
 
+.avatar {
+    display: flex;
+    align-items: center;
+    padding: 4px;
+}
+
+.avatar img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
 /* Dashboard Container */
 .dashboard-container {
     padding: 32px;

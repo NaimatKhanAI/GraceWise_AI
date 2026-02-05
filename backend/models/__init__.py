@@ -11,5 +11,7 @@ from models.planner import Planner
 from models.curriculum import Curriculum
 from models.quiz import Quiz
 from models.quiz_result import QuizResult
+from models.notification import Notification
+from models.ai_session import AiSession
 
-__all__ = ['db', 'User', 'Child', 'Devotional', 'DevotionalProgress', 'Planner', 'Curriculum', 'Quiz', 'QuizResult']
+__all__ = ['db', 'User', 'Child', 'Devotional', 'DevotionalProgress', 'Planner', 'Curriculum', 'Quiz', 'QuizResult', 'Notification', 'AiSession']
