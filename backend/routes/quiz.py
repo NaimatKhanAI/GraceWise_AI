@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
-from models import db, Quiz, QuizResult, User
+from models import db, Quiz, QuizResult, User, Notification
 import os
 import json
 from datetime import datetime
@@ -77,6 +77,21 @@ def upload_document():
             create_document_embeddings(filepath)
         except Exception as e:
             print(f"Warning: Could not create embeddings: {e}")
+        
+        # Create notifications for all students (non-admin users)
+        try:
+            all_students = User.query.filter_by(is_admin=False).all()
+            for student in all_students:
+                notification = Notification(
+                    user_id=student.id,
+                    title="New Document Available",
+                    message=f"A new document '{filename}' has been uploaded. Check it out!",
+                    notification_type="document_upload"
+                )
+                db.session.add(notification)
+            db.session.commit()
+        except Exception as e:
+            print(f"Warning: Could not create notifications: {e}")
         
         return jsonify({
             "message": "Document uploaded successfully!",
@@ -189,6 +204,22 @@ Return ONLY the JSON, no additional text."""
         
         db.session.add(new_quiz)
         db.session.commit()
+        
+        # Create notifications for all students (non-admin users)
+        try:
+            all_students = User.query.filter_by(is_admin=False).all()
+            for student in all_students:
+                notification = Notification(
+                    user_id=student.id,
+                    title="New Quiz Available",
+                    message=f"A new quiz '{title}' has been generated. Test your knowledge!",
+                    notification_type="quiz_created",
+                    related_id=new_quiz.id
+                )
+                db.session.add(notification)
+            db.session.commit()
+        except Exception as e:
+            print(f"Warning: Could not create notifications: {e}")
         
         return jsonify({
             "message": "Quiz generated successfully!",
