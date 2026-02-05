@@ -3,7 +3,7 @@ class AuthSystem {
     constructor() {
         this.apiBaseUrl = 'http://127.0.0.1:5000';
         this.currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
-        this.accessToken = localStorage.getItem('accessToken') || null;
+        this.accessToken = localStorage.getItem('access_token') || null;
     }
 
     // Register new user (backend)
@@ -52,7 +52,7 @@ class AuthSystem {
             }
 
             this.accessToken = data.access_token;
-            localStorage.setItem('accessToken', data.access_token);
+            localStorage.setItem('access_token', data.access_token);
             this.currentUser = data.user;
             localStorage.setItem('currentUser', JSON.stringify(data.user));
 
@@ -67,7 +67,7 @@ class AuthSystem {
         this.currentUser = null;
         this.accessToken = null;
         localStorage.removeItem('currentUser');
-        localStorage.removeItem('accessToken');
+        localStorage.removeItem('access_token');
         window.location.href = 'index.html';
     }
 

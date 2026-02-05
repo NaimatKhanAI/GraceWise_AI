@@ -28,5 +28,6 @@ class User(db.Model):
             'last_name': self.last_name,
             'email': self.email,
             'created_at': self.created_at.isoformat(),
+            'is_active': self.is_active,
             'is_admin': self.is_admin
         }
