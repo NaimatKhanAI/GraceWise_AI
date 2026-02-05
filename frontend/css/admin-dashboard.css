@@ -1,5 +1,10 @@
 /* Admin Dashboard Specific Styles */
 
+.dashboard-container {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
 .dashboard-header {
     margin-bottom: 32px;
 }
@@ -9,12 +14,14 @@
     color: #1f2937;
     font-weight: 700;
     margin-bottom: 8px;
+    word-wrap: break-word;
 }
 
 .welcome-text {
     color: #6b7280;
     font-size: 16px;
     font-weight: 400;
+    word-wrap: break-word;
 }
 
 /* Stats Row */
@@ -207,15 +214,12 @@
     
     .stat-card {
         padding: 20px 16px;
-        flex-direction: column;
-        text-align: center;
-        gap: 12px;
     }
     
     .stat-icon {
-        width: 48px;
-        height: 48px;
-        font-size: 20px;
+        width: 52px;
+        height: 52px;
+        font-size: 22px;
     }
     
     .stat-info h3 {
@@ -238,6 +242,14 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 12px;
+    }
+    
+    .chart-header h3 {
+        font-size: 18px;
+    }
+    
+    .time-filter {
+        width: 100%;
     }
     
     .earning-amount h2 {
@@ -263,15 +275,19 @@
     }
     
     .stat-label {
-        font-size: 12px;
+        font-size: 11px;
     }
     
     .stat-change {
-        font-size: 12px;
+        font-size: 11px;
     }
     
     .chart-card {
         padding: 16px;
+    }
+    
+    .chart-header h3 {
+        font-size: 16px;
     }
     
     .earning-amount h2 {
@@ -279,13 +295,13 @@
     }
     
     .user-avatars img {
-        width: 24px;
-        height: 24px;
+        width: 20px;
+        height: 20px;
     }
     
     .more-users {
-        width: 24px;
-        height: 24px;
-        font-size: 10px;
+        width: 20px;
+        height: 20px;
+        font-size: 9px;
     }
 }

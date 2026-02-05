@@ -18,6 +18,52 @@
             margin-top: 24px;
         }
 
+        @media (max-width: 768px) {
+            .quiz-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .quiz-card {
+                padding: 16px;
+            }
+
+            .quiz-title {
+                font-size: 18px;
+            }
+
+            .quiz-description {
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .quiz-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .quiz-card {
+                padding: 12px;
+                border-left-width: 3px;
+            }
+
+            .quiz-title {
+                font-size: 16px;
+                margin-bottom: 8px;
+            }
+
+            .quiz-meta {
+                gap: 12px;
+                font-size: 12px;
+            }
+
+            .take-quiz-btn {
+                padding: 10px;
+                font-size: 14px;
+            }
+        }
+
         .quiz-card {
             background: white;
             border-radius: 16px;
@@ -287,6 +333,14 @@
     </style>
 </head>
 <body>
+    <!-- Mobile Menu Toggle -->
+    <div class="mobile-menu-toggle">
+        <i class="fas fa-bars"></i>
+    </div>
+    
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay"></div>
+    
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="logo">
@@ -347,19 +401,81 @@
                 <input type="text" placeholder="Search quizzes...">
             </div>
             <div class="header-right">
-                <div class="profile">
-                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face" alt="Profile">
-                    <span id="userName">User</span>
-                </div>
-                <div class="date">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span id="current-date"></span>
-                </div>
                 <div class="notification">
                     <i class="fas fa-bell"></i>
                 </div>
+                <div class="avatar" id="avatarBtn">
+                    <i class="fas fa-user-circle"></i>
+                </div>
             </div>
         </header>
+
+        <!-- User Profile Modal -->
+        <div class="profile-modal" id="profileModal">
+            <div class="profile-modal-content">
+                <button class="modal-close" onclick="closeProfileModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+                
+                <div class="profile-header">
+                    <div class="avatar-section">
+                        <div class="avatar-large" id="avatarLarge">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                    </div>
+                    <h2 id="userNameDisplay">User Name</h2>
+                </div>
+                
+                <div class="profile-form">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="userEmailDisplay" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="userFullNameDisplay" readonly>
+                    </div>
+                    
+                    <button class="change-password-btn" onclick="openChangePasswordModal()">
+                        <i class="fas fa-lock"></i>
+                        Change Password
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Change Password Modal -->
+        <div class="change-password-modal" id="changePasswordModal">
+            <div class="password-modal-content">
+                <button class="modal-close" onclick="closeChangePasswordModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+                
+                <h2>Change Password</h2>
+                
+                <form id="passwordForm" onsubmit="handleChangePassword(event)">
+                    <div class="form-group">
+                        <label>Current Password</label>
+                        <input type="password" id="currentPassword" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>New Password</label>
+                        <input type="password" id="newPassword" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Confirm Password</label>
+                        <input type="password" id="confirmPassword" required>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">
+                        Update Password
+                    </button>
+                </form>
+            </div>
+        </div>
 
         <!-- Dashboard Content -->
         <div class="dashboard-content">
@@ -435,16 +551,13 @@
             }
 
             // Set current date
-            document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric', 
-                year: 'numeric' 
-            });
-
-            // Set user name
-            const user = auth.getCurrentUser();
-            if (user) {
-                document.getElementById('userName').textContent = user.first_name || 'User';
+            const dateEl = document.getElementById('current-date');
+            if (dateEl) {
+                dateEl.textContent = new Date().toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                });
             }
 
             // Load quizzes
@@ -650,6 +763,121 @@
         function closeResultModal() {
             document.getElementById('resultModal').classList.remove('active');
             loadQuizzes(); // Reload quizzes
+        }
+
+        // Profile Modal Functions
+        const avatarBtn = document.getElementById('avatarBtn');
+        const profileModal = document.getElementById('profileModal');
+
+        function openProfileModal() {
+            const user = auth.getCurrentUser();
+            if (user) {
+                document.getElementById('userNameDisplay').textContent = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'User';
+                document.getElementById('userEmailDisplay').value = user.email || '';
+                document.getElementById('userFullNameDisplay').value = [user.first_name, user.last_name].filter(Boolean).join(' ') || '';
+            }
+            profileModal.classList.add('active');
+        }
+
+        function closeProfileModal() {
+            profileModal.classList.remove('active');
+        }
+
+        function openChangePasswordModal() {
+            document.getElementById('changePasswordModal').classList.add('active');
+        }
+
+        function closeChangePasswordModal() {
+            document.getElementById('changePasswordModal').classList.remove('active');
+            document.getElementById('passwordForm').reset();
+        }
+
+        async function handleChangePassword(event) {
+            event.preventDefault();
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (newPassword !== confirmPassword) {
+                showError('Passwords do not match');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                showError('Password must be at least 6 characters long');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/auth/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${auth.accessToken}`
+                    },
+                    body: JSON.stringify({
+                        current_password: currentPassword,
+                        new_password: newPassword
+                    })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    showSuccess('Password changed successfully');
+                    closeChangePasswordModal();
+                } else {
+                    showError(data.message || 'Failed to change password');
+                }
+            } catch (error) {
+                showError('Error changing password');
+            }
+        }
+
+        avatarBtn.addEventListener('click', openProfileModal);
+        profileModal.addEventListener('click', (e) => {
+            if (e.target === profileModal) closeProfileModal();
+        });
+
+        document.getElementById('changePasswordModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('changePasswordModal')) closeChangePasswordModal();
+        });
+
+        // Mobile menu functionality
+        const mobileToggle = document.querySelector('.mobile-menu-toggle');
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.querySelector('.mobile-overlay');
+        const body = document.body;
+
+        function toggleMobileMenu() {
+            sidebar.classList.toggle('mobile-open');
+            overlay.classList.toggle('active');
+            body.classList.toggle('menu-open');
+            
+            // Toggle icon between bars and times
+            const icon = mobileToggle.querySelector('i');
+            if (sidebar.classList.contains('mobile-open')) {
+                icon.className = 'fas fa-times';
+            } else {
+                icon.className = 'fas fa-bars';
+            }
+        }
+
+        if (mobileToggle) {
+            mobileToggle.addEventListener('click', toggleMobileMenu);
+        }
+        
+        if (overlay) {
+            overlay.addEventListener('click', toggleMobileMenu);
+        }
+
+        // Update current date
+        const currentDateElement = document.getElementById('current-date');
+        if (currentDateElement) {
+            currentDateElement.textContent = new Date().toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
         }
     </script>
 </body>

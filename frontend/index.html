@@ -470,7 +470,15 @@
     <script>
         function toggleMobileMenu() {
             const nav = document.getElementById('mobileNav');
+            const toggle = document.querySelector('.mobile-menu-toggle');
             nav.classList.toggle('mobile-open');
+            
+            // Toggle icon between bars and times
+            if (nav.classList.contains('mobile-open')) {
+                toggle.innerHTML = '<i class="fas fa-times"></i>';
+            } else {
+                toggle.innerHTML = '<i class="fas fa-bars"></i>';
+            }
         }
         
         function checkUserAndRedirect() {

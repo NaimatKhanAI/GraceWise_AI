@@ -214,18 +214,14 @@ def change_password():
             return jsonify({"message": "User not found"}), 404
         
         data = request.json
-        old_password = data.get('old_password')
+        current_password = data.get('current_password')
         new_password = data.get('new_password')
-        confirm_password = data.get('confirm_password')
         
-        if not old_password or not new_password or not confirm_password:
+        if not current_password or not new_password:
             return jsonify({"message": "Missing required fields"}), 400
         
-        if not user.check_password(old_password):
+        if not user.check_password(current_password):
             return jsonify({"message": "Current password is incorrect"}), 401
-        
-        if new_password != confirm_password:
-            return jsonify({"message": "New passwords do not match"}), 400
         
         if len(new_password) < 6:
             return jsonify({"message": "Password must be at least 6 characters"}), 400
@@ -237,6 +233,47 @@ def change_password():
     
     except Exception as e:
         db.session.rollback()
+        return jsonify({"message": f"Error: {str(e)}"}), 500
+
+
+# ==================== UPDATE AVATAR ====================
+@auth_bp.route("/update-avatar", methods=["POST"])
+@jwt_required()
+def update_avatar():
+    """Update user avatar/profile picture"""
+    try:
+        user_id = get_user_id()
+        user = User.query.get(user_id)
+        
+        if not user:
+            return jsonify({"message": "User not found"}), 404
+        
+        if 'avatar' not in request.files:
+            return jsonify({"message": "No avatar file provided"}), 400
+        
+        file = request.files['avatar']
+        
+        if file.filename == '':
+            return jsonify({"message": "No file selected"}), 400
+        
+        # Validate file type
+        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
+        if '.' not in file.filename or file.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+            return jsonify({"message": "Invalid file type. Only PNG, JPG, JPEG, GIF allowed"}), 400
+        
+        # Save avatar file (simple implementation - you may want to use cloud storage)
+        import os
+        avatar_dir = 'documents/avatars'
+        if not os.path.exists(avatar_dir):
+            os.makedirs(avatar_dir)
+        
+        filename = f"user_{user_id}_avatar.png"
+        filepath = os.path.join(avatar_dir, filename)
+        file.save(filepath)
+        
+        return jsonify({"message": "Avatar updated successfully", "avatar_url": f"/documents/avatars/{filename}"}), 200
+    
+    except Exception as e:
         return jsonify({"message": f"Error: {str(e)}"}), 500
 
 
