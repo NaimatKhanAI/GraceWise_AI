@@ -9,9 +9,11 @@ from models.devotional import Devotional
 from models.devotional_progress import DevotionalProgress
 from models.planner import Planner
 from models.curriculum import Curriculum
+from models.module import Module
+from models.lesson import Lesson
 from models.quiz import Quiz
 from models.quiz_result import QuizResult
 from models.notification import Notification
 from models.ai_session import AiSession
 
-__all__ = ['db', 'User', 'Child', 'Devotional', 'DevotionalProgress', 'Planner', 'Curriculum', 'Quiz', 'QuizResult', 'Notification', 'AiSession']
+__all__ = ['db', 'User', 'Child', 'Devotional', 'DevotionalProgress', 'Planner', 'Curriculum', 'Module', 'Lesson', 'Quiz', 'QuizResult', 'Notification', 'AiSession']

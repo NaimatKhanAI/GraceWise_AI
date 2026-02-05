@@ -1,3 +1,0 @@
-This is a test document for quiz generation.
-It contains some sample content.
-This should be enough for testing.
