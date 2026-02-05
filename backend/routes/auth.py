@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from models import db, User
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -113,6 +113,57 @@ def get_current_user():
             return jsonify({"message": "User not found"}), 404
         
         return jsonify({"user": user.to_dict()}), 200
+    
+    except Exception as e:
+        return jsonify({"message": f"Error: {str(e)}"}), 500
+
+
+# ==================== GET ALL USERS (ADMIN ONLY) ====================
+@auth_bp.route("/all-users", methods=["GET"])
+@jwt_required()
+def get_all_users():
+    """Get all users (admin only)"""
+    try:
+        user_id = get_user_id()
+        current_user = User.query.get(user_id)
+        
+        if not current_user or not current_user.is_admin:
+            return jsonify({"message": "Admin access required"}), 403
+        
+        # Get pagination parameters
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+        search = request.args.get('search', '', type=str)
+        
+        # Build query
+        query = User.query
+        
+        # Apply search filter
+        if search:
+            search_term = f"%{search}%"
+            query = query.filter(
+                db.or_(
+                    User.first_name.ilike(search_term),
+                    User.last_name.ilike(search_term),
+                    User.email.ilike(search_term)
+                )
+            )
+        
+        # Order by most recent first
+        query = query.order_by(User.created_at.desc())
+        
+        # Paginate
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        
+        users = [user.to_dict() for user in pagination.items]
+        
+        return jsonify({
+            "users": users,
+            "total": pagination.total,
+            "page": page,
+            "per_page": per_page,
+            "total_pages": pagination.pages
+        }), 200
     
     except Exception as e:
         return jsonify({"message": f"Error: {str(e)}"}), 500

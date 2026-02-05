@@ -241,3 +241,7 @@
         padding: 6px 10px;
     }
 }
+/* Utility classes */
+.text-center {
+    text-align: center;
+}

@@ -37,6 +37,10 @@
                 <i class="fas fa-book"></i>
                 <span>Curriculum</span>
             </a>
+            <a href="admin-quiz.html" class="nav-item">
+                <i class="fas fa-question-circle"></i>
+                <span>Quiz Management</span>
+            </a>
         </nav>
 
         <div class="sidebar-footer">
@@ -98,98 +102,24 @@
                     <thead>
                         <tr>
                             <th>User Name</th>
-                            <th>Grade</th>
-                            <th>Phone Number</th>
                             <th>Email</th>
-                            <th>Country</th>
+                            <th>Registered Date</th>
                             <th>Status</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="users-table-body">
                         <tr>
-                            <td class="user-name">Jane Cooper</td>
-                            <td>6th</td>
-                            <td>(225) 555-0118</td>
-                            <td>jane@microsoft.com</td>
-                            <td>United States</td>
-                            <td><span class="status-badge status-active">Active</span></td>
-                        </tr>
-                        <tr>
-                            <td class="user-name">Floyd Miles</td>
-                            <td>5th</td>
-                            <td>(205) 555-0100</td>
-                            <td>floyd@yahoo.com</td>
-                            <td>Kiribati</td>
-                            <td><span class="status-badge status-inactive">Inactive</span></td>
-                        </tr>
-                        <tr>
-                            <td class="user-name">Ronald Richards</td>
-                            <td>7th</td>
-                            <td>(302) 555-0107</td>
-                            <td>ronald@adobe.com</td>
-                            <td>Israel</td>
-                            <td><span class="status-badge status-inactive">Inactive</span></td>
-                        </tr>
-                        <tr>
-                            <td class="user-name">Marvin McKinney</td>
-                            <td>6th</td>
-                            <td>(252) 555-0126</td>
-                            <td>marvin@tesla.com</td>
-                            <td>Iran</td>
-                            <td><span class="status-badge status-active">Active</span></td>
-                        </tr>
-                        <tr>
-                            <td class="user-name">Jerome Bell</td>
-                            <td>6th</td>
-                            <td>(629) 555-0129</td>
-                            <td>jerome@google.com</td>
-                            <td>Réunion</td>
-                            <td><span class="status-badge status-active">Active</span></td>
-                        </tr>
-                        <tr>
-                            <td class="user-name">Kathryn Murphy</td>
-                            <td>6th</td>
-                            <td>(406) 555-0120</td>
-                            <td>kathryn@microsoft.com</td>
-                            <td>Curaçao</td>
-                            <td><span class="status-badge status-active">Active</span></td>
-                        </tr>
-                        <tr>
-                            <td class="user-name">Jacob Jones</td>
-                            <td>6th</td>
-                            <td>(208) 555-0112</td>
-                            <td>jacob@yahoo.com</td>
-                            <td>Brazil</td>
-                            <td><span class="status-badge status-active">Active</span></td>
-                        </tr>
-                        <tr>
-                            <td class="user-name">Kristin Watson</td>
-                            <td>6th</td>
-                            <td>(704) 555-0127</td>
-                            <td>kristin@facebook.com</td>
-                            <td>Åland Islands</td>
-                            <td><span class="status-badge status-inactive">Inactive</span></td>
+                            <td colspan="4" class="text-center">Loading users...</td>
                         </tr>
                     </tbody>
                 </table>
 
                 <div class="pagination">
-                    <div class="pagination-info">
-                        Showing data 1 to 8 of 256K entries
+                    <div class="pagination-info" id="pagination-info">
+                        Loading...
                     </div>
-                    <div class="pagination-controls">
-                        <button class="pagination-btn" disabled>
-                            <i class="fas fa-chevron-left"></i>
-                        </button>
-                        <button class="pagination-btn active">1</button>
-                        <button class="pagination-btn">2</button>
-                        <button class="pagination-btn">3</button>
-                        <button class="pagination-btn">4</button>
-                        <span>...</span>
-                        <button class="pagination-btn">40</button>
-                        <button class="pagination-btn">
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
+                    <div class="pagination-controls" id="pagination-controls">
+                        <!-- Pagination buttons will be generated here -->
                     </div>
                 </div>
             </div>
@@ -219,26 +149,180 @@
             year: 'numeric'
         });
 
-        // Search functionality
-        document.querySelector('.search-users input').addEventListener('input', function(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            const rows = document.querySelectorAll('.users-table tbody tr');
-            
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(searchTerm) ? '' : 'none';
+        // State variables
+        let currentPage = 1;
+        let totalPages = 1;
+        let searchTerm = '';
+        const perPage = 10;
+
+        // Format date
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
             });
+        }
+
+        // Load users from API
+        async function loadUsers(page = 1, search = '') {
+            try {
+                const token = localStorage.getItem('access_token');
+                if (!token) {
+                    window.location.href = 'sign_in.html';
+                    return;
+                }
+
+                const url = new URL('http://localhost:5000/auth/all-users');
+                url.searchParams.append('page', page);
+                url.searchParams.append('per_page', perPage);
+                if (search) {
+                    url.searchParams.append('search', search);
+                }
+
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401 || response.status === 403) {
+                        localStorage.removeItem('access_token');
+                        window.location.href = 'sign_in.html';
+                        return;
+                    }
+                    throw new Error('Failed to fetch users');
+                }
+
+                const data = await response.json();
+                displayUsers(data.users);
+                updatePagination(data.page, data.total_pages, data.total);
+                currentPage = data.page;
+                totalPages = data.total_pages;
+
+            } catch (error) {
+                console.error('Error loading users:', error);
+                document.getElementById('users-table-body').innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 20px; color: #dc2626;">
+                            Failed to load users. Please try again.
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Display users in table
+        function displayUsers(users) {
+            const tbody = document.getElementById('users-table-body');
+            
+            if (users.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 20px;">
+                            No users found.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = users.map(user => `
+                <tr>
+                    <td class="user-name">${user.first_name || ''} ${user.last_name || ''}</td>
+                    <td>${user.email}</td>
+                    <td>${formatDate(user.created_at)}</td>
+                    <td>
+                        <span class="status-badge ${user.is_active ? 'status-active' : 'status-inactive'}">
+                            ${user.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Update pagination info and controls
+        function updatePagination(page, totalPagesCount, totalCount) {
+            const start = (page - 1) * perPage + 1;
+            const end = Math.min(page * perPage, totalCount);
+            
+            document.getElementById('pagination-info').textContent = 
+                `Showing data ${start} to ${end} of ${totalCount} entries`;
+
+            const paginationControls = document.getElementById('pagination-controls');
+            let html = '';
+
+            // Previous button
+            html += `<button class="pagination-btn" ${page === 1 ? 'disabled' : ''} onclick="changePage(${page - 1})">
+                <i class="fas fa-chevron-left"></i>
+            </button>`;
+
+            // Page numbers
+            const maxButtons = 5;
+            let startPage = Math.max(1, page - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPagesCount, startPage + maxButtons - 1);
+            
+            if (endPage - startPage < maxButtons - 1) {
+                startPage = Math.max(1, endPage - maxButtons + 1);
+            }
+
+            if (startPage > 1) {
+                html += `<button class="pagination-btn" onclick="changePage(1)">1</button>`;
+                if (startPage > 2) {
+                    html += `<span>...</span>`;
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<button class="pagination-btn ${i === page ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+            }
+
+            if (endPage < totalPagesCount) {
+                if (endPage < totalPagesCount - 1) {
+                    html += `<span>...</span>`;
+                }
+                html += `<button class="pagination-btn" onclick="changePage(${totalPagesCount})">${totalPagesCount}</button>`;
+            }
+
+            // Next button
+            html += `<button class="pagination-btn" ${page === totalPagesCount ? 'disabled' : ''} onclick="changePage(${page + 1})">
+                <i class="fas fa-chevron-right"></i>
+            </button>`;
+
+            paginationControls.innerHTML = html;
+        }
+
+        // Change page
+        function changePage(page) {
+            if (page >= 1 && page <= totalPages) {
+                loadUsers(page, searchTerm);
+            }
+        }
+
+        // Search functionality
+        let searchTimeout;
+        document.querySelector('.search-users input').addEventListener('input', function(e) {
+            clearTimeout(searchTimeout);
+            searchTerm = e.target.value;
+            searchTimeout = setTimeout(() => {
+                currentPage = 1;
+                loadUsers(1, searchTerm);
+            }, 500);
         });
 
-        // Pagination functionality
-        document.querySelectorAll('.pagination-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                if (!this.disabled && !this.querySelector('i')) {
-                    document.querySelectorAll('.pagination-btn').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                }
-            });
+        // Sort functionality
+        document.querySelector('.sort-dropdown').addEventListener('change', function(e) {
+            // Implement sorting logic here if needed
+            console.log('Sort by:', e.target.value);
         });
+
+        // Initial load
+        loadUsers();
     </script>
 </body>
 </html>

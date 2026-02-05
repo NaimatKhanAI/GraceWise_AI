@@ -97,10 +97,10 @@
                     </div>
                     <div class="stat-info">
                         <p class="stat-label">Total User</p>
-                        <h3>5,423</h3>
-                        <div class="stat-change positive">
+                        <h3 id="total-users-count">0</h3>
+                        <div class="stat-change positive" id="total-users-change">
                             <i class="fas fa-arrow-up"></i>
-                            <span>16% this month</span>
+                            <span>0% this month</span>
                         </div>
                     </div>
                 </div>
@@ -111,10 +111,10 @@
                     </div>
                     <div class="stat-info">
                         <p class="stat-label">Active user</p>
-                        <h3>1,893</h3>
-                        <div class="stat-change negative">
+                        <h3 id="active-users-count">0</h3>
+                        <div class="stat-change negative" id="active-users-change">
                             <i class="fas fa-arrow-down"></i>
-                            <span>1% this month</span>
+                            <span>0% this month</span>
                         </div>
                     </div>
                 </div>
@@ -125,7 +125,7 @@
                     </div>
                     <div class="stat-info">
                         <p class="stat-label">Sleeping user</p>
-                        <h3>189</h3>
+                        <h3 id="sleeping-users-count">0</h3>
                         <div class="user-avatars">
                             <img src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=24&h=24&fit=crop&crop=face" alt="User 1">
                             <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=24&h=24&fit=crop&crop=face" alt="User 2">
@@ -202,6 +202,67 @@
             day: 'numeric',
             year: 'numeric'
         });
+
+        // Fetch and display dashboard statistics
+        async function loadDashboardStats() {
+            try {
+                const token = localStorage.getItem('access_token');
+                if (!token) {
+                    window.location.href = 'sign_in.html';
+                    return;
+                }
+
+                const response = await fetch('http://localhost:5000/dashboard/summary', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        localStorage.removeItem('access_token');
+                        window.location.href = 'sign_in.html';
+                        return;
+                    }
+                    throw new Error('Failed to fetch dashboard data');
+                }
+
+                const data = await response.json();
+                
+                // Update total users
+                document.getElementById('total-users-count').textContent = data.total_users.toLocaleString();
+                const totalUsersChange = document.getElementById('total-users-change');
+                if (data.total_users_growth >= 0) {
+                    totalUsersChange.className = 'stat-change positive';
+                    totalUsersChange.innerHTML = `<i class="fas fa-arrow-up"></i><span>${data.total_users_growth}% this month</span>`;
+                } else {
+                    totalUsersChange.className = 'stat-change negative';
+                    totalUsersChange.innerHTML = `<i class="fas fa-arrow-down"></i><span>${Math.abs(data.total_users_growth)}% this month</span>`;
+                }
+
+                // Update active users
+                document.getElementById('active-users-count').textContent = data.active_users.toLocaleString();
+                const activeUsersChange = document.getElementById('active-users-change');
+                if (data.active_users_growth >= 0) {
+                    activeUsersChange.className = 'stat-change positive';
+                    activeUsersChange.innerHTML = `<i class="fas fa-arrow-up"></i><span>${data.active_users_growth}% this month</span>`;
+                } else {
+                    activeUsersChange.className = 'stat-change negative';
+                    activeUsersChange.innerHTML = `<i class="fas fa-arrow-down"></i><span>${Math.abs(data.active_users_growth)}% this month</span>`;
+                }
+
+                // Update sleeping users
+                document.getElementById('sleeping-users-count').textContent = data.sleeping_users.toLocaleString();
+
+            } catch (error) {
+                console.error('Error loading dashboard stats:', error);
+            }
+        }
+
+        // Load stats when page loads
+        loadDashboardStats();
     </script>
 </body>
 </html>
