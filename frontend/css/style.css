@@ -112,6 +112,24 @@ body {
     letter-spacing: 0.5px;
 }
 
+.signin-btn {
+    background: #c97e76;
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 4px;
+    font-weight: 500;
+    font-size: 12px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    margin-right: 10px;
+}
+
+.header-buttons {
+    display: flex;
+    align-items: center;
+}
+
 /* Hero Section */
 .hero {
     background: white;
