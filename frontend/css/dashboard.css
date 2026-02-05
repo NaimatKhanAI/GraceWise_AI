@@ -175,6 +175,225 @@ body {
     color: #718096;
 }
 
+.avatar {
+    position: relative;
+    padding: 8px;
+    cursor: pointer;
+    font-size: 24px;
+    color: #b59c61;
+    transition: all 0.2s ease;
+}
+
+.avatar:hover {
+    color: #d4af37;
+}
+
+/* Profile Modal */
+.profile-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.profile-modal.active {
+    display: flex;
+}
+
+.profile-modal-content {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #718096;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.modal-close:hover {
+    color: #2d3748;
+}
+
+.profile-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.avatar-section {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 16px;
+}
+
+.avatar-large {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #b59c61, #d4af37);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 60px;
+    color: white;
+    margin: 0 auto;
+}
+
+.avatar-upload {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 40px;
+    height: 40px;
+    background: white;
+    border: 3px solid #b59c61;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    color: #b59c61;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.avatar-upload:hover {
+    background: #f8f9fa;
+    border-color: #d4af37;
+    color: #d4af37;
+}
+
+.profile-header h2 {
+    font-size: 24px;
+    color: #2d3748;
+    margin: 0;
+}
+
+.profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.form-group input {
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    background: #f8f9fa;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #b59c61;
+    background: white;
+}
+
+.change-password-btn {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #b59c61, #d4af37);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.change-password-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(181, 156, 97, 0.3);
+}
+
+/* Change Password Modal */
+.change-password-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 2100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.change-password-modal.active {
+    display: flex;
+}
+
+.password-modal-content {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 450px;
+    width: 100%;
+    position: relative;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.password-modal-content h2 {
+    font-size: 22px;
+    color: #2d3748;
+    margin: 0 0 24px 0;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
 .profile {
     display: flex;
     align-items: center;
@@ -575,19 +794,27 @@ body {
     
     /* Mobile Menu Toggle */
     .mobile-menu-toggle {
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         position: fixed;
         top: 20px;
         left: 20px;
-        z-index: 1001;
-        background: #2d3748;
-        color: white;
+        z-index: 1002;
+        background: white;
+        color: #374151;
         border: none;
         padding: 12px;
         border-radius: 8px;
         cursor: pointer;
         font-size: 18px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        transition: all 0.3s ease;
+    }
+
+    .mobile-menu-toggle:hover {
+        background: #f7f7f7;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     }
     
     .mobile-overlay {
@@ -599,6 +826,7 @@ body {
         height: 100%;
         background: rgba(0,0,0,0.5);
         z-index: 999;
+        transition: opacity 0.3s ease;
     }
     
     .mobile-overlay.active {
@@ -608,7 +836,7 @@ body {
     .sidebar {
         transform: translateX(-100%);
         transition: transform 0.3s ease;
-        z-index: 1000;
+        z-index: 1001;
         box-shadow: 2px 0 10px rgba(0,0,0,0.1);
     }
     
@@ -636,6 +864,13 @@ body {
     .header-right {
         gap: 12px;
         flex-wrap: wrap;
+        margin-left: auto;
+        justify-content: flex-end;
+        width: 100%;
+    }
+
+    .notification {
+        margin-left: auto;
     }
     
     .profile span {
@@ -782,8 +1017,10 @@ body {
 }
 
 /* Hide mobile toggle on desktop */
-.mobile-menu-toggle {
-    display: none;
+@media (min-width: 769px) {
+    .mobile-menu-toggle {
+        display: none;
+    }
 }
 /* Schedule */
 .schedule-list {

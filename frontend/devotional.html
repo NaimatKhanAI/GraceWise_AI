@@ -84,19 +84,81 @@
                 </div>
                 
                 <div class="header-right">
-                    <div class="profile">
-                        <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face" alt="Profile">
-                        <span>Jason Doulo</span>
-                    </div>
-                    <div class="date">
-                        <i class="fas fa-calendar-alt"></i>
-                        <span id="current-date">Jan 15, 2024</span>
-                    </div>
                     <div class="notification">
                         <i class="fas fa-bell"></i>
                     </div>
+                    <div class="avatar" id="avatarBtn">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
                 </div>
             </header>
+
+            <!-- User Profile Modal -->
+            <div class="profile-modal" id="profileModal">
+                <div class="profile-modal-content">
+                    <button class="modal-close" onclick="closeProfileModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    
+                    <div class="profile-header">
+                        <div class="avatar-section">
+                            <div class="avatar-large" id="avatarLarge">
+                                <i class="fas fa-user-circle"></i>
+                            </div>
+                        </div>
+                        <h2 id="userNameDisplay">User Name</h2>
+                    </div>
+                    
+                    <div class="profile-form">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="userEmailDisplay" readonly>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" id="userFullNameDisplay" readonly>
+                        </div>
+                        
+                        <button class="change-password-btn" onclick="openChangePasswordModal()">
+                            <i class="fas fa-lock"></i>
+                            Change Password
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Change Password Modal -->
+            <div class="change-password-modal" id="changePasswordModal">
+                <div class="password-modal-content">
+                    <button class="modal-close" onclick="closeChangePasswordModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    
+                    <h2>Change Password</h2>
+                    
+                    <form id="passwordForm" onsubmit="handleChangePassword(event)">
+                        <div class="form-group">
+                            <label>Current Password</label>
+                            <input type="password" id="currentPassword" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>New Password</label>
+                            <input type="password" id="newPassword" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Confirm Password</label>
+                            <input type="password" id="confirmPassword" required>
+                        </div>
+                        
+                        <button type="submit" class="submit-btn">
+                            Update Password
+                        </button>
+                    </form>
+                </div>
+            </div>
 
             <!-- Devotional Content -->
             <div class="dashboard-content">
@@ -400,6 +462,83 @@
     
     <script src="js/dashboard.js"></script>
     <script>
+        // Profile Modal Functions
+        const avatarBtn = document.getElementById('avatarBtn');
+        const profileModal = document.getElementById('profileModal');
+
+        function openProfileModal() {
+            const user = auth.getCurrentUser();
+            if (user) {
+                document.getElementById('userNameDisplay').textContent = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'User';
+                document.getElementById('userEmailDisplay').value = user.email || '';
+                document.getElementById('userFullNameDisplay').value = [user.first_name, user.last_name].filter(Boolean).join(' ') || '';
+            }
+            profileModal.classList.add('active');
+        }
+
+        function closeProfileModal() {
+            profileModal.classList.remove('active');
+        }
+
+        function openChangePasswordModal() {
+            document.getElementById('changePasswordModal').classList.add('active');
+        }
+
+        function closeChangePasswordModal() {
+            document.getElementById('changePasswordModal').classList.remove('active');
+            document.getElementById('passwordForm').reset();
+        }
+
+        async function handleChangePassword(event) {
+            event.preventDefault();
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (newPassword !== confirmPassword) {
+                showError('Passwords do not match');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                showError('Password must be at least 6 characters long');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/auth/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${auth.accessToken}`
+                    },
+                    body: JSON.stringify({
+                        current_password: currentPassword,
+                        new_password: newPassword
+                    })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    showSuccess('Password changed successfully');
+                    closeChangePasswordModal();
+                } else {
+                    showError(data.message || 'Failed to change password');
+                }
+            } catch (error) {
+                showError('Error changing password');
+            }
+        }
+
+        avatarBtn.addEventListener('click', openProfileModal);
+        profileModal.addEventListener('click', (e) => {
+            if (e.target === profileModal) closeProfileModal();
+        });
+
+        document.getElementById('changePasswordModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('changePasswordModal')) closeChangePasswordModal();
+        });
+
         // Mobile menu functionality
         const mobileToggle = document.querySelector('.mobile-menu-toggle');
         const sidebar = document.querySelector('.sidebar');
@@ -410,6 +549,14 @@
             sidebar.classList.toggle('mobile-open');
             overlay.classList.toggle('active');
             body.classList.toggle('menu-open');
+            
+            // Toggle icon between bars and times
+            const icon = mobileToggle.querySelector('i');
+            if (sidebar.classList.contains('mobile-open')) {
+                icon.className = 'fas fa-times';
+            } else {
+                icon.className = 'fas fa-bars';
+            }
         }
 
         mobileToggle.addEventListener('click', toggleMobileMenu);

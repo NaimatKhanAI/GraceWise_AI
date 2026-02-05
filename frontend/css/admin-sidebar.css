@@ -12,6 +12,11 @@ body {
     display: flex;
     height: 100vh;
     color: #333;
+    overflow-x: hidden;
+}
+
+body.menu-open {
+    overflow: hidden;
 }
 
 /* Main Content */
@@ -21,6 +26,7 @@ body {
     flex-direction: column;
     width: 100%;
     margin-left: 250px;
+    overflow-x: hidden;
 }
 
 /* Sidebar Styles */
@@ -36,6 +42,7 @@ body {
     top: 0;
     height: 100vh;
     z-index: 1000;
+    overflow-y: auto;
 }
 
 .sidebar .logo {
@@ -70,12 +77,21 @@ body {
     transition: all 0.2s ease;
     border-radius: 0 25px 25px 0;
     margin-right: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .nav-item i {
     margin-right: 12px;
     width: 20px;
     font-size: 16px;
+    flex-shrink: 0;
+}
+
+.nav-item span {
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .nav-item.active {
@@ -236,19 +252,31 @@ body {
     
     /* Mobile Menu Toggle */
     .mobile-menu-toggle {
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         position: fixed;
         top: 20px;
         left: 20px;
-        z-index: 1001;
-        background: #2d3748;
-        color: white;
+        z-index: 1002;
+        background: white;
+        color: #374151;
         border: none;
         padding: 12px;
         border-radius: 8px;
         cursor: pointer;
         font-size: 18px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        transition: all 0.3s ease;
+    }
+
+    .mobile-menu-toggle:hover {
+        background: #f7f7f7;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .mobile-menu-toggle:active {
+        transform: scale(0.95);
     }
     
     .mobile-overlay {
@@ -260,6 +288,7 @@ body {
         height: 100%;
         background: rgba(0,0,0,0.5);
         z-index: 999;
+        transition: opacity 0.3s ease;
     }
     
     .mobile-overlay.active {
@@ -272,13 +301,18 @@ body {
         top: 0;
         width: 250px;
         height: 100vh;
-        z-index: 1000;
+        z-index: 1001;
         transition: left 0.3s ease;
         box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        background-color: #faf9f7;
     }
     
     .sidebar.mobile-open {
         left: 0;
+    }
+
+    .sidebar.mobile-open ~ .mobile-menu-toggle {
+        left: 260px;
     }
     
     .main-content {
@@ -289,27 +323,48 @@ body {
     .header {
         padding: 16px 20px 16px 70px;
         flex-wrap: wrap;
-        gap: 16px;
+        gap: 12px;
     }
     
     .search-bar {
         width: 100%;
-        max-width: 300px;
+        max-width: none;
         order: 3;
         flex-basis: 100%;
+        margin-top: 8px;
     }
     
     .header-right {
         gap: 12px;
         flex-wrap: wrap;
+        justify-content: flex-end;
+        flex: 1;
     }
     
     .profile span {
         display: none;
     }
     
+    .profile img {
+        width: 36px;
+        height: 36px;
+    }
+    
     .date {
         font-size: 12px;
+    }
+    
+    .date i {
+        font-size: 14px;
+    }
+    
+    .notification {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .notification i {
+        font-size: 16px;
     }
     
     .dashboard-container {
@@ -327,10 +382,11 @@ body {
     
     .header {
         padding: 12px 15px 12px 60px;
+        gap: 8px;
     }
     
     .search-bar {
-        height: 32px;
+        height: 38px;
     }
     
     .search-bar input {
@@ -338,12 +394,42 @@ body {
         padding: 6px 10px 6px 35px;
     }
     
+    .search-bar i {
+        font-size: 13px;
+        left: 10px;
+    }
+    
+    .header-right {
+        gap: 8px;
+    }
+    
+    .profile img {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .date {
+        font-size: 11px;
+        padding: 2px 6px;
+    }
+    
+    .notification {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .notification i {
+        font-size: 14px;
+    }
+    
     .dashboard-container {
         padding: 12px;
     }
 }
 
-/* Hide mobile toggle on desktop */
-.mobile-menu-toggle {
-    display: none;
+/* Hide mobile toggle on desktop (above 768px) */
+@media (min-width: 769px) {
+    .mobile-menu-toggle {
+        display: none;
+    }
 }
