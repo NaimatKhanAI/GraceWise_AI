@@ -27,7 +27,10 @@
             <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle menu">
                 ☰
             </button>
-            <button class="signup-btn" onclick="window.location.href='sign_up.html'">SIGN UP</button>
+            <div class="header-buttons">
+                <button class="signin-btn" id="signinBtn" onclick="window.location.href='sign_in.html'" style="display:none;">SIGN IN</button>
+                <button class="signup-btn" id="signupBtn" onclick="window.location.href='sign_up.html'">SIGN UP</button>
+            </div>
         </div>
     </header>
 
@@ -60,18 +63,6 @@
                 
                 <div class="hero-center">
                     <h1>Confident Homeschooling, <span class="highlight"> Rooted in Faith</span> - with AI Help by Your Side</h1>
-                    
-<div class="quiz-container">
-    <button class="quiz-btn" onclick="window.open('https://docs.google.com/forms/d/1sAC72etJyDGcQA3idL_jF4bLWmZpVkrusrLwb29dETc', '_blank')">
-        <svg class="quiz-icon" width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-            <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-        <span class="quiz-text">Take Our Quiz</span>
-        <span class="quiz-arrow">→</span>
-    </button>
-    <!-- <p class="quiz-subtitle">Find your perfect homeschooling path in 2 minutes</p> -->
-</div>
                     
 <div class="features-row">
     <div class="feature-item">
@@ -185,12 +176,7 @@
                         </div>
                     </div>
                     
-                    <a href="https://docs.google.com/forms/d/1sAC72etJyDGcQA3idL_jF4bLWmZpVkrusrLwb29dETc"
-                       target="_blank"
-                       class="more-about-btn"
-                       style="text-decoration: none;">
-                       Take the quiz
-                    </a>
+
 
                 </div>
                 
@@ -485,13 +471,40 @@
             // Check if user is already logged in
             const currentUser = JSON.parse(localStorage.getItem('currentUser'));
             if (currentUser) {
-                if (currentUser.isAdmin) {
+                if (currentUser.is_admin) {
                     window.location.href = 'admin-dashboard.html';
                 } else {
                     window.location.href = 'dashboard.html';
                 }
             } else {
                 window.location.href = 'sign_in.html';
+            }
+        }
+        
+        // Check authentication status and update header buttons
+        function updateHeaderButtons() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            const signupBtn = document.getElementById('signupBtn');
+            const signinBtn = document.getElementById('signinBtn');
+            
+            if (currentUser) {
+                // User is logged in, hide Sign In and Sign Up buttons
+                if (signupBtn) signupBtn.style.display = 'none';
+                if (signinBtn) signinBtn.style.display = 'none';
+            } else {
+                // User is not logged in, show Sign Up button
+                if (signupBtn) signupBtn.style.display = 'inline-block';
+                if (signinBtn) signinBtn.style.display = 'none';
+            }
+        }
+        
+        // Update dashboard link to check authentication
+        function handleDashboardNavigation(event) {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (!currentUser) {
+                event.preventDefault();
+                window.location.href = 'sign_in.html';
+                return false;
             }
         }
         
@@ -504,6 +517,15 @@
                     nav.classList.remove('mobile-open');
                 });
             });
+            
+            // Add authentication check to dashboard link
+            const dashboardLink = document.querySelector('a[href="dashboard.html"]');
+            if (dashboardLink) {
+                dashboardLink.addEventListener('click', handleDashboardNavigation);
+            }
+            
+            // Update header buttons on page load
+            updateHeaderButtons();
         });
     </script>
 
