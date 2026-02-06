@@ -17,8 +17,8 @@ class Module(db.Model):
     curriculum = db.relationship("Curriculum", back_populates="modules")
     lessons = db.relationship("Lesson", back_populates="module", cascade="all, delete-orphan")
 
-    def to_dict(self):
-        return {
+    def to_dict(self, include_lessons=False):
+        result = {
             "id": self.id,
             "curriculum_id": self.curriculum_id,
             "name": self.name,
@@ -28,3 +28,6 @@ class Module(db.Model):
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "lesson_count": len(self.lessons) if self.lessons else 0
         }
+        if include_lessons:
+            result["lessons"] = [lesson.to_dict() for lesson in self.lessons]
+        return result

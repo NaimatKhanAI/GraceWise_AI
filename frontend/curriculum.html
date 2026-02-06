@@ -8,7 +8,9 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/curriculum.css">
+    <link rel="stylesheet" href="css/toast.css">
     <link rel="stylesheet" href="css/notifications.css">
+    <script src="js/toast.js" defer></script>
     <script src="js/notifications.js" defer></script>
     <script src="js/auth.js" defer></script>
 </head>
@@ -163,259 +165,17 @@
 
         <!-- Curriculum Content -->
         <div class="curriculum-content">
-            <!-- Page Title -->
+            <!-- Page Header -->
             <div class="page-header">
-                <h1>Curriculum</h1>
-            </div>
-
-            <!-- Subject Tabs -->
-            <div class="subject-tabs">
-                <button class="subject-tab active">All Subjects</button>
-                <button class="subject-tab">Mathematics</button>
-                <button class="subject-tab">Science</button>
-                <button class="subject-tab">Language Arts</button>
-                <button class="subject-tab">Social Studies</button>
-                <button class="subject-tab">Art's & Music</button>
-            </div>
-
-            <!-- Filter Controls -->
-            <div class="filter-controls">
-                <div class="filter-group">
-                    <select class="filter-select">
-                        <option>AI Assistant</option>
-                        <option>Teacher</option>
-                        <option>Self-Study</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <select class="filter-select">
-                        <option>All Types</option>
-                        <option>Video</option>
-                        <option>Interactive</option>
-                        <option>Reading</option>
-                    </select>
-                </div>
+                <h1>Your Curriculum</h1>
+                <p>Explore lessons and learn with AI assistance</p>
             </div>
 
             <!-- Curriculum Sections -->
-            <div class="curriculum-sections">
-                <!-- Mathematics Section -->
-                <div class="curriculum-section">
-                    <div class="section-header">
-                        <div class="section-info">
-                            <div class="section-icon math-icon">
-                                <i class="fas fa-calculator"></i>
-                            </div>
-                            <div class="section-details">
-                                <h3>Mathematics - Grade 3</h3>
-                                <p>12 modules · 48 lessons · 156 activities</p>
-                            </div>
-                        </div>
-                        <button class="expand-btn">
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                    </div>
-                    
-                    <div class="modules-list">
-                        <div class="module-item">
-                            <div class="module-icon">
-                                <i class="fas fa-circle"></i>
-                            </div>
-                            <div class="module-content">
-                                <h4>Module 1: Addition & Subtraction</h4>
-                                <p>4 lessons · 12 activities · Estimated: 2 weeks</p>
-                            </div>
-                            <div class="module-status">
-                                <span class="status-badge active">Active</span>
-                                <button class="module-menu">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="module-item">
-                            <div class="module-icon">
-                                <i class="fas fa-circle"></i>
-                            </div>
-                            <div class="module-content">
-                                <h4>Module 2: Multiplication Basics</h4>
-                                <p>5 lessons · 18 activities · Estimated: 3 weeks</p>
-                            </div>
-                            <div class="module-status">
-                                <span class="status-badge active">Active</span>
-                                <button class="module-menu">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="module-item">
-                            <div class="module-icon">
-                                <i class="fas fa-circle"></i>
-                            </div>
-                            <div class="module-content">
-                                <h4>Module 3: Division Fundamentals</h4>
-                                <p>5 lessons · 15 activities · Estimated: 3 weeks</p>
-                            </div>
-                            <div class="module-status">
-                                <span class="status-badge locked">Locked</span>
-                                <button class="module-menu">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="module-item">
-                            <div class="module-icon">
-                                <i class="fas fa-circle"></i>
-                            </div>
-                            <div class="module-content">
-                                <h4>Module 3: Division Fundamentals</h4>
-                                <p>5 lessons · 15 activities · Estimated: 3 weeks</p>
-                            </div>
-                            <div class="module-status">
-                                <span class="status-badge locked">Locked</span>
-                                <button class="module-menu">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button class="add-module">
-                        <i class="fas fa-plus"></i>
-                        Add Module
-                    </button>
-                </div>
-
-                <!-- Science Section -->
-                <div class="curriculum-section">
-                    <div class="section-header">
-                        <div class="section-info">
-                            <div class="section-icon science-icon">
-                                <i class="fas fa-flask"></i>
-                            </div>
-                            <div class="section-details">
-                                <h3>Science - Grade 3</h3>
-                                <p>10 modules · 40 lessons · 120 activities</p>
-                            </div>
-                        </div>
-                        <button class="expand-btn">
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                    </div>
-                    
-                    <div class="modules-list">
-                        <div class="module-item">
-                            <div class="module-icon">
-                                <i class="fas fa-circle"></i>
-                            </div>
-                            <div class="module-content">
-                                <h4>Module 1: Living Things & Their Environment</h4>
-                                <p>6 lessons · 18 activities · Estimated: 4 weeks</p>
-                            </div>
-                            <div class="module-status">
-                                <span class="status-badge active">Active</span>
-                                <button class="module-menu">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="module-item">
-                            <div class="module-icon">
-                                <i class="fas fa-circle"></i>
-                            </div>
-                            <div class="module-content">
-                                <h4>Module 2: Matter & It's Properties</h4>
-                                <p>5 lessons · 15 activities · Estimated: 3 weeks</p>
-                            </div>
-                            <div class="module-status">
-                                <span class="status-badge active">Active</span>
-                                <button class="module-menu">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button class="add-module">
-                        <i class="fas fa-plus"></i>
-                        Add Module
-                    </button>
-                </div>
-
-                <!-- Language Arts Section -->
-                <div class="curriculum-section">
-                    <div class="section-header">
-                        <div class="section-info">
-                            <div class="section-icon language-icon">
-                                <i class="fas fa-book-open"></i>
-                            </div>
-                            <div class="section-details">
-                                <h3>Language Arts - Grade 3</h3>
-                                <p>14 modules · 20 lessons · 168 activities</p>
-                            </div>
-                        </div>
-                        <button class="expand-btn">
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                    </div>
-                    
-                    <div class="modules-list">
-                        <div class="module-item">
-                            <div class="module-icon">
-                                <i class="fas fa-circle"></i>
-                            </div>
-                            <div class="module-content">
-                                <h4>Module 1: Reading Comprehensive Strategies</h4>
-                                <p>6 lessons · 18 activities · Estimated: 4 weeks</p>
-                            </div>
-                            <div class="module-status">
-                                <span class="status-badge active">Active</span>
-                                <button class="module-menu">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="module-item">
-                            <div class="module-icon">
-                                <i class="fas fa-circle"></i>
-                            </div>
-                            <div class="module-content">
-                                <h4>Module 2: Grammar & Sentence Structure</h4>
-                                <p>5 lessons · 15 activities · Estimated: 3 weeks</p>
-                            </div>
-                            <div class="module-status">
-                                <span class="status-badge active">Active</span>
-                                <button class="module-menu">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="module-item">
-                            <div class="module-icon">
-                                <i class="fas fa-circle"></i>
-                            </div>
-                            <div class="module-content">
-                                <h4>Module 2: Creative Writing</h4>
-                                <p>5 lessons · 15 activities · Estimated: 3 weeks</p>
-                            </div>
-                            <div class="module-status">
-                                <span class="status-badge active">Active</span>
-                                <button class="module-menu">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button class="add-module">
-                        <i class="fas fa-plus"></i>
-                        Add Module
-                    </button>
+            <div class="curriculum-sections" id="curriculumList">
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <p>Loading curriculum...</p>
                 </div>
             </div>
         </div>
@@ -519,12 +279,11 @@
         </div>
     </div>
 
-    <script src="js/dashboard.js"></script>
     <script src="js/curriculum.js"></script>
     <script>
         // Profile Modal Functions
-        const avatarBtn = document.getElementById('avatarBtn');
         const profileModal = document.getElementById('profileModal');
+        const avatarBtn = document.getElementById('avatarBtn');
 
         function openProfileModal() {
             const user = auth.getCurrentUser();
@@ -566,7 +325,7 @@
             }
 
             try {
-                const response = await fetch('http://127.0.0.1:5000/auth/change-password', {
+                const response = await fetch(`${window.API_BASE_URL || 'http://127.0.0.1:5000'}/auth/change-password`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -590,10 +349,14 @@
             }
         }
 
-        avatarBtn.addEventListener('click', openProfileModal);
-        profileModal.addEventListener('click', (e) => {
-            if (e.target === profileModal) closeProfileModal();
-        });
+        if (avatarBtn) {
+            avatarBtn.addEventListener('click', openProfileModal);
+        }
+        if (profileModal) {
+            profileModal.addEventListener('click', (e) => {
+                if (e.target === profileModal) closeProfileModal();
+            });
+        }
 
         document.getElementById('changePasswordModal').addEventListener('click', (e) => {
             if (e.target === document.getElementById('changePasswordModal')) closeChangePasswordModal();

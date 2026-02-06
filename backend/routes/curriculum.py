@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
+from sqlalchemy.orm import joinedload
 import os
 import shutil
 from datetime import datetime
@@ -94,13 +95,33 @@ def create_curriculum():
     }), 201
 
 
+
+
 # Get all curriculum with modules and lessons
 @curriculum_bp.route("/", methods=["GET"])
 def get_all_curriculum():
     include_modules = request.args.get('include_modules', 'false').lower() == 'true'
     items = Curriculum.query.order_by(Curriculum.created_at.desc()).all()
     
-    return jsonify([c.to_dict(include_modules=include_modules) for c in items])
+    if not include_modules:
+        return jsonify([c.to_dict(include_modules=False) for c in items])
+    
+    # Build response with full hierarchy (like get_curriculum endpoint)
+    result = []
+    for c in items:
+        curriculum_dict = c.to_dict()
+        
+        # Get modules with their lessons
+        modules = []
+        for module in c.modules:
+            module_dict = module.to_dict()
+            module_dict['lessons'] = [lesson.to_dict() for lesson in module.lessons]
+            modules.append(module_dict)
+        
+        curriculum_dict['modules'] = modules
+        result.append(curriculum_dict)
+    
+    return jsonify(result)
 
 
 # Get single curriculum with full details

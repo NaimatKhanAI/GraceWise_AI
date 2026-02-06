@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
@@ -10,7 +11,7 @@ rag_bp = Blueprint('rag', __name__, url_prefix="/rag")
 
 # Configure upload settings
 UPLOAD_FOLDER = 'documents'
-ALLOWED_EXTENSIONS = {'pdf'}
+ALLOWED_EXTENSIONS = {'pdf', 'txt'}
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 
 # Ensure documents folder exists
@@ -412,3 +413,193 @@ def create_document_embeddings(filepath):
     except Exception as e:
         print(f"Error creating embeddings: {e}")
         return False
+
+
+# ==================== ASK LESSON-SPECIFIC QUESTION (LLM WITH RETRIEVAL TOOL) ====================
+
+# Cache for lesson embeddings to avoid re-processing on every question
+_lesson_cache = {}
+
+def _load_lesson_data(lesson_id):
+    """Load and cache lesson text + embeddings"""
+    if lesson_id in _lesson_cache:
+        return _lesson_cache[lesson_id]
+    
+    from models import Lesson
+    lesson = Lesson.query.get_or_404(lesson_id)
+    lesson_file_path = os.path.join(UPLOAD_FOLDER, lesson.file_path)
+    
+    if not os.path.exists(lesson_file_path):
+        return None
+    
+    text_content = ""
+    
+    if lesson.file_type == 'pdf':
+        from pypdf import PdfReader
+        reader = PdfReader(lesson_file_path)
+        for page in reader.pages:
+            page_text = page.extract_text()
+            if page_text:
+                text_content += page_text + "\n"
+    elif lesson.file_type == 'txt':
+        with open(lesson_file_path, 'r', encoding='utf-8') as f:
+            text_content = f.read()
+    
+    if not text_content.strip():
+        return None
+    
+    # Chunk the text
+    chunk_size = 1000
+    overlap = 150
+    chunks = []
+    for i in range(0, len(text_content), chunk_size - overlap):
+        chunks.append(text_content[i:i + chunk_size])
+    
+    # Generate embeddings
+    from sentence_transformers import SentenceTransformer
+    embed_model = SentenceTransformer('all-MiniLM-L6-v2')
+    chunk_embeddings = embed_model.encode(chunks)
+    
+    _lesson_cache[lesson_id] = {
+        "lesson": lesson,
+        "chunks": chunks,
+        "embeddings": chunk_embeddings,
+        "embed_model": embed_model,
+        "full_text": text_content
+    }
+    return _lesson_cache[lesson_id]
+
+
+def _retrieve_from_lesson(query, lesson_data, top_k=5):
+    """Retrieval tool: search lesson chunks by semantic similarity"""
+    import numpy as np
+    
+    chunks = lesson_data["chunks"]
+    chunk_embeddings = lesson_data["embeddings"]
+    embed_model = lesson_data["embed_model"]
+    
+    query_emb = embed_model.encode([query])[0]
+    similarities = [
+        float(np.dot(query_emb, ce) / (np.linalg.norm(query_emb) * np.linalg.norm(ce)))
+        for ce in chunk_embeddings
+    ]
+    top_idx = sorted(range(len(similarities)), key=lambda i: similarities[i], reverse=True)[:top_k]
+    
+    results = []
+    for i in top_idx:
+        results.append({"chunk_index": i, "score": round(similarities[i], 4), "text": chunks[i]})
+    return results
+
+
+@rag_bp.route("/ask-lesson/<int:lesson_id>", methods=["POST"])
+@jwt_required()
+def ask_lesson(lesson_id):
+    """Ask a question about a specific lesson — LLM uses retrieval as a tool"""
+    from models import Lesson
+    
+    data = request.json
+    question = data.get("question")
+    conversation_history = data.get("history", [])  # [{role, content}, ...]
+    
+    if not question:
+        return jsonify({"answer": "Please provide a question."}), 400
+
+    try:
+        # Load lesson data (cached)
+        lesson_data = _load_lesson_data(lesson_id)
+        if lesson_data is None:
+            return jsonify({"answer": "❌ Lesson file not found or unreadable."}), 404
+        
+        lesson = lesson_data["lesson"]
+        
+        # Get LLM
+        llm = get_llm()
+        if llm == "ERROR_NO_KEY":
+            return jsonify({"answer": "❌ API Key is missing."}), 500
+        if llm == "ERROR_IMPORT":
+            return jsonify({"answer": "Server is missing required LLM dependencies."}), 500
+
+        # Step 1: LLM decides what to search for (tool use pattern)
+        from langchain_core.messages import SystemMessage, HumanMessage
+        
+        # Generate search queries from the LLM
+        search_planning_prompt = f"""You are an AI tutor helping a student with the lesson: "{lesson.name}".
+
+Given the student's question, generate 1-3 short search queries that would help find the most relevant information from the lesson document. Return ONLY the search queries, one per line, nothing else.
+
+Student's question: {question}"""
+
+        search_response = llm.invoke([
+            SystemMessage(content="You generate search queries to retrieve information from a document. Return only the queries, one per line."),
+            HumanMessage(content=search_planning_prompt)
+        ])
+        
+        search_queries = [q.strip() for q in search_response.content.strip().split('\n') if q.strip()]
+        if not search_queries:
+            search_queries = [question]
+        
+        print(f"[Lesson {lesson_id}] Search queries: {search_queries}")
+        
+        # Step 2: Execute retrieval for each query
+        all_retrieved = []
+        seen_indices = set()
+        for query in search_queries[:3]:  # max 3 queries
+            results = _retrieve_from_lesson(query, lesson_data, top_k=3)
+            for r in results:
+                if r["chunk_index"] not in seen_indices:
+                    seen_indices.add(r["chunk_index"])
+                    all_retrieved.append(r)
+        
+        # Sort by score and take top 5
+        all_retrieved.sort(key=lambda x: x["score"], reverse=True)
+        top_chunks = all_retrieved[:5]
+        
+        retrieved_context = "\n\n---\n\n".join([f"[Section {r['chunk_index']+1}] (relevance: {r['score']})\n{r['text']}" for r in top_chunks])
+        
+        print(f"[Lesson {lesson_id}] Retrieved {len(top_chunks)} chunks, scores: {[r['score'] for r in top_chunks]}")
+        
+        # Step 3: Build conversation with retrieved context and history
+        system_prompt = f"""You are a friendly and knowledgeable AI tutor helping a student learn from the lesson: "{lesson.name}".
+
+Your role:
+- Help the student understand the lesson content deeply
+- Answer questions with clear, educational explanations
+- Use examples and analogies when helpful
+- Encourage the student and praise good questions
+- If the student asks something not covered in the lesson, be honest about it and explain what the lesson does cover
+- Reference specific parts of the lesson when answering
+- Keep answers focused and structured (use bullet points, headers, etc.)
+
+Below are the most relevant sections retrieved from the lesson document:
+
+{retrieved_context}
+
+Use these sections to answer the student's question accurately. You may also draw on your general knowledge to supplement explanations, but always ground your answers in the lesson content first."""
+
+        messages = [SystemMessage(content=system_prompt)]
+        
+        # Add conversation history (max last 10 exchanges)
+        for msg in conversation_history[-20:]:
+            if msg.get("role") == "user":
+                messages.append(HumanMessage(content=msg["content"]))
+            elif msg.get("role") == "assistant":
+                from langchain_core.messages import AIMessage
+                messages.append(AIMessage(content=msg["content"]))
+        
+        # Add current question
+        messages.append(HumanMessage(content=question))
+        
+        # Step 4: Get LLM answer
+        response = llm.invoke(messages)
+
+        return jsonify({
+            "answer": response.content,
+            "lesson_name": lesson.name,
+            "sources_count": len(top_chunks),
+            "search_queries": search_queries
+        }), 200
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"answer": f"❌ Error: {str(e)}"}), 500
