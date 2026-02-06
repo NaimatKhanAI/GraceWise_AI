@@ -40,7 +40,6 @@ def handle_options_preflight():
 # app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:@localhost/gracewise"
 # app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///gracewise.db')
 
-
 app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:@localhost/gracewise"
 # app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://graceuser:StrongPass123!@localhost/gracewise"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
