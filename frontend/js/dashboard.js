@@ -1,4 +1,9 @@
 // Dashboard JavaScript
+
+// Use shared API_BASE_URL if available, otherwise define it
+if (typeof window.API_BASE_URL === 'undefined') {
+    window.API_BASE_URL = 'http://127.0.0.1:5000';
+}
 const API_BASE_URL = window.API_BASE_URL;
 
 // Fetch student dashboard stats
@@ -26,20 +31,26 @@ async function fetchStudentStats() {
 
 // Update stats display
 function updateStatsDisplay(stats) {
-    document.getElementById('totalQuizzesAttempted').textContent = stats.total_quiz_attempts || 0;
-    document.getElementById('totalHoursSpent').textContent = stats.total_hours_spent || 0;
-    document.getElementById('studentRanking').textContent = stats.ranking || 1;
-    document.getElementById('totalStudents').textContent = stats.total_students_ranked || 0;
+    const elements = {
+        'totalQuizzesAttempted': stats.total_quiz_attempts || 0,
+        'totalHoursSpent': stats.total_hours_spent || 0,
+        'studentRanking': stats.ranking || 1,
+        'totalStudents': stats.total_students_ranked || 0,
+        'averageScore': Math.round(stats.average_score || 0) + '%',
+        'totalQuizzesValue': stats.total_quiz_attempts || 0,
+        'avgScoreValue': Math.round(stats.average_score || 0) + '%',
+        'totalHoursValue': (stats.total_hours_spent || 0) + ' hours',
+        'rankingValue': stats.ranking || 1,
+        'totalStudentsValue': stats.total_students_ranked || 0
+    };
     
-    const avgScore = stats.average_score || 0;
-    document.getElementById('averageScore').textContent = Math.round(avgScore) + '%';
-    
-    // Update tab content with same values
-    document.getElementById('totalQuizzesValue').textContent = stats.total_quiz_attempts || 0;
-    document.getElementById('avgScoreValue').textContent = Math.round(avgScore) + '%';
-    document.getElementById('totalHoursValue').textContent = (stats.total_hours_spent || 0) + ' hours';
-    document.getElementById('rankingValue').textContent = stats.ranking || 1;
-    document.getElementById('totalStudentsValue').textContent = stats.total_students_ranked || 0;
+    // Update elements only if they exist in the DOM
+    for (const [elementId, value] of Object.entries(elements)) {
+        const el = document.getElementById(elementId);
+        if (el) {
+            el.textContent = value;
+        }
+    }
 }
 
 // Fetch notifications
@@ -69,6 +80,11 @@ async function fetchNotifications() {
 // Display notifications
 function displayNotifications(notifications) {
     const notificationList = document.getElementById('notificationList');
+    
+    // Exit if element doesn't exist (e.g., not on dashboard page)
+    if (!notificationList) {
+        return;
+    }
     
     if (!notifications || notifications.length === 0) {
         notificationList.innerHTML = '<div class="no-notifications">No notifications yet</div>';

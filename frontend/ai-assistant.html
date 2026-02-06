@@ -103,6 +103,23 @@
 
         <!-- AI Assistant Content -->
         <div class="dashboard-content">
+            <!-- Lesson Context Banner (hidden by default, shown when coming from curriculum) -->
+            <div class="lesson-banner" id="lessonBanner" style="display: none;">
+                <button class="back-btn" id="backToCurriculum">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Curriculum
+                </button>
+                <div class="lesson-banner-info">
+                    <div class="lesson-banner-icon">
+                        <i class="fas fa-book-reader"></i>
+                    </div>
+                    <div>
+                        <h3 id="lessonBannerName">Lesson Name</h3>
+                        <p id="lessonBannerDesc">Ask me anything about this lesson!</p>
+                    </div>
+                </div>
+            </div>
+
             <div class="chat-container">
                 <div class="chat-messages" id="chatMessages">
                     <div class="message bot-message">
@@ -225,7 +242,7 @@
         </div>
     </div>
 
-    <script src="js/dashboard.js"></script>
+    <!-- dashboard.js removed to prevent duplicate variable conflicts -->
     <script>
         // Mobile menu functionality
         const mobileToggle = document.querySelector('.mobile-menu-toggle');

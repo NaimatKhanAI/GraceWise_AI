@@ -7,9 +7,51 @@ document.addEventListener('DOMContentLoaded', function () {
     const API_BASE_URL = window.API_BASE_URL;
 
     let aiSessionId = null;
+    let conversationHistory = []; // stores {role, content} for lesson context
+
+    // --- Lesson mode detection from URL params ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const lessonId = urlParams.get('lesson_id');
+    const lessonName = urlParams.get('lesson_name') || 'Lesson';
+    const lessonDesc = urlParams.get('lesson_desc') || '';
+    const isLessonMode = !!lessonId;
 
     function getAccessToken() {
-        return localStorage.getItem('accessToken') || auth?.accessToken;
+        return localStorage.getItem('access_token') || localStorage.getItem('accessToken') || auth?.accessToken;
+    }
+
+    // --- Show lesson context banner ---
+    if (isLessonMode) {
+        const lessonBanner = document.getElementById('lessonBanner');
+        const lessonBannerName = document.getElementById('lessonBannerName');
+        const lessonBannerDesc = document.getElementById('lessonBannerDesc');
+        
+        if (lessonBanner) {
+            lessonBanner.style.display = 'flex';
+            lessonBannerName.textContent = decodeURIComponent(lessonName);
+            lessonBannerDesc.textContent = decodeURIComponent(lessonDesc) || 'Ask me anything about this lesson!';
+        }
+
+        // Replace the default greeting with lesson-specific one
+        if (chatMessages) {
+            chatMessages.innerHTML = '';
+            appendMessage(
+                `Hello! I'm your AI tutor for **${decodeURIComponent(lessonName)}**. I have the full lesson document loaded and ready to help you learn!\n\nYou can ask me to:\n- Explain concepts from the lesson\n- Summarize sections\n- Quiz you on the material\n- Clarify anything you don't understand\n\nWhat would you like to know?`,
+                'ai'
+            );
+        }
+
+        // Update page title
+        document.title = `AI Tutor — ${decodeURIComponent(lessonName)} — Gracewise`;
+    }
+
+    // --- Back to curriculum button ---
+    const backBtn = document.getElementById('backToCurriculum');
+    if (backBtn) {
+        backBtn.addEventListener('click', function() {
+            window.location.href = 'curriculum.html';
+        });
+        backBtn.style.display = isLessonMode ? 'inline-flex' : 'none';
     }
 
     async function startAiSession() {
@@ -25,10 +67,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
 
-            if (!response.ok) {
-                return;
-            }
-
+            if (!response.ok) return;
             const data = await response.json();
             aiSessionId = data.session_id || null;
         } catch (error) {
@@ -110,15 +149,30 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             const token = getAccessToken();
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+            const timeoutId = setTimeout(() => controller.abort(), 60000);
 
-            const response = await fetch(`${API_BASE_URL}/rag/ask`, {
+            let url, body;
+
+            if (isLessonMode) {
+                // Lesson-specific RAG endpoint with conversation history
+                url = `${API_BASE_URL}/rag/ask-lesson/${lessonId}`;
+                body = JSON.stringify({ 
+                    question: text,
+                    history: conversationHistory
+                });
+            } else {
+                // General AI assistant endpoint
+                url = `${API_BASE_URL}/rag/ask`;
+                body = JSON.stringify({ question: text });
+            }
+
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                 },
-                body: JSON.stringify({ question: text }),
+                body: body,
                 signal: controller.signal
             });
 
@@ -131,10 +185,15 @@ document.addEventListener('DOMContentLoaded', function () {
             const data = await response.json();
             const answer = data.answer || 'Sorry, I could not process your request.';
 
+            // Update conversation history for lesson mode
+            if (isLessonMode) {
+                conversationHistory.push({ role: 'user', content: text });
+                conversationHistory.push({ role: 'assistant', content: answer });
+            }
+
             if (loadingEl) {
                 const content = loadingEl.querySelector('p');
                 if (content) content.innerHTML = marked.parse(answer);
-
             }
         } catch (error) {
             console.error('Chat error:', error);

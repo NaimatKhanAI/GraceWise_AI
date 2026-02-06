@@ -30,5 +30,5 @@ class Curriculum(db.Model):
             "module_count": len(self.modules) if self.modules else 0
         }
         if include_modules and self.modules:
-            result["modules"] = [m.to_dict() for m in self.modules]
+            result["modules"] = [m.to_dict(include_lessons=True) for m in self.modules]
         return result

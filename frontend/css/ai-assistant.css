@@ -625,3 +625,90 @@
         padding: 10px 50px 10px 15px;
     }
 }
+
+/* ==================== Lesson Context Banner ==================== */
+.lesson-banner {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: linear-gradient(135deg, #faf8f3 0%, #f5f0e6 100%);
+    border: 1px solid #e8dfc9;
+    border-radius: 12px;
+    padding: 14px 20px;
+    margin-bottom: 16px;
+}
+
+.lesson-banner .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: white;
+    border: 1px solid #e0d5c0;
+    border-radius: 8px;
+    color: #6b5d4d;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    font-family: 'Inter', sans-serif;
+}
+
+.lesson-banner .back-btn:hover {
+    background: #b59c61;
+    color: white;
+    border-color: #b59c61;
+}
+
+.lesson-banner-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: 1;
+    min-width: 0;
+}
+
+.lesson-banner-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #b59c61, #d4af37);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.lesson-banner-info h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #2d2d2d;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lesson-banner-info p {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: #8a7e6b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 768px) {
+    .lesson-banner {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .lesson-banner .back-btn {
+        align-self: flex-start;
+    }
+}

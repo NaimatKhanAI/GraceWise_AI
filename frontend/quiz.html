@@ -575,7 +575,7 @@
         // Load quizzes
         async function loadQuizzes() {
             try {
-                const token = localStorage.getItem('accessToken');
+                const token = localStorage.getItem('access_token');
                 
                 if (!token) {
                     showError('Authentication required');
@@ -643,7 +643,7 @@
 
         async function openQuiz(quizId) {
             try {
-                const token = localStorage.getItem('accessToken');
+                const token = localStorage.getItem('access_token');
                 const response = await fetch(`${apiUrl}/quiz/quizzes/${quizId}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -703,7 +703,7 @@
             }
 
             try {
-                const token = localStorage.getItem('accessToken');
+                const token = localStorage.getItem('access_token');
                 const response = await fetch(`${apiUrl}/quiz/submit-quiz`, {
                     method: 'POST',
                     headers: {
