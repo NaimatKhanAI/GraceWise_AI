@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="css/notifications.css">
     <script src="js/notifications.js" defer></script>
     <script src="js/auth.js" defer></script>
+    <script src="js/config.js"></script>
 </head>
 <body>
     <!-- Mobile Menu Toggle -->
@@ -566,7 +567,7 @@
             }
 
             try {
-                const response = await fetch('http://127.0.0.1:5000/auth/change-password', {
+                const response = await fetch(`${window.API_BASE_URL}/auth/change-password`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

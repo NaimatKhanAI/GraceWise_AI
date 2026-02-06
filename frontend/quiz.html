@@ -10,6 +10,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="js/notifications.js" defer></script>
     <script src="js/auth.js" defer></script>
+    <script src="js/config.js"></script>
     <style>
         .quiz-grid {
             display: grid;
@@ -531,7 +532,7 @@
     </div>
 
     <script>
-        const apiUrl = 'http://127.0.0.1:5000';
+        const apiUrl =  window.API_BASE_URL;
         let currentQuiz = null;
 
         // Initialize page after auth.js loads
@@ -809,7 +810,7 @@
             }
 
             try {
-                const response = await fetch('http://127.0.0.1:5000/auth/change-password', {
+                const response = await fetch(`${window.API_BASE_URL}/auth/change-password`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

@@ -1,5 +1,5 @@
 // Dashboard JavaScript
-const API_BASE_URL = 'http://127.0.0.1:5000';
+const API_BASE_URL = window.API_BASE_URL;
 
 // Fetch student dashboard stats
 async function fetchStudentStats() {

@@ -11,6 +11,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="js/notifications.js" defer></script>
     <script src="js/auth.js" defer></script>
+    <script src="js/config.js"></script>
     <style>
         .tab-container {
             background: white;
@@ -616,7 +617,7 @@
                 console.log('Starting file upload with token:', token.substring(0, 20) + '...');
                 console.log('File:', file.name, 'Size:', file.size, 'Type:', file.type);
                 
-                const response = await fetch('http://127.0.0.1:5000/quiz/upload-document', {
+                const response = await fetch('${window.API_BASE_URL}/quiz/upload-document', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -646,7 +647,7 @@
         async function loadUploadedFiles() {
             try {
                 const token = localStorage.getItem('accessToken');
-                const response = await fetch('http://127.0.0.1:5000/quiz/uploaded-documents', {
+                const response = await fetch(`${window.API_BASE_URL}/quiz/uploaded-documents`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -690,7 +691,7 @@
         async function loadDocuments() {
             try {
                 const token = localStorage.getItem('accessToken');
-                const response = await fetch('http://127.0.0.1:5000/quiz/uploaded-documents', {
+                const response = await fetch(`${window.API_BASE_URL}/quiz/uploaded-documents`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -733,7 +734,7 @@
 
             try {
                 const token = localStorage.getItem('accessToken');
-                const response = await fetch('http://127.0.0.1:5000/quiz/generate-quiz', {
+                const response = await fetch(`${window.API_BASE_URL}/quiz/generate-quiz`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -766,7 +767,7 @@
         async function loadQuizzes() {
             try {
                 const token = localStorage.getItem('accessToken');
-                const response = await fetch('http://127.0.0.1:5000/quiz/quizzes', {
+                const response = await fetch(`${window.API_BASE_URL}/quiz/quizzes`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
