@@ -261,6 +261,31 @@ def get_quiz(quiz_id):
         return jsonify({"message": f"Error: {str(e)}"}), 500
 
 
+# ==================== DELETE QUIZ ====================
+@quiz_bp.route("/quizzes/<int:quiz_id>", methods=["DELETE"])
+@jwt_required()
+def delete_quiz(quiz_id):
+    """Delete a quiz (admin only)"""
+    try:
+        user_id = get_user_id()
+        user = User.query.get(user_id)
+
+        if not user or not user.is_admin:
+            return jsonify({"message": "Admin access required"}), 403
+
+        quiz = Quiz.query.get(quiz_id)
+        if not quiz:
+            return jsonify({"message": "Quiz not found"}), 404
+
+        db.session.delete(quiz)
+        db.session.commit()
+
+        return jsonify({"message": "Quiz deleted successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": f"Error deleting quiz: {str(e)}"}), 500
+
+
 # ==================== SUBMIT QUIZ ====================
 @quiz_bp.route("/submit-quiz", methods=["POST"])
 @jwt_required()

@@ -18,29 +18,51 @@ def get_user_id():
 @jwt_required()
 def dashboard_summary():
     """Get dashboard statistics for admin"""
+    # Get current admin's details
+    user_id = get_user_id()
+    current_user = User.query.get(user_id)
+    admin_name = current_user.first_name if current_user else "Admin"
+    
     total_users = User.query.count()
     
-    # Get active users (users who logged in within last 30 days)
+    # Get active users (logged in within last 30 days)
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
     active_users = User.query.filter(
         User.is_active == True,
+        User.last_login != None,
         User.last_login >= thirty_days_ago
-    ).count() if hasattr(User, 'last_login') else User.query.filter_by(is_active=True).count()
+    ).count()
     
-    # Calculate sleeping users (inactive users)
-    sleeping_users = User.query.filter_by(is_active=False).count()
+    # Sleeping users = registered & active but haven't logged in within 30 days
+    sleeping_users = total_users - active_users
     
     # Additional stats
     total_children = Child.query.count()
     completed_devotionals = DevotionalProgress.query.count()
     active_planners = Planner.query.count()
     
-    # Calculate growth percentage (mock calculation for now)
-    # In real implementation, compare with previous month
-    total_users_growth = 16  # Mock value
-    active_users_growth = -1  # Mock value
+    # Calculate real growth percentages by comparing with previous month
+    sixty_days_ago = datetime.utcnow() - timedelta(days=60)
+    
+    # Users created this month vs last month
+    users_this_month = User.query.filter(User.created_at >= thirty_days_ago).count()
+    users_last_month = User.query.filter(
+        User.created_at >= sixty_days_ago,
+        User.created_at < thirty_days_ago
+    ).count()
+    total_users_growth = round(((users_this_month - users_last_month) / max(users_last_month, 1)) * 100)
+    
+    # Active users this month vs last month
+    active_last_month = User.query.filter(
+        User.is_active == True,
+        User.last_login != None,
+        User.last_login >= sixty_days_ago,
+        User.last_login < thirty_days_ago
+    ).count()
+    active_users_growth = round(((active_users - active_last_month) / max(active_last_month, 1)) * 100)
 
     return jsonify({
+        "admin_name": admin_name,
         "total_users": total_users,
         "total_users_growth": total_users_growth,
         "active_users": active_users,

@@ -70,7 +70,7 @@
             </div>
             <div class="header-right">
                 <div class="avatar">
-                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=32&h=32&fit=crop&crop=face" alt="Profile">
+                    <i class="fas fa-user-circle" style="font-size: 32px; color: #b59c61;"></i>
                 </div>
             </div>
         </header>
@@ -79,7 +79,8 @@
         <div class="dashboard-container">
             <div class="dashboard-header">
                 <h1>Dashboard</h1>
-                <p class="welcome-text">Welcome back, Sarah! Here's what's happening today 👋</p>
+                <p class="welcome-text" id="welcome-text">Welcome back! Here's what's happening today 👋</p>
+                <span id="current-date" style="font-size: 0.85rem; color: #888;"></span>
             </div>
 
             <!-- Stats Cards -->
@@ -119,13 +120,7 @@
                     <div class="stat-info">
                         <p class="stat-label">Sleeping user</p>
                         <h3 id="sleeping-users-count">0</h3>
-                        <div class="user-avatars">
-                            <img src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=24&h=24&fit=crop&crop=face" alt="User 1">
-                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=24&h=24&fit=crop&crop=face" alt="User 2">
-                            <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=24&h=24&fit=crop&crop=face" alt="User 3">
-                            <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=24&h=24&fit=crop&crop=face" alt="User 4">
-                            <span class="more-users">+5</span>
-                        </div>
+                       
                     </div>
                 </div>
             </div>
@@ -198,11 +193,14 @@
         overlay.addEventListener('click', toggleMobileMenu);
 
         // Update date
-        document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-        });
+        const dateEl = document.getElementById('current-date');
+        if (dateEl) {
+            dateEl.textContent = new Date().toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        }
 
         // Fetch and display dashboard statistics
         async function loadDashboardStats() {
@@ -213,7 +211,7 @@
                     return;
                 }
 
-                const response = await fetch('http://localhost:5000/dashboard/summary', {
+                const response = await fetch(`${window.API_BASE_URL}/dashboard/summary`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -231,6 +229,11 @@
                 }
 
                 const data = await response.json();
+                
+                // Update welcome message with admin's name
+                if (data.admin_name) {
+                    document.getElementById('welcome-text').textContent = `Welcome back, ${data.admin_name}! Here's what's happening today 👋`;
+                }
                 
                 // Update total users
                 document.getElementById('total-users-count').textContent = data.total_users.toLocaleString();
