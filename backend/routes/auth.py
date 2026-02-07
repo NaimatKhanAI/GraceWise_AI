@@ -84,6 +84,10 @@ def login():
         if not user.is_active:
             return jsonify({"message": "User account is inactive"}), 403
         
+        # Update last login timestamp
+        user.last_login = datetime.utcnow()
+        db.session.commit()
+        
         # Create access token
         access_token = create_access_token(
             identity=str(user.id),  # Convert to string to ensure proper JWT encoding
