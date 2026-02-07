@@ -71,6 +71,42 @@ app.register_blueprint(quiz_bp, url_prefix="/quiz")
 with app.app_context():
     db.create_all()
     
+    # Migrate planner table if needed
+    try:
+        from sqlalchemy import text
+        inspector = db.inspect(db.engine)
+        
+        if 'planner' in inspector.get_table_names():
+            existing_columns = [col['name'] for col in inspector.get_columns('planner')]
+            
+            columns_to_add = []
+            if 'start_time' not in existing_columns:
+                columns_to_add.append("ADD COLUMN start_time VARCHAR(10)")
+            if 'end_time' not in existing_columns:
+                columns_to_add.append("ADD COLUMN end_time VARCHAR(10)")
+            if 'subject' not in existing_columns:
+                columns_to_add.append("ADD COLUMN subject VARCHAR(100)")
+            if 'subtitle' not in existing_columns:
+                columns_to_add.append("ADD COLUMN subtitle VARCHAR(150)")
+            if 'created_at' not in existing_columns:
+                columns_to_add.append("ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP")
+            if 'updated_at' not in existing_columns:
+                columns_to_add.append("ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+            
+            if columns_to_add:
+                print("\n" + "="*50)
+                print(f"Migrating planner table - adding {len(columns_to_add)} columns...")
+                print("="*50)
+                for column_def in columns_to_add:
+                    sql = f"ALTER TABLE planner {column_def}"
+                    db.session.execute(text(sql))
+                db.session.commit()
+                print("✅ Planner table migration completed!")
+                print("="*50 + "\n")
+    except Exception as e:
+        print(f"⚠️  Planner migration note: {str(e)}")
+        db.session.rollback()
+    
     # Initialize admin user
     from models import User
     admin_email = "admin@grace-wise.com"

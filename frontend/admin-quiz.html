@@ -542,12 +542,15 @@
             verifyAdminAccess();
         }
 
-        // Set current date
-        document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric', 
-            year: 'numeric' 
-        });
+        // Set current date (if element exists)
+        const currentDateEl = document.getElementById('current-date');
+        if (currentDateEl) {
+            currentDateEl.textContent = new Date().toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric' 
+            });
+        }
 
         // Tab switching
         document.querySelectorAll('.tab-button').forEach(button => {

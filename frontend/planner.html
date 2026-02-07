@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Planner - Gracewise</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/planner.css">
+    <link rel="stylesheet" href="css/notifications.css">
+    <script src="js/config.js"></script>
+    <script src="js/auth.js" defer></script>
+    <script src="js/notifications.js" defer></script>
+</head>
+<body>
+    <!-- Mobile Menu Toggle -->
+    <div class="mobile-menu-toggle">
+        <i class="fas fa-bars"></i>
+    </div>
+    
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay"></div>
+    
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <img src="assest/logo/main_logo.png" alt="Gracewise Logo">
+        </div>
+        <nav class="nav-menu">
+            <a href="dashboard.html" class="nav-item">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="ai-assistant.html" class="nav-item" onclick="window.location.href='ai-assistant.html'">
+                <i class="fas fa-robot"></i>
+                <span>AI Assistant</span>
+            </a>
+            <a href="progress.html" class="nav-item">
+                <i class="fas fa-chart-line"></i>
+                <span>Child progress</span>
+            </a>
+            <a href="planner.html" class="nav-item active">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Planners</span>
+            </a>
+            <a href="curriculum.html" class="nav-item">
+                <i class="fas fa-book"></i>
+                <span>Curriculum</span>
+            </a>
+            <a href="quiz.html" class="nav-item">
+                <i class="fas fa-question-circle"></i>
+                <span>Quizzes</span>
+            </a>
+        </nav>
+        <div class="sidebar-bottom">
+            <a href="premium-plan.html" class="upgrade-card" onclick="openPremiumModal()">
+                <i class="fas fa-crown"></i>
+                <span>Upgrade to Pro</span>
+            </a>
+            <a href="settings.html" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+            <a href="#" class="nav-item" onclick="auth.logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="What do you want to learn">
+            </div>
+            <div class="header-right">
+                <div class="notification-wrapper">
+                    <div class="notification" id="notificationBell">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                    </div>
+                    <div class="notification-dropdown" id="notificationDropdown">
+                        <div class="notification-header">
+                            <h3>Notifications</h3>
+                            <button class="mark-all-read" onclick="markAllNotificationsRead()">Mark All as Read</button>
+                        </div>
+                        <div class="notification-list" id="notificationList">
+                            <div class="no-notifications">No notifications yet</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="avatar" id="avatarBtn">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- User Profile Modal -->
+        <div class="profile-modal" id="profileModal">
+            <div class="profile-modal-content">
+                <button class="modal-close" onclick="closeProfileModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+                
+                <div class="profile-header">
+                    <div class="avatar-section">
+                        <div class="avatar-large" id="avatarLarge">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                    </div>
+                    <h2 id="userNameDisplay">User Name</h2>
+                </div>
+                
+                <div class="profile-form">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="userEmailDisplay" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="userFullNameDisplay" readonly>
+                    </div>
+                    
+                    <button class="change-password-btn" onclick="openChangePasswordModal()">
+                        <i class="fas fa-lock"></i>
+                        Change Password
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Change Password Modal -->
+        <div class="change-password-modal" id="changePasswordModal">
+            <div class="password-modal-content">
+                <button class="modal-close" onclick="closeChangePasswordModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+                
+                <h2>Change Password</h2>
+                
+                <form id="passwordForm" onsubmit="handleChangePassword(event)">
+                    <div class="form-group">
+                        <label>Current Password</label>
+                        <input type="password" id="currentPassword" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>New Password</label>
+                        <input type="password" id="newPassword" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Confirm Password</label>
+                        <input type="password" id="confirmPassword" required>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">
+                        Update Password
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="page-container">
+            <div class="section-header">
+                <div class="section-header-left">
+                    <h1><i class="fas fa-calendar-alt"></i> Weekly Planner</h1>
+                    <p>Organize your daily schedule and plan ahead</p>
+                </div>
+            </div>
+
+            <!-- Planner Header with Controls -->
+            <div class="planner-header">
+                <div class="planner-controls">
+                    <div class="date-selector">
+                        <label for="weekSelector">Select Week:</label>
+                        <select id="weekSelector">
+                            <option value="this-week">This Week</option>
+                            <option value="next-week">Next Week</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </div>
+                    <div class="date-range" id="customDateRange" style="display: none;">
+                        <input type="date" id="startDate" placeholder="Start Date">
+                        <span>to</span>
+                        <input type="date" id="endDate" placeholder="End Date">
+                        <button class="btn-secondary" onclick="applyCustomRange()">Apply</button>
+                    </div>
+                    <div class="view-toggle">
+                        <button class="view-btn active" data-view="weekly" title="Weekly View">
+                            <i class="fas fa-th"></i>
+                        </button>
+                        <button class="view-btn" data-view="daily" title="Daily View">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                </div>
+                <button class="btn-primary" onclick="openNewPlanModal()">
+                    <i class="fas fa-plus"></i> New Plan
+                </button>
+            </div>
+
+            <!-- Week Navigation -->
+            <div class="week-navigation">
+                <button class="btn-icon" id="prevWeekBtn" onclick="navigatePreviousWeek()">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <span id="currentWeekDisplay" class="week-display">Week of Feb 1 - Feb 7, 2025</span>
+                <button class="btn-icon" id="nextWeekBtn" onclick="navigateNextWeek()">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+
+            <!-- Weekly Planner Grid -->
+            <div class="planner-grid" id="plannerGrid">
+                <!-- Generated dynamically -->
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <i class="fas fa-calendar-times"></i>
+                <h3>No plans yet</h3>
+                <p>You don't have any plans scheduled for this week. Create your first plan to get started!</p>
+                <button class="btn-primary" onclick="openNewPlanModal()">
+                    <i class="fas fa-plus"></i> Create Plan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New/Edit Plan Modal -->
+    <div class="modal" id="planModal">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h2 id="modalTitle">Create New Plan</h2>
+                <button class="modal-close" onclick="closePlanModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="planForm" onsubmit="savePlan(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="planTitle">Plan Title *</label>
+                            <input type="text" id="planTitle" placeholder="e.g., Math Lesson, Science Project" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="planSubject">Subject / Activity Type *</label>
+                            <select id="planSubject" required>
+                                <option value="">Select a subject</option>
+                                <option value="Mathematics">Mathematics</option>
+                                <option value="English">English</option>
+                                <option value="Science">Science</option>
+                                <option value="History">History</option>
+                                <option value="Geography">Geography</option>
+                                <option value="Art">Art</option>
+                                <option value="PE">Physical Education</option>
+                                <option value="Music">Music</option>
+                                <option value="Study">General Study</option>
+                                <option value="Break">Break</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="planDate">Date *</label>
+                            <input type="date" id="planDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="planStartTime">Start Time *</label>
+                            <input type="time" id="planStartTime" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="planEndTime">End Time *</label>
+                            <input type="time" id="planEndTime" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="planSubtitle">Subtitle (Optional)</label>
+                            <input type="text" id="planSubtitle" placeholder="e.g., Tutor name, Quiz name, or study type">
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="planDescription">Description / Notes (Optional)</label>
+                        <textarea id="planDescription" placeholder="Add any additional notes or details about this plan" rows="4"></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="closePlanModal()">Cancel</button>
+                        <button type="submit" class="btn-primary">Save Plan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="deleteModal">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h2>Delete Plan</h2>
+                <button class="modal-close" onclick="closeDeleteModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this plan? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+                <button class="btn-danger" onclick="confirmDelete()">Delete Plan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Plan Modal -->
+    <div class="modal" id="viewPlanModal">
+        <div class="modal-content modal-md">
+            <div class="modal-header">
+                <h2 id="viewPlanTitle">Plan Details</h2>
+                <button class="modal-close" onclick="closeViewPlanModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="viewPlanContent">
+                <!-- Generated dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeViewPlanModal()">Close</button>
+                <button class="btn-primary" onclick="editCurrentPlan()">Edit Plan</button>
+                <button class="btn-outline-danger" onclick="deletePlanConfirm()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay for modals -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeAllModals()"></div>
+
+    <script src="js/planner.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Eduman</title>
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/settings.css">
+    <link rel="stylesheet" href="css/notifications.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="js/notifications.js" defer></script>
+    <script src="js/auth.js" defer></script>
+    <script src="js/config.js"></script>
+</head>
+<body>
+    <!-- Mobile Menu Toggle -->
+    <div class="mobile-menu-toggle">
+        <i class="fas fa-bars"></i>
+    </div>
+    
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay"></div>
+    
+     <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <img src="assest/logo/main_logo.png" alt="Gracewise Logo">
+        </div>
+        <nav class="nav-menu">
+            <a href="dashboard.html" class="nav-item">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="ai-assistant.html" class="nav-item">
+                <i class="fas fa-robot"></i>
+                <span>AI Assistant</span>
+            </a>
+            <a href="progress.html" class="nav-item">
+                <i class="fas fa-chart-line"></i>
+                <span>Child progress</span>
+            </a>
+            <a href="planner.html" class="nav-item">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Planners</span>
+            </a>
+            <a href="curriculum.html" class="nav-item">
+                <i class="fas fa-book"></i>
+                <span>Curriculum</span>
+            </a>
+            <a href="quiz.html" class="nav-item">
+                <i class="fas fa-question-circle"></i>
+                <span>Quizzes</span>
+            </a>
+        </nav>
+        <div class="sidebar-bottom">
+            <a href="premium-plan.html" class="upgrade-card" onclick="openPremiumModal()">
+                <i class="fas fa-crown"></i>
+                <span>Upgrade to Pro</span>
+            </a>
+            <a href="settings.html" class="nav-item active">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+            <a href="#" class="nav-item" onclick="auth.logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="What do you want to learn">
+            </div>
+            <div class="header-right">
+                <div class="notification-wrapper">
+                    <div class="notification" id="notificationBell">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                    </div>
+                    <div class="notification-dropdown" id="notificationDropdown">
+                        <div class="notification-header">
+                            <h3>Notifications</h3>
+                            <button class="mark-all-read" onclick="markAllNotificationsRead()">Mark All as Read</button>
+                        </div>
+                        <div class="notification-list" id="notificationList">
+                            <div class="no-notifications">No notifications yet</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="avatar" id="avatarBtn">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <span class="user-name" id="currentDate"></span>
+            </div>
+        </header>
+
+        <!-- Settings Content -->
+        <div class="settings-container">
+            <h1 class="settings-title">Account Setting</h1>
+            
+            <div class="settings-section">
+                <!-- User Name -->
+                <div class="setting-item">
+                    <label class="setting-label">User Name</label>
+                    <div class="setting-value-group">
+                        <span class="setting-value" id="displayUserName">Loading...</span>
+                        <button class="change-btn" onclick="openEditNameModal()">Change</button>
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div class="setting-item">
+                    <label class="setting-label">Email</label>
+                    <div class="setting-value-group">
+                        <span class="setting-value" id="displayUserEmail">Loading...</span>
+                        <button class="change-btn" onclick="openEditEmailModal()">Change</button>
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div class="setting-item">
+                    <label class="setting-label">Password</label>
+                    <div class="setting-value-group">
+                        <span class="setting-value">••••••••••••</span>
+                        <button class="change-btn" onclick="openChangePasswordModal()">Change</button>
+                    </div>
+                </div>
+
+                <!-- Notification Toggle -->
+                <div class="setting-item">
+                    <label class="setting-label">Notification</label>
+                    <div class="setting-value-group">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="notificationToggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Name Modal -->
+    <div class="settings-modal" id="editNameModal">
+        <div class="settings-modal-content">
+            <div class="settings-modal-header">
+                <h3>Change User Name</h3>
+                <button class="settings-modal-close" onclick="closeEditNameModal()">&times;</button>
+            </div>
+            <form id="editNameForm" onsubmit="handleNameUpdate(event)">
+                <div class="form-group">
+                    <label for="firstName">First Name</label>
+                    <input type="text" id="firstName" required>
+                </div>
+                <div class="form-group">
+                    <label for="lastName">Last Name</label>
+                    <input type="text" id="lastName" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" onclick="closeEditNameModal()">Cancel</button>
+                    <button type="submit" class="btn-save">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Email Modal -->
+    <div class="settings-modal" id="editEmailModal">
+        <div class="settings-modal-content">
+            <div class="settings-modal-header">
+                <h3>Change Email</h3>
+                <button class="settings-modal-close" onclick="closeEditEmailModal()">&times;</button>
+            </div>
+            <form id="editEmailForm" onsubmit="handleEmailUpdate(event)">
+                <div class="form-group">
+                    <label for="newEmail">New Email</label>
+                    <input type="email" id="newEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Current Password</label>
+                    <input type="password" id="confirmPassword" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" onclick="closeEditEmailModal()">Cancel</button>
+                    <button type="submit" class="btn-save">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="change-password-modal" id="changePasswordModal">
+        <div class="change-password-content">
+            <div class="change-password-header">
+                <h3>Change Password</h3>
+                <button class="change-password-close" onclick="closeChangePasswordModal()">&times;</button>
+            </div>
+            <form id="passwordForm" onsubmit="handleChangePassword(event)">
+                <div class="form-group">
+                    <label for="currentPasswordChange">Current Password</label>
+                    <input type="password" id="currentPasswordChange" required>
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">New Password</label>
+                    <input type="password" id="newPassword" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="confirmNewPassword">Confirm New Password</label>
+                    <input type="password" id="confirmNewPassword" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" onclick="closeChangePasswordModal()">Cancel</button>
+                    <button type="submit" class="btn-save">Change Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div class="profile-modal" id="profileModal">
+        <div class="profile-modal-content">
+            <div class="profile-modal-header">
+                <h3 id="userNameDisplay">User Profile</h3>
+                <button class="profile-modal-close" onclick="closeProfileModal()">&times;</button>
+            </div>
+            <div class="profile-modal-body">
+                <div class="profile-field">
+                    <label>Email</label>
+                    <input type="text" id="userEmailDisplay" readonly>
+                </div>
+                <div class="profile-field">
+                    <label>Full Name</label>
+                    <input type="text" id="userFullNameDisplay" readonly>
+                </div>
+            </div>
+            <div class="profile-modal-footer">
+                <button class="btn-primary" onclick="closeProfileModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/settings.js"></script>
+</body>
+</html>
