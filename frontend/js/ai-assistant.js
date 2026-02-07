@@ -4,7 +4,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const sendBtn = document.getElementById('sendBtn');
     const profileName = document.querySelector('.profile span');
 
-    const API_BASE_URL = 'http://127.0.0.1:5000';
+    const API_BASE_URL = window.API_BASE_URL;
+
     let aiSessionId = null;
     let conversationHistory = []; // stores {role, content} for lesson context
 
