@@ -94,8 +94,9 @@ def get_llm():
         print("Using OpenAI LLM")
         llm_cache = ChatOpenAI(
             openai_api_key=openai_key,
-            model="openai/gpt-oss-120b",
-            base_url="https://api.canopywave.io/v1",
+            # model="openai/gpt-oss-120b",
+            model="gpt-4o-mini",
+            # base_url="https://api.canopywave.io/v1",
             temperature=0.2,
             timeout=30,
             max_retries=2
