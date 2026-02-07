@@ -170,6 +170,24 @@ def mark_notification_read(notification_id):
         return jsonify({"message": f"Error marking notification: {str(e)}"}), 500
 
 
+@dashboard_bp.route("/student/notifications/mark-all-read", methods=["PUT"])
+@jwt_required()
+def mark_all_notifications_read():
+    """Mark all notifications as read for the current user"""
+    try:
+        user_id = get_user_id()
+        
+        # Update all unread notifications for this user
+        Notification.query.filter_by(user_id=user_id, is_read=False).update({"is_read": True})
+        db.session.commit()
+        
+        return jsonify({"message": "All notifications marked as read"}), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": f"Error marking all notifications: {str(e)}"}), 500
+
+
 # ==================== STUDENT PROGRESS ====================
 @dashboard_bp.route("/student/progress", methods=["GET"])
 @jwt_required()

@@ -30,10 +30,6 @@
             <img src="assest/logo/main_logo.png" alt="Gracewise Logo">
         </div>
         <nav class="nav-menu">
-            <a href="index.html" class="nav-item">
-                <i class="fas fa-home"></i>
-                <span>Home</span>
-            </a>
             <a href="dashboard.html" class="nav-item">
                 <i class="fas fa-th-large"></i>
                 <span>Dashboard</span>
@@ -50,7 +46,7 @@
                 <i class="fas fa-chart-line"></i>
                 <span>Child progress</span>
             </a>
-            <a href="#" class="nav-item">
+            <a href="planner.html" class="nav-item">
                 <i class="fas fa-calendar-alt"></i>
                 <span>Planners</span>
             </a>
@@ -68,7 +64,7 @@
                 <i class="fas fa-crown"></i>
                 <span>Upgrade to Pro</span>
             </a>
-            <a href="#" class="nav-item">
+            <a href="settings.html" class="nav-item">
                 <i class="fas fa-cog"></i>
                 <span>Settings</span>
             </a>
@@ -88,15 +84,23 @@
                 <input type="text" placeholder="What do you want to learn">
             </div>
             <div class="header-right">
-                <div class="date">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span id="current-date">Jan 15, 2024</span>
+                <div class="notification-wrapper">
+                    <div class="notification" id="notificationBell">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                    </div>
+                    <div class="notification-dropdown" id="notificationDropdown">
+                        <div class="notification-header">
+                            <h3>Notifications</h3>
+                            <button class="mark-all-read" onclick="markAllNotificationsRead()">Mark All as Read</button>
+                        </div>
+                        <div class="notification-list" id="notificationList">
+                            <div class="no-notifications">No notifications yet</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="profile">
-                    <span>Jason Doulo</span>
-                </div>
-                <div class="notification">
-                    <i class="fas fa-bell"></i>
+                <div class="avatar" id="avatarBtn">
+                    <i class="fas fa-user-circle"></i>
                 </div>
             </div>
         </header>
@@ -239,6 +243,73 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- User Profile Modal -->
+    <div class="profile-modal" id="profileModal">
+        <div class="profile-modal-content">
+            <button class="modal-close" onclick="closeProfileModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <div class="profile-header">
+                <div class="avatar-section">
+                    <div class="avatar-large" id="avatarLarge">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                </div>
+                <h2 id="userNameDisplay">User Name</h2>
+            </div>
+            
+            <div class="profile-form">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="userEmailDisplay" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="userFullNameDisplay" readonly>
+                </div>
+                
+                <button class="change-password-btn" onclick="openChangePasswordModal()">
+                    <i class="fas fa-lock"></i>
+                    Change Password
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="change-password-modal" id="changePasswordModal">
+        <div class="password-modal-content">
+            <button class="modal-close" onclick="closeChangePasswordModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <h2>Change Password</h2>
+            
+            <form id="passwordForm" onsubmit="handleChangePassword(event)">
+                <div class="form-group">
+                    <label>Current Password</label>
+                    <input type="password" id="currentPassword" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="newPassword" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Confirm Password</label>
+                    <input type="password" id="confirmPassword" required>
+                </div>
+                
+                <button type="submit" class="submit-btn">
+                    Update Password
+                </button>
+            </form>
         </div>
     </div>
 

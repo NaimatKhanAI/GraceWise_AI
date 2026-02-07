@@ -81,6 +81,14 @@ class AuthSystem {
         return this.currentUser;
     }
 
+    // Update current user data
+    updateUser(userData) {
+        if (this.currentUser) {
+            this.currentUser = { ...this.currentUser, ...userData };
+            localStorage.setItem('user', JSON.stringify(this.currentUser));
+        }
+    }
+
     // Redirect based on user type
     redirectAfterLogin() {
         // Check if user is admin

@@ -139,8 +139,22 @@ async function markNotificationRead(notificationId) {
 
 // Mark all notifications as read
 async function markAllNotificationsRead() {
-    // This would require a backend endpoint - for now we'll refresh notifications
-    fetchNotifications();
+    try {
+        const response = await fetch(`${API_BASE_URL}/dashboard/student/notifications/mark-all-read`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${auth.accessToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            fetchNotifications();
+            showSuccess('All notifications marked as read');
+        }
+    } catch (error) {
+        console.error('Error marking all notifications:', error);
+    }
 }
 
 // Format time to relative format

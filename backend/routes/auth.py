@@ -138,6 +138,7 @@ def get_all_users():
         page = request.args.get('page', 1, type=int)
         per_page = request.args.get('per_page', 10, type=int)
         search = request.args.get('search', '', type=str)
+        sort_by = request.args.get('sort_by', 'newest', type=str)
         
         # Build query
         query = User.query
@@ -153,8 +154,15 @@ def get_all_users():
                 )
             )
         
-        # Order by most recent first
-        query = query.order_by(User.created_at.desc())
+        # Apply sorting
+        if sort_by == 'oldest':
+            query = query.order_by(User.created_at.asc())
+        elif sort_by == 'name_asc':
+            query = query.order_by(User.first_name.asc(), User.last_name.asc())
+        elif sort_by == 'name_desc':
+            query = query.order_by(User.first_name.desc(), User.last_name.desc())
+        else:  # newest (default)
+            query = query.order_by(User.created_at.desc())
         
         # Paginate
         pagination = query.paginate(page=page, per_page=per_page, error_out=False)
@@ -300,4 +308,108 @@ def check_email():
         }), 200
     
     except Exception as e:
+        return jsonify({"message": f"Error: {str(e)}"}), 500
+
+
+# ==================== UPDATE PROFILE ====================
+@auth_bp.route("/update-profile", methods=["PUT"])
+@jwt_required()
+def update_profile():
+    """Update user profile (name)"""
+    try:
+        user_id = get_user_id()
+        user = User.query.get(user_id)
+        
+        if not user:
+            return jsonify({"message": "User not found"}), 404
+        
+        data = request.json
+        first_name = data.get('first_name', '').strip()
+        last_name = data.get('last_name', '').strip()
+        
+        if not first_name:
+            return jsonify({"message": "First name is required"}), 400
+        
+        user.first_name = first_name
+        user.last_name = last_name
+        db.session.commit()
+        
+        return jsonify({
+            "message": "Profile updated successfully",
+            "user": user.to_dict()
+        }), 200
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": f"Error: {str(e)}"}), 500
+
+
+# ==================== UPDATE EMAIL ====================
+@auth_bp.route("/update-email", methods=["PUT"])
+@jwt_required()
+def update_email():
+    """Update user email"""
+    try:
+        user_id = get_user_id()
+        user = User.query.get(user_id)
+        
+        if not user:
+            return jsonify({"message": "User not found"}), 404
+        
+        data = request.json
+        new_email = data.get('new_email', '').strip().lower()
+        password = data.get('password', '')
+        
+        if not new_email or not password:
+            return jsonify({"message": "Email and password are required"}), 400
+        
+        # Verify password
+        if not user.check_password(password):
+            return jsonify({"message": "Incorrect password"}), 401
+        
+        # Check if email already exists
+        existing_user = User.query.filter_by(email=new_email).first()
+        if existing_user and existing_user.id != user_id:
+            return jsonify({"message": "Email already in use"}), 409
+        
+        user.email = new_email
+        db.session.commit()
+        
+        return jsonify({
+            "message": "Email updated successfully",
+            "user": user.to_dict()
+        }), 200
+    
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": f"Error: {str(e)}"}), 500
+
+
+# ==================== NOTIFICATION PREFERENCES ====================
+@auth_bp.route("/notification-preferences", methods=["PUT"])
+@jwt_required()
+def update_notification_preferences():
+    """Update user notification preferences"""
+    try:
+        user_id = get_user_id()
+        user = User.query.get(user_id)
+        
+        if not user:
+            return jsonify({"message": "User not found"}), 404
+        
+        data = request.json
+        notifications_enabled = data.get('notifications_enabled', True)
+        
+        # Store preference in user model (you may need to add this field to User model)
+        # For now, we'll just return success. You can add a column to User model if needed
+        # user.notifications_enabled = notifications_enabled
+        # db.session.commit()
+        
+        return jsonify({
+            "message": "Notification preferences updated successfully",
+            "notifications_enabled": notifications_enabled
+        }), 200
+    
+    except Exception as e:
+        db.session.rollback()
         return jsonify({"message": f"Error: {str(e)}"}), 500

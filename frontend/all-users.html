@@ -83,10 +83,10 @@
                             <input type="text" placeholder="Search">
                         </div>
                         <select class="sort-dropdown">
-                            <option>Sort by: Newest</option>
-                            <option>Sort by: Oldest</option>
-                            <option>Sort by: Name A-Z</option>
-                            <option>Sort by: Name Z-A</option>
+                            <option value="newest">Sort by: Newest</option>
+                            <option value="oldest">Sort by: Oldest</option>
+                            <option value="name_asc">Sort by: Name A-Z</option>
+                            <option value="name_desc">Sort by: Name Z-A</option>
                         </select>
                     </div>
                 </div>
@@ -143,17 +143,21 @@
         mobileToggle.addEventListener('click', toggleMobileMenu);
         overlay.addEventListener('click', toggleMobileMenu);
         
-        // Update current date
-        document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-        });
+        // Update current date (if element exists)
+        const currentDateEl = document.getElementById('current-date');
+        if (currentDateEl) {
+            currentDateEl.textContent = new Date().toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        }
 
         // State variables
         let currentPage = 1;
         let totalPages = 1;
         let searchTerm = '';
+        let sortBy = 'newest';
         const perPage = 10;
 
         // Format date
@@ -168,7 +172,7 @@
         }
 
         // Load users from API
-        async function loadUsers(page = 1, search = '') {
+        async function loadUsers(page = 1, search = '', sort = 'newest') {
             try {
                 const token = localStorage.getItem('access_token');
                 if (!token) {
@@ -182,6 +186,7 @@
                 if (search) {
                     url.searchParams.append('search', search);
                 }
+                url.searchParams.append('sort_by', sort);
 
                 const response = await fetch(url, {
                     method: 'GET',
@@ -301,7 +306,7 @@
         // Change page
         function changePage(page) {
             if (page >= 1 && page <= totalPages) {
-                loadUsers(page, searchTerm);
+                loadUsers(page, searchTerm, sortBy);
             }
         }
 
@@ -312,14 +317,15 @@
             searchTerm = e.target.value;
             searchTimeout = setTimeout(() => {
                 currentPage = 1;
-                loadUsers(1, searchTerm);
+                loadUsers(1, searchTerm, sortBy);
             }, 500);
         });
 
         // Sort functionality
         document.querySelector('.sort-dropdown').addEventListener('change', function(e) {
-            // Implement sorting logic here if needed
-            console.log('Sort by:', e.target.value);
+            sortBy = e.target.value;
+            currentPage = 1;
+            loadUsers(1, searchTerm, sortBy);
         });
 
         // Initial load

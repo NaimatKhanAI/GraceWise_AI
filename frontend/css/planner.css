@@ -1,0 +1,1075 @@
+/* ========================================
+   WEEKLY PLANNER STYLES
+   ======================================== */
+
+/* Page Container */
+.page-container {
+    padding: 32px;
+}
+
+/* Section Header */
+.section-header {
+    margin-bottom: 24px;
+}
+
+.section-header-left h1 {
+    font-size: 28px;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.section-header-left h1 i {
+    color: #b59c61;
+}
+
+.section-header-left p {
+    color: #718096;
+    font-size: 14px;
+}
+
+/* Planner Header */
+.planner-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, #fff5f2 0%, #fef9f5 100%);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.planner-controls {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.date-selector,
+.date-range {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.date-selector label,
+.date-range label {
+    font-weight: 500;
+    color: #2c3e50;
+    white-space: nowrap;
+}
+
+.date-selector select,
+.date-range input {
+    padding: 0.6rem 1rem;
+    border: 1px solid #e0e6ed;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background: white;
+    color: #2c3e50;
+    font-family: 'Inter', sans-serif;
+}
+
+.date-selector select {
+    min-width: 150px;
+    cursor: pointer;
+}
+
+.date-range input {
+    width: 140px;
+}
+
+.date-range span {
+    color: #7f8c8d;
+    font-weight: 500;
+}
+
+.view-toggle {
+    display: flex;
+    gap: 0.5rem;
+    background: white;
+    padding: 0.5rem;
+    border-radius: 8px;
+    border: 1px solid #e0e6ed;
+}
+
+.view-btn {
+    padding: 0.6rem 0.8rem;
+    border: none;
+    background: transparent;
+    color: #7f8c8d;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.view-btn:hover {
+    background: #fff5f2;
+    color: #5a6c7d;
+}
+
+.view-btn.active {
+    background: linear-gradient(135deg, #b59c61, #d4af37);
+    color: white;
+}
+
+/* Week Navigation */
+.week-navigation {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #e0e6ed;
+}
+
+.week-display {
+    font-weight: 600;
+    color: #2c3e50;
+    min-width: 200px;
+    text-align: center;
+    font-size: 1rem;
+}
+
+.btn-icon {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #e0e6ed;
+    background: white;
+    color: #b59c61;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.btn-icon:hover {
+    background: #fff5f2;
+    border-color: #b59c61;
+}
+
+.btn-icon:active {
+    transform: scale(0.95);
+}
+
+/* Planner Grid */
+.planner-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.75rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e0e6ed;
+    overflow-x: auto;
+}
+
+.planner-grid.weekly-view {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+/* Day Column Container */
+.day-column-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 200px;
+    max-height: 600px;
+    border: 1px solid #e0e6ed;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fafbfc;
+}
+
+/* Time Column - Not used in new layout */
+.time-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.time-header {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.9rem;
+    border-bottom: 2px solid #e0e6ed;
+}
+
+.time-slot {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #7f8c8d;
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 0.5rem;
+}
+
+/* Day Content Area */
+.day-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 0.75rem;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.day-plan-item {
+    width: 100%;
+}
+
+.empty-day-slot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60px;
+    border: 2px dashed #e0e6ed;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.empty-day-slot:hover {
+    border-color: #b59c61;
+    background: rgba(181, 156, 97, 0.05);
+}
+
+.empty-day-text {
+    color: #bdc3c7;
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+/* Day Column */
+.day-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.day-header {
+    height: 50px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 0.4rem;
+    border-bottom: 2px solid #e0e6ed;
+    background: linear-gradient(135deg, #f8faff 0%, #fff5f2 100%);
+}
+
+.day-name {
+    font-weight: 700;
+    color: #2c3e50;
+    font-size: 0.85rem;
+}
+
+.day-date {
+    font-size: 0.7rem;
+    color: #7f8c8d;
+    margin-top: 0.2rem;
+}
+
+.day-slot {
+    height: 80px;
+    position: relative;
+    border: 1px solid #e0e6ed;
+    border-radius: 6px;
+    padding: 0.5rem;
+    background: #fafbfc;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.day-slot:hover {
+    background: #fff5f2;
+    border-color: #b59c61;
+    box-shadow: 0 2px 8px rgba(181, 156, 97, 0.1);
+}
+
+.day-slot.has-plan {
+    background: white;
+    padding: 0;
+    border: none;
+}
+
+.day-slot.empty-with-hover:hover {
+    border: 2px dashed #b59c61;
+    background: #fff5f2;
+}
+
+/* Daily View Styles */
+.planner-grid.daily-view {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.planner-grid.daily-view .daily-plan-item {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: white;
+    border: 1px solid #e0e6ed;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.planner-grid.daily-view .daily-plan-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.daily-plan-date {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e0e6ed;
+    margin-bottom: 0.5rem;
+}
+
+.planner-grid.daily-view .planner-card {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Planner Card */
+.planner-card {
+    width: 100%;
+    padding: 0.65rem 0.7rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    overflow: hidden;
+    position: relative;
+    border-left: 4px solid;
+    min-height: 65px;
+}
+
+.planner-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.planner-card-time {
+    font-size: 0.7rem;
+    font-weight: 700;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+    margin-bottom: 0.2rem;
+}
+
+.planner-card-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+}
+
+.planner-card-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.25;
+    margin: 0;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.planner-card-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.3;
+    margin: 0;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.planner-card-subtitle {
+    font-size: 0.7rem;
+    opacity: 0.75;
+    line-height: 1.15;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+}
+
+.planner-card-actions {
+    display: flex;
+    gap: 0.3rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    margin-top: 0.25rem;
+}
+
+.planner-card:hover .planner-card-actions {
+    opacity: 1;
+}
+
+.card-action-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: rgba(255, 255, 255, 0.8);
+    color: inherit;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    transition: all 0.2s ease;
+}
+
+.card-action-btn:hover {
+    background: white;
+    transform: scale(1.1);
+}
+
+/* Subject Color Classes */
+.planner-card.mathematics {
+    background: linear-gradient(135deg, #e8f0fe 0%, #f3f6ff 100%);
+    color: #1a4d9e;
+    border-left-color: #1a4d9e;
+}
+
+.planner-card.english {
+    background: linear-gradient(135deg, #f3e8f6 0%, #faf3ff 100%);
+    color: #6b2e6f;
+    border-left-color: #9b59b6;
+}
+
+.planner-card.science {
+    background: linear-gradient(135deg, #e8f6f3 0%, #f3faf8 100%);
+    color: #1d5e5e;
+    border-left-color: #16a085;
+}
+
+.planner-card.history {
+    background: linear-gradient(135deg, #fff3e8 0%, #fffaf3 100%);
+    color: #8b4513;
+    border-left-color: #cd7f32;
+}
+
+.planner-card.geography {
+    background: linear-gradient(135deg, #e8f8f3 0%, #f3fbf8 100%);
+    color: #1d6e5e;
+    border-left-color: #27ae60;
+}
+
+.planner-card.art {
+    background: linear-gradient(135deg, #ffe8f0 0%, #fff3f8 100%);
+    color: #8b1538;
+    border-left-color: #e91e63;
+}
+
+.planner-card.pe {
+    background: linear-gradient(135deg, #ffe8e8 0%, #fff3f3 100%);
+    color: #8b1a1a;
+    border-left-color: #e74c3c;
+}
+
+.planner-card.music {
+    background: linear-gradient(135deg, #f3e8ff 0%, #faf3ff 100%);
+    color: #5a2d82;
+    border-left-color: #8e44ad;
+}
+
+.planner-card.study {
+    background: linear-gradient(135deg, #fffbe8 0%, #fffdf3 100%);
+    color: #8b7e1a;
+    border-left-color: #f39c12;
+}
+
+.planner-card.break {
+    background: linear-gradient(135deg, #f0fff0 0%, #f8fff8 100%);
+    color: #1a5e1a;
+    border-left-color: #27ae60;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 12px;
+    border: 2px dashed #e0e6ed;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    color: #bdc3c7;
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    font-size: 1.3rem;
+}
+
+.empty-state p {
+    color: #7f8c8d;
+    margin-bottom: 1.5rem;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+}
+
+.modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: none;
+}
+
+.modal-overlay.active {
+    display: block;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease;
+    z-index: 1001;
+}
+
+.modal-lg {
+    max-width: 700px;
+}
+
+.modal-md {
+    max-width: 600px;
+}
+
+.modal-sm {
+    max-width: 400px;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem;
+    border-bottom: 1px solid #e0e6ed;
+    gap: 1rem;
+}
+
+.modal-header h2 {
+    color: #2c3e50;
+    font-size: 1.3rem;
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: #7f8c8d;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+}
+
+.modal-close:hover {
+    background: #fff5f2;
+    color: #2c3e50;
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 1.5rem 2rem;
+    border-top: 1px solid #e0e6ed;
+    background: #fff5f2;
+}
+
+/* Form Styles */
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.95rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 0.75rem 1rem;
+    border: 1px solid #e0e6ed;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: 'Inter', sans-serif;
+    color: #2c3e50;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #b59c61;
+    box-shadow: 0 0 0 3px rgba(181, 156, 97, 0.1);
+    background: white;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e0e6ed;
+}
+
+/* Plan Details View */
+.plan-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.plan-detail-item {
+    display: flex;
+    gap: 1rem;
+}
+
+.plan-detail-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    background: #fff5f2;
+    color: #b59c61;
+    flex-shrink: 0;
+}
+
+.plan-detail-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.plan-detail-label {
+    font-size: 0.85rem;
+    color: #7f8c8d;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.plan-detail-value {
+    font-size: 1rem;
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+.plan-detail-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: fit-content;
+    padding: 0.5rem 0.75rem;
+    background: #fff5f2;
+    color: #b59c61;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 1400px) {
+    .planner-grid {
+        gap: 0.6rem;
+        padding: 0.85rem;
+    }
+    
+    .day-column-container {
+        min-height: 180px;
+        max-height: 500px;
+    }
+}
+
+@media (max-width: 1200px) {
+    .planner-grid {
+        grid-template-columns: repeat(7, 1fr);
+        gap: 0.5rem;
+        padding: 0.75rem;
+    }
+
+    .day-header {
+        height: 45px;
+        padding: 0.4rem 0.25rem;
+    }
+
+    .day-name {
+        font-size: 0.8rem;
+    }
+
+    .day-date {
+        font-size: 0.65rem;
+    }
+
+    .day-content {
+        padding: 0.6rem;
+        gap: 0.45rem;
+    }
+    
+    .day-column-container {
+        min-height: 160px;
+        max-height: 450px;
+    }
+
+    .planner-card {
+        padding: 0.55rem 0.6rem;
+        min-height: 60px;
+    }
+
+    .planner-card-title {
+        font-size: 0.76rem;
+        -webkit-line-clamp: 1;
+    }
+
+    .planner-card-time {
+        font-size: 0.65rem;
+    }
+
+    .planner-card-subtitle {
+        font-size: 0.65rem;
+    }
+}
+
+@media (max-width: 992px) {
+    .planner-grid {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.75rem;
+    }
+
+    .day-column-container {
+        min-height: 150px;
+        max-height: 400px;
+    }
+
+    .day-header {
+        height: 48px;
+    }
+
+    .day-content {
+        min-height: 100px;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-container {
+        padding: 16px;
+    }
+
+    .planner-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+        padding: 1.25rem;
+    }
+
+    .planner-controls {
+        flex-direction: column;
+    }
+
+    .date-selector,
+    .date-range {
+        width: 100%;
+    }
+
+    .date-selector select,
+    .date-range input {
+        width: 100%;
+    }
+
+    .view-toggle {
+        justify-content: center;
+    }
+
+    .week-navigation {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .week-display {
+        width: 100%;
+    }
+
+    .planner-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.65rem;
+        padding: 0.65rem;
+    }
+    
+    .day-column-container {
+        min-height: 140px;
+        max-height: 350px;
+    }
+    
+    .day-content {
+        padding: 0.5rem;
+        gap: 0.4rem;
+    }
+    
+    .planner-card {
+        padding: 0.5rem;
+        min-height: 55px;
+    }
+    
+    .planner-card-time {
+        font-size: 0.6rem;
+    }
+    
+    .planner-card-title {
+        font-size: 0.74rem;
+    }
+
+    .modal-content {
+        width: 95%;
+        max-height: 85vh;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-footer {
+        flex-direction: column;
+    }
+
+    .btn-secondary,
+    .btn-primary,
+    .btn-outline-danger {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-container {
+        padding: 12px;
+    }
+
+    .planner-header {
+        padding: 1rem;
+    }
+    
+    .planner-grid {
+        grid-template-columns: 1fr;
+        gap: 0.6rem;
+        padding: 0.6rem;
+    }
+    
+    .day-column-container {
+        min-height: 130px;
+        max-height: 300px;
+    }
+
+    .section-header h1,
+    .section-header-left h1 {
+        font-size: 1.5rem;
+    }
+
+    .section-header p,
+    .section-header-left p {
+        font-size: 0.85rem;
+    }
+
+    .modal-header {
+        padding: 1.5rem;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-footer {
+        padding: 1rem 1.5rem;
+    }
+
+    .form-group label {
+        font-size: 0.9rem;
+    }
+
+    .form-group input,
+    .form-group select {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Utility Classes */
+.btn-primary {
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #b59c61, #d4af37);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #a88b52, #c9a332);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(181, 156, 97, 0.3);
+}
+
+.btn-secondary {
+    padding: 0.75rem 1.5rem;
+    background: #fff5f2;
+    color: #b59c61;
+    border: 1px solid #e8d9c6;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.btn-secondary:hover {
+    background: #f5ebe0;
+    border-color: #b59c61;
+}
+
+.btn-danger {
+    padding: 0.75rem 1.5rem;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-danger:hover {
+    background: #c0392b;
+}
+
+.btn-outline-danger {
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    color: #e74c3c;
+    border: 1px solid #e74c3c;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-danger:hover {
+    background: #ffe8e8;
+    border-color: #c0392b;
+    color: #c0392b;
+}
