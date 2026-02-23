@@ -102,7 +102,7 @@ class AuthSystem {
     // Check access permissions
     checkAccess() {
         const currentPage = window.location.pathname.split('/').pop();
-        const adminPages = ['admin-dashboard.html', 'all-users.html', 'admin-curriculum.html'];
+        const adminPages = ['admin-dashboard.html', 'all-users.html', 'admin-curriculum.html', 'admin-quiz.html', 'admin-settings.html'];
         
         if (adminPages.includes(currentPage)) {
             if (!this.isLoggedIn() || !this.currentUser.is_admin) {

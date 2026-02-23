@@ -42,6 +42,10 @@
                 <i class="fas fa-question-circle"></i>
                 <span>Quiz Management</span>
             </a>
+            <a href="admin-settings.html" class="nav-item">
+                <i class="fas fa-sliders-h"></i>
+                <span>AI Settings</span>
+            </a>
         </nav>
 
         <div class="sidebar-footer">
@@ -98,11 +102,12 @@
                             <th>Email</th>
                             <th>Registered Date</th>
                             <th>Status</th>
+                            <th>Access</th>
                         </tr>
                     </thead>
                     <tbody id="users-table-body">
                         <tr>
-                            <td colspan="4" class="text-center">Loading users...</td>
+                            <td colspan="5" class="text-center">Loading users...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -180,7 +185,7 @@
                     return;
                 }
 
-                const url = new URL('http://localhost:5000/auth/all-users');
+                const url = new URL(`${window.API_BASE_URL}/auth/all-users`);
                 url.searchParams.append('page', page);
                 url.searchParams.append('per_page', perPage);
                 if (search) {
@@ -215,7 +220,7 @@
                 console.error('Error loading users:', error);
                 document.getElementById('users-table-body').innerHTML = `
                     <tr>
-                        <td colspan="4" style="text-align: center; padding: 20px; color: #dc2626;">
+                        <td colspan="5" style="text-align: center; padding: 20px; color: #dc2626;">
                             Failed to load users. Please try again.
                         </td>
                     </tr>
@@ -230,7 +235,7 @@
             if (users.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="4" style="text-align: center; padding: 20px;">
+                        <td colspan="5" style="text-align: center; padding: 20px;">
                             No users found.
                         </td>
                     </tr>
@@ -248,8 +253,47 @@
                             ${user.is_active ? 'Active' : 'Inactive'}
                         </span>
                     </td>
+                    <td>
+                        <button onclick="toggleUserActive(${user.id}, ${user.is_active ? 'false' : 'true'})">
+                            ${user.is_active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button onclick="toggleUserAdmin(${user.id}, ${user.is_admin ? 'false' : 'true'})">
+                            ${user.is_admin ? 'Remove Admin' : 'Make Admin'}
+                        </button>
+                    </td>
                 </tr>
             `).join('');
+        }
+
+        async function toggleUserActive(userId, isActive) {
+            await updateUserAccess(userId, { is_active: isActive });
+        }
+
+        async function toggleUserAdmin(userId, isAdmin) {
+            await updateUserAccess(userId, { is_admin: isAdmin });
+        }
+
+        async function updateUserAccess(userId, payload) {
+            try {
+                const token = localStorage.getItem('access_token');
+                const response = await fetch(`${window.API_BASE_URL}/auth/admin/users/${userId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || 'Update failed');
+                }
+
+                loadUsers(currentPage, searchTerm, sortBy);
+            } catch (error) {
+                alert(error.message || 'Failed to update user access');
+            }
         }
 
         // Update pagination info and controls

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Settings - Gracewise</title>
+    <link rel="stylesheet" href="css/admin-sidebar.css">
+    <link rel="stylesheet" href="css/admin-settings.css">
+    <link rel="stylesheet" href="css/toast.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="js/toast.js" defer></script>
+    <script src="js/auth.js" defer></script>
+    <script src="js/config.js"></script>
+    <script src="js/admin-settings.js" defer></script>
+</head>
+<body>
+    <div class="mobile-menu-toggle">
+        <i class="fas fa-bars"></i>
+    </div>
+    <div class="mobile-overlay"></div>
+
+    <div class="sidebar">
+        <div class="logo">
+            <img src="assest/logo/main_logo.png" alt="Gracewise Logo">
+        </div>
+        <nav class="nav-menu">
+            <a href="admin-dashboard.html" class="nav-item">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="all-users.html" class="nav-item">
+                <i class="fas fa-users"></i>
+                <span>Users</span>
+            </a>
+            <a href="admin-curriculum.html" class="nav-item">
+                <i class="fas fa-book"></i>
+                <span>Curriculum</span>
+            </a>
+            <a href="admin-quiz.html" class="nav-item">
+                <i class="fas fa-question-circle"></i>
+                <span>Quiz Management</span>
+            </a>
+            <a href="admin-settings.html" class="nav-item active">
+                <i class="fas fa-sliders-h"></i>
+                <span>AI Settings</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-section">
+                <a href="#"><i class="fas fa-cog"></i> Settings</a>
+                <a href="#" onclick="auth.logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <header class="header">
+            <div class="search-bar">
+                <i class="fas fa-sliders-h"></i>
+                <input type="text" value="AI Assistant Configuration" readonly>
+            </div>
+            <div class="header-right">
+                <div class="avatar">
+                    <i class="fas fa-user-circle" style="font-size: 32px; color: #b59c61;"></i>
+                </div>
+            </div>
+        </header>
+
+        <div class="settings-container">
+            <div class="settings-card">
+                <div class="settings-header">
+                    <h1>AI Assistant Prompt</h1>
+                    <p>Admin can update the assistant system prompt from here.</p>
+                </div>
+                <form id="aiPromptForm">
+                    <label for="aiPromptInput">System Prompt</label>
+                    <textarea id="aiPromptInput" rows="16" placeholder="Loading prompt..." required></textarea>
+                    <div class="settings-actions">
+                        <button type="button" class="btn-secondary" id="resetPromptBtn">Reset to Default</button>
+                        <button type="submit" class="btn-primary" id="savePromptBtn">Save Prompt</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

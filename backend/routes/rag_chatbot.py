@@ -8,6 +8,20 @@ from datetime import datetime
 os.environ["LANGCHAIN_TRACING_V2"] = "false"
 
 rag_bp = Blueprint('rag', __name__, url_prefix="/rag")
+AI_PROMPT_KEY = "ai_assistant_system_prompt"
+DEFAULT_AI_PROMPT = """You are GraceWise, a warm, friendly, faith-based Christian homeschool helper who responds in a natural, human-like way.
+
+Purpose: Support and encourage homeschooling moms with spiritual guidance and practical academic help.
+
+Guidelines:
+- Be kind, simple, and faith-centered.
+- Include Scripture or gentle encouragement when helpful.
+- Give clear homeschooling advice (lessons, schedules, motivation).
+- Respond warmly to greetings, thanks, or casual messages (e.g., hi, hello) with friendly, human conversation.
+- Use provided context when relevant.
+- Avoid negativity.
+- End with an uplifting line like: "You're doing great - keep trusting God!"
+"""
 
 # Configure upload settings
 UPLOAD_FOLDER = 'documents'
@@ -21,6 +35,29 @@ if not os.path.exists(UPLOAD_FOLDER):
 # Global variables for lazy initialization
 vector_data = None
 llm_cache = None
+
+
+def get_user_id():
+    user_id = get_jwt_identity()
+    if isinstance(user_id, str):
+        user_id = int(user_id)
+    return user_id
+
+
+def is_admin_user():
+    from models import User
+
+    user = User.query.get(get_user_id())
+    return bool(user and user.is_admin)
+
+
+def get_ai_system_prompt():
+    from models import AppSetting
+
+    setting = AppSetting.query.filter_by(setting_key=AI_PROMPT_KEY).first()
+    if setting and setting.setting_value and setting.setting_value.strip():
+        return setting.setting_value
+    return DEFAULT_AI_PROMPT
 
 
 def allowed_file(filename):
@@ -55,6 +92,50 @@ def health_check():
         }), 200
     except Exception as e:
         return jsonify({"status": "unhealthy", "error": str(e)}), 500
+
+
+@rag_bp.route("/admin/prompt", methods=["GET"])
+@jwt_required()
+def get_admin_prompt():
+    if not is_admin_user():
+        return jsonify({"message": "Admin access required"}), 403
+
+    return jsonify({
+        "setting_key": AI_PROMPT_KEY,
+        "prompt": get_ai_system_prompt()
+    }), 200
+
+
+@rag_bp.route("/admin/prompt", methods=["PUT"])
+@jwt_required()
+def update_admin_prompt():
+    if not is_admin_user():
+        return jsonify({"message": "Admin access required"}), 403
+
+    data = request.json or {}
+    prompt = (data.get("prompt") or "").strip()
+
+    if not prompt:
+        return jsonify({"message": "Prompt cannot be empty"}), 400
+
+    if len(prompt) > 12000:
+        return jsonify({"message": "Prompt is too long (max 12000 chars)"}), 400
+
+    from models import db, AppSetting
+
+    setting = AppSetting.query.filter_by(setting_key=AI_PROMPT_KEY).first()
+    if not setting:
+        setting = AppSetting(setting_key=AI_PROMPT_KEY, setting_value=prompt)
+        db.session.add(setting)
+    else:
+        setting.setting_value = prompt
+
+    db.session.commit()
+
+    return jsonify({
+        "message": "AI prompt updated successfully",
+        "prompt": setting.setting_value
+    }), 200
 
 
 def get_llm():
@@ -205,6 +286,18 @@ def ask():
             from langchain_core.messages import SystemMessage, HumanMessage
             
             print("Invoking LLM...")
+            dynamic_prompt = get_ai_system_prompt()
+            try:
+                response = llm.invoke([
+                    SystemMessage(content=dynamic_prompt),
+                    HumanMessage(content=question)
+                ])
+                print(f"LLM response received: {len(response.content)} chars")
+                return jsonify({"answer": response.content, "sources_count": 0}), 200
+            except Exception as llm_error:
+                print(f"LLM invocation error: {llm_error}")
+                return jsonify({"answer": f"❌ Error calling LLM: {str(llm_error)}"}), 500
+
             try:
                 response = llm.invoke([
                     SystemMessage(content="""You are GraceWise — a warm, friendly, faith-based Christian homeschool helper who responds in a natural, human-like way.
@@ -249,6 +342,18 @@ Guidelines:
         
         # Call LLM using LangChain
         from langchain_core.messages import SystemMessage, HumanMessage
+        dynamic_prompt_with_context = (
+            get_ai_system_prompt()
+            + "\n\nAnswer based on the context provided below. If the answer is not in the context, "
+            + "provide helpful Christian homeschooling guidance based on your knowledge."
+        )
+
+        response = llm.invoke([
+            SystemMessage(content=dynamic_prompt_with_context),
+            HumanMessage(content=f"Context:\n{context}\n\nQuestion: {question}")
+        ])
+
+        return jsonify({"answer": response.content, "sources_count": 3}), 200
 
         response = llm.invoke([
             SystemMessage(content="""You are GraceWise — a warm, friendly, faith-based Christian homeschool helper who responds in a natural, human-like way.
@@ -278,9 +383,13 @@ Answer based on the context provided below. If the answer is not in the context,
 
 # ==================== UPLOAD PDF ====================
 @rag_bp.route("/upload", methods=["POST"])
+@jwt_required()
 def upload_document():
     """Upload PDF document for RAG system"""
     try:
+        if not is_admin_user():
+            return jsonify({"message": "Admin access required"}), 403
+
         if 'file' not in request.files:
             return jsonify({"message": "No file provided"}), 400
         
@@ -321,9 +430,13 @@ def upload_document():
 
 # ==================== LIST DOCUMENTS ====================
 @rag_bp.route("/documents", methods=["GET"])
+@jwt_required()
 def list_documents():
     """List all uploaded PDF documents"""
     try:
+        if not is_admin_user():
+            return jsonify({"message": "Admin access required"}), 403
+
         if not os.path.exists(UPLOAD_FOLDER):
             return jsonify({"documents": [], "count": 0}), 200
         
@@ -359,9 +472,13 @@ def list_documents():
 
 # ==================== DELETE DOCUMENT ====================
 @rag_bp.route("/documents/<filename>", methods=["DELETE"])
+@jwt_required()
 def delete_document(filename):
     """Delete an uploaded PDF document"""
     try:
+        if not is_admin_user():
+            return jsonify({"message": "Admin access required"}), 403
+
         # Prevent directory traversal attacks
         if '/' in filename or '\\' in filename or filename.startswith('.'):
             return jsonify({"message": "Invalid filename"}), 400
@@ -388,9 +505,13 @@ def delete_document(filename):
 
 # ==================== GET RAG STATUS ====================
 @rag_bp.route("/status", methods=["GET"])
+@jwt_required()
 def rag_status():
     """Get RAG system status"""
     try:
+        if not is_admin_user():
+            return jsonify({"message": "Admin access required"}), 403
+
         doc_count = 0
         total_size = 0
         

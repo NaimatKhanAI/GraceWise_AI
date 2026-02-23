@@ -40,8 +40,8 @@ def handle_options_preflight():
 # app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:@localhost/gracewise"
 # app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///gracewise.db')
 
-# app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:@localhost/gracewise"
-app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://graceuser:StrongPass123!@localhost/gracewise"
+app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:@localhost/gracewise"
+# app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://graceuser:StrongPass123!@localhost/gracewise"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # JWT Configuration
@@ -108,7 +108,8 @@ with app.app_context():
         db.session.rollback()
     
     # Initialize admin user
-    from models import User
+    from models import User, AppSetting
+    from routes.rag_chatbot import AI_PROMPT_KEY, DEFAULT_AI_PROMPT
     admin_email = "admin@grace-wise.com"
     admin = User.query.filter_by(email=admin_email).first()
     
@@ -129,6 +130,13 @@ with app.app_context():
         print("="*50 + "\n")
     else:
         print(f"\nAdmin user already exists: {admin_email}\n")
+
+    prompt_setting = AppSetting.query.filter_by(setting_key=AI_PROMPT_KEY).first()
+    if not prompt_setting:
+        prompt_setting = AppSetting(setting_key=AI_PROMPT_KEY, setting_value=DEFAULT_AI_PROMPT)
+        db.session.add(prompt_setting)
+        db.session.commit()
+        print("Default AI prompt initialized.")
 
 #Initialize RAG system on startup
 with app.app_context():

@@ -21,6 +21,10 @@ def dashboard_summary():
     # Get current admin's details
     user_id = get_user_id()
     current_user = User.query.get(user_id)
+
+    if not current_user or not current_user.is_admin:
+        return jsonify({"message": "Admin access required"}), 403
+
     admin_name = current_user.first_name if current_user else "Admin"
     
     total_users = User.query.count()

@@ -181,6 +181,51 @@ def get_all_users():
         return jsonify({"message": f"Error: {str(e)}"}), 500
 
 
+# ==================== ADMIN UPDATE USER ACCESS ====================
+@auth_bp.route("/admin/users/<int:target_user_id>", methods=["PATCH"])
+@jwt_required()
+def admin_update_user_access(target_user_id):
+    """Allow admin to update user access flags"""
+    try:
+        admin_id = get_user_id()
+        admin_user = User.query.get(admin_id)
+
+        if not admin_user or not admin_user.is_admin:
+            return jsonify({"message": "Admin access required"}), 403
+
+        target_user = User.query.get(target_user_id)
+        if not target_user:
+            return jsonify({"message": "User not found"}), 404
+
+        data = request.json or {}
+        changed = False
+
+        if "is_active" in data:
+            target_user.is_active = bool(data["is_active"])
+            changed = True
+
+        if "is_admin" in data:
+            requested_admin = bool(data["is_admin"])
+            if target_user.id == admin_user.id and requested_admin is False:
+                return jsonify({"message": "You cannot remove your own admin access"}), 400
+            target_user.is_admin = requested_admin
+            changed = True
+
+        if not changed:
+            return jsonify({"message": "No valid fields provided"}), 400
+
+        db.session.commit()
+
+        return jsonify({
+            "message": "User access updated successfully",
+            "user": target_user.to_dict()
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": f"Error: {str(e)}"}), 500
+
+
 # ==================== UPDATE USER ====================
 @auth_bp.route("/update", methods=["PUT"])
 @jwt_required()

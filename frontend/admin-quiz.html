@@ -400,6 +400,10 @@
                 <i class="fas fa-question-circle"></i>
                 <span>Quiz Management</span>
             </a>
+            <a href="admin-settings.html" class="nav-item">
+                <i class="fas fa-sliders-h"></i>
+                <span>AI Settings</span>
+            </a>
         </nav>
 
         <div class="sidebar-footer">
@@ -535,6 +539,10 @@
             }
         }
 
+        function getAccessToken() {
+            return localStorage.getItem('access_token') || localStorage.getItem('accessToken');
+        }
+
         // Run after deferred scripts are loaded
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', verifyAdminAccess);
@@ -619,7 +627,7 @@
             formData.append('file', file);
 
             try {
-                const token = localStorage.getItem('accessToken');
+                const token = getAccessToken();
                 
                 if (!token) {
                     showError('You are not authenticated. Please login again.');
@@ -672,7 +680,7 @@
         // Load uploaded files
         async function loadUploadedFiles() {
             try {
-                const token = localStorage.getItem('accessToken');
+                const token = getAccessToken();
                 const response = await fetch(`${window.API_BASE_URL}/quiz/uploaded-documents`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -716,7 +724,7 @@
         // Load documents for quiz generation
         async function loadDocuments() {
             try {
-                const token = localStorage.getItem('accessToken');
+                const token = getAccessToken();
                 const response = await fetch(`${window.API_BASE_URL}/quiz/uploaded-documents`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -759,7 +767,7 @@
             }
 
             try {
-                const token = localStorage.getItem('accessToken');
+                const token = getAccessToken();
                 const response = await fetch(`${window.API_BASE_URL}/quiz/generate-quiz`, {
                     method: 'POST',
                     headers: {
@@ -792,7 +800,7 @@
         // Load quizzes
         async function loadQuizzes() {
             try {
-                const token = localStorage.getItem('accessToken');
+                const token = getAccessToken();
                 const response = await fetch(`${window.API_BASE_URL}/quiz/quizzes`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -855,7 +863,7 @@
             if (!confirm('Are you sure you want to delete this quiz? This cannot be undone.')) return;
 
             try {
-                const token = localStorage.getItem('accessToken');
+                const token = getAccessToken();
                 const response = await fetch(`${window.API_BASE_URL}/quiz/quizzes/${quizId}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
