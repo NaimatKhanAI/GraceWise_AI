@@ -1,4 +1,12 @@
-const API_BASE_URL = window.API_BASE_URL || `${window.location.protocol}//${window.location.hostname}:5000`;
+const API_BASE_URL = (() => {
+    const host = window.location.hostname;
+    const fallback = `${window.location.protocol}//${host}:5000`;
+    const configured = window.API_BASE_URL || "";
+    const onPublicHost = host !== "127.0.0.1" && host !== "localhost";
+    const configuredIsLocal = configured.includes("127.0.0.1") || configured.includes("localhost");
+    if (onPublicHost && configuredIsLocal) return fallback;
+    return configured || fallback;
+})();
 
 function getToken() {
     return localStorage.getItem("access_token") || localStorage.getItem("accessToken");
