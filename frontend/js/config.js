@@ -2,7 +2,7 @@
     if (window.API_BASE_URL) return;
 
     const protocol = window.location.protocol || "http:";
-    const host = window.location.hostname || "127.0.0.1";
+    const host = window.location.hostname || "72.62.35.115" || "127.0.0.1";
     const port = window.location.port;
 
     // If frontend is already served from backend port, reuse current origin.
