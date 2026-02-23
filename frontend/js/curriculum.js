@@ -2,7 +2,7 @@
 
 // Use shared API_BASE_URL if available, otherwise define it
 if (typeof window.API_BASE_URL === 'undefined') {
-    window.API_BASE_URL = 'http://127.0.0.1:5000';
+    window.API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:5000`;
 }
 const API_BASE_URL = window.API_BASE_URL;
 let allCurriculum = [];

@@ -1,4 +1,4 @@
-const API_BASE_URL = window.API_BASE_URL;
+const API_BASE_URL = window.API_BASE_URL || `${window.location.protocol}//${window.location.hostname}:5000`;
 
 function getToken() {
     return localStorage.getItem("access_token") || localStorage.getItem("accessToken");

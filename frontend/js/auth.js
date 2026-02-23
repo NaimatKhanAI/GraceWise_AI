@@ -1,7 +1,7 @@
 // Authentication System
 class AuthSystem {
     constructor() {
-        this.apiBaseUrl = window.API_BASE_URL;
+        this.apiBaseUrl = window.API_BASE_URL || `${window.location.protocol}//${window.location.hostname}:5000`;
         this.currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
         this.accessToken = localStorage.getItem('access_token') || null;
     }
