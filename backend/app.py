@@ -3,9 +3,13 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 import os
 from dotenv import load_dotenv
+from sqlalchemy.engine import URL
 
-# Load environment variables from .env
-load_dotenv(override=True)
+# Load env from both backend/.env and project-root/.env
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, ".."))
+load_dotenv(os.path.join(BASE_DIR, ".env"), override=True)
+load_dotenv(os.path.join(PROJECT_ROOT, ".env"), override=True)
 
 # Disable LangChain tracing/telemetry to avoid Pydantic v1 inference errors on Python 3.14
 os.environ["LANGCHAIN_TRACING_V2"] = "false"
@@ -40,8 +44,18 @@ def handle_options_preflight():
 # app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:@localhost/gracewise"
 # app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///gracewise.db')
 
-# app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:@localhost/gracewise"
-app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://graceuser:StrongPass123!@localhost/gracewise"
+# Prefer explicit URI env vars. Fallback to DB_* parts to avoid hardcoded credentials.
+database_uri = os.environ.get("SQLALCHEMY_DATABASE_URI") or os.environ.get("DATABASE_URL")
+if not database_uri:
+    database_uri = URL.create(
+        drivername="mysql+pymysql",
+        username=os.environ.get("DB_USER", "graceuser"),
+        password=os.environ.get("DB_PASSWORD", "StrongPass123!"),
+        host=os.environ.get("DB_HOST", "localhost"),
+        database=os.environ.get("DB_NAME", "gracewise"),
+    ).render_as_string(hide_password=False)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = database_uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # JWT Configuration
