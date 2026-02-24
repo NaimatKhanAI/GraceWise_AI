@@ -118,9 +118,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const content = document.createElement('div');
         content.className = 'message-content';
-        const p = document.createElement('p');
-        p.innerHTML = marked.parse(text);
-        content.appendChild(p);
+        content.innerHTML = marked.parse(text);
         messageEl.appendChild(content);
 
         if (sender === 'user') {
@@ -192,7 +190,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             if (loadingEl) {
-                const content = loadingEl.querySelector('p');
+                const content = loadingEl.querySelector('.message-content');
                 if (content) content.innerHTML = marked.parse(answer);
             }
         } catch (error) {
@@ -206,7 +204,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             if (loadingEl) {
-                const content = loadingEl.querySelector('p');
+                const content = loadingEl.querySelector('.message-content');
                 if (content) content.textContent = errorMessage;
             }
         } finally {

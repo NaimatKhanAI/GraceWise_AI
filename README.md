@@ -9,6 +9,7 @@ A comprehensive web-based platform designed to support children's spiritual grow
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Installation & Setup](#installation--setup)
+- [Local Development (Windows + Laragon)](#local-development-windows--laragon)
 - [API Endpoints](#api-endpoints)
 - [Frontend Integration](#frontend-integration)
 - [Usage Guide](#usage-guide)
@@ -132,8 +133,18 @@ grace-wise/
    ```
 
 4. **Configure environment variables**
-   Create a `.env` file in the backend directory:
+   Create a `.env` file in the project root (or in `backend/.env`):
    ```
+   FLASK_ENV=development
+   FLASK_DEBUG=true
+   HOST=127.0.0.1
+   PORT=5000
+
+   DB_USER=root
+   DB_PASSWORD=
+   DB_HOST=127.0.0.1
+   DB_NAME=gracewise
+
    OPENAI_API_KEY=your_api_key_here
    # or
    GROQ_API_KEY=your_groq_key_here
@@ -175,6 +186,50 @@ grace-wise/
 
 4. **Open in browser**
    Navigate to `http://localhost:8000/index.html`
+
+## Local Development (Windows + Laragon)
+
+Follow these steps if you are running locally with Laragon.
+
+1. **Start Laragon services**
+   - Open Laragon and start `Apache/Nginx` and `MySQL`.
+
+2. **Create database**
+   ```sql
+   CREATE DATABASE IF NOT EXISTS gracewise CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   ```
+
+3. **Set `.env` correctly**
+   - Use these DB values for common Laragon defaults:
+   ```
+   DB_USER=root
+   DB_PASSWORD=
+   DB_HOST=127.0.0.1
+   DB_NAME=gracewise
+   ```
+   - If `SQLALCHEMY_DATABASE_URI` exists, make sure it matches your local MySQL credentials, otherwise remove it.
+   - Note: the app loads both root `.env` and `backend/.env`. Keep values consistent to avoid conflicts.
+
+4. **Run backend (Terminal 1)**
+   ```powershell
+   cd backend
+   python -m venv venv
+   .\venv\Scripts\Activate.ps1
+   pip install -r requirements.txt
+   python app.py
+   ```
+   Backend URL: `http://127.0.0.1:5000`
+
+5. **Run frontend (Terminal 2)**
+   ```powershell
+   cd frontend
+   python -m http.server 8000
+   ```
+   Frontend URL: `http://127.0.0.1:8000/index.html`
+
+6. **Open admin settings**
+   - `http://127.0.0.1:8000/admin-settings.html`
+   - From this page, admin can update/test OpenAI API key.
 
 ## 🔌 API Endpoints
 
