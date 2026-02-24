@@ -1,4 +1,8 @@
 .env
+backend/.env
+backend/.env.*
+!.env.example
+!backend/.env.example
 check_db.py
 .venv
 __pycache__

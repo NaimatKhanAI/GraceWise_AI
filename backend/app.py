@@ -31,8 +31,17 @@ from routes.quiz import quiz_bp
 #Create Flask app
 app = Flask(__name__)
 
-# Enable CORS for frontend communication
-CORS(app, resources={r"/*": {"origins": "*"}})
+FLASK_ENV = os.environ.get("FLASK_ENV", "development").lower()
+IS_PRODUCTION = FLASK_ENV == "production"
+
+def parse_cors_origins(value: str):
+    raw = (value or "*").strip()
+    if raw == "*":
+        return "*"
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+# Enable CORS for frontend communication (set CORS_ORIGINS in production)
+CORS(app, resources={r"/*": {"origins": parse_cors_origins(os.environ.get("CORS_ORIGINS", "*"))}})
 
 # Always return OK for CORS preflight requests
 @app.before_request
@@ -59,7 +68,10 @@ app.config['SQLALCHEMY_DATABASE_URI'] = database_uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # JWT Configuration
-app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'your-secret-key-change-in-production')
+jwt_secret = os.environ.get('JWT_SECRET_KEY')
+if IS_PRODUCTION and not jwt_secret:
+    raise RuntimeError("JWT_SECRET_KEY is required when FLASK_ENV=production")
+app.config['JWT_SECRET_KEY'] = jwt_secret or 'your-secret-key-change-in-production'
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = False
 app.config['JWT_TOKEN_LOCATION'] = ['headers']
 app.config['JWT_HEADER_NAME'] = 'Authorization'
@@ -124,10 +136,17 @@ with app.app_context():
     # Initialize admin user
     from models import User, AppSetting
     from routes.rag_chatbot import AI_PROMPT_KEY, DEFAULT_AI_PROMPT
-    admin_email = "admin@grace-wise.com"
+    auto_create_admin = os.environ.get("AUTO_CREATE_ADMIN", "true").lower() == "true"
+    admin_email = os.environ.get("ADMIN_EMAIL", "admin@grace-wise.com")
     admin = User.query.filter_by(email=admin_email).first()
-    
-    if not admin:
+
+    if auto_create_admin and not admin:
+        admin_password = os.environ.get("ADMIN_PASSWORD")
+        if IS_PRODUCTION and not admin_password:
+            raise RuntimeError("ADMIN_PASSWORD is required in production when AUTO_CREATE_ADMIN=true")
+        if not admin_password:
+            admin_password = "grace.admin@123"
+
         print("\n" + "="*50)
         print("Creating admin user...")
         print("="*50)
@@ -137,13 +156,16 @@ with app.app_context():
             email=admin_email,
             is_admin=True
         )
-        admin.set_password("grace.admin@123")
+        admin.set_password(admin_password)
         db.session.add(admin)
         db.session.commit()
         print(f"Admin user created: {admin_email}")
         print("="*50 + "\n")
     else:
-        print(f"\nAdmin user already exists: {admin_email}\n")
+        if admin:
+            print(f"\nAdmin user already exists: {admin_email}\n")
+        else:
+            print("\nSkipping admin auto-create (AUTO_CREATE_ADMIN=false).\n")
 
     prompt_setting = AppSetting.query.filter_by(setting_key=AI_PROMPT_KEY).first()
     if not prompt_setting:
@@ -163,5 +185,11 @@ with app.app_context():
 
 #Run the app
 if __name__ == "__main__":
-    app.run(debug=True, use_reloader=False, host='0.0.0.0', port=5000, threaded=True)
+    app.run(
+        debug=os.environ.get("FLASK_DEBUG", "false").lower() == "true",
+        use_reloader=False,
+        host=os.environ.get("HOST", "0.0.0.0"),
+        port=int(os.environ.get("PORT", "5000")),
+        threaded=True,
+    )
 

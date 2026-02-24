@@ -2,19 +2,35 @@
     const protocol = window.location.protocol || "http:";
     const host = window.location.hostname || "127.0.0.1";
     const port = window.location.port;
-    const existing = window.API_BASE_URL || "";
+    const existing = (window.API_BASE_URL || "").trim();
 
-    // If stale localhost value exists on a public host, replace it.
-    const isPublicHost = host !== "127.0.0.1" && host !== "localhost";
-    const hasLocalApi = existing.includes("127.0.0.1") || existing.includes("localhost");
-    if (existing && !(isPublicHost && hasLocalApi)) return;
+    if (existing) {
+        window.API_BASE_URL = existing.replace(/\/+$/, "");
+        return;
+    }
 
-    // If frontend is already served from backend port, reuse current origin.
+    // Allow manual override from HTML meta tag:
+    // <meta name="api-base-url" content="https://your-domain.com/api" />
+    const metaApi = document.querySelector('meta[name="api-base-url"]');
+    const metaValue = (metaApi?.content || "").trim();
+    if (metaValue) {
+        window.API_BASE_URL = metaValue.replace(/\/+$/, "");
+        return;
+    }
+
+    const isLocalHost = host === "127.0.0.1" || host === "localhost";
+
+    // VPS/domain setup: frontend on same domain, backend behind reverse proxy at /api.
+    if (!isLocalHost) {
+        window.API_BASE_URL = `${window.location.origin}/api`;
+        return;
+    }
+
+    // Local development fallback.
     if (port === "5000") {
         window.API_BASE_URL = window.location.origin;
         return;
     }
 
-    // Default backend port for this app.
     window.API_BASE_URL = `${protocol}//${host}:5000`;
 })();
