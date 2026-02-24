@@ -62,6 +62,32 @@ async function loadPrompt() {
     }
 }
 
+async function loadOpenAiKeyStatus() {
+    const statusEl = document.getElementById("openAiKeyStatus");
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/rag/admin/openai-key`, {
+            headers: {
+                "Authorization": `Bearer ${getToken()}`
+            }
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "Failed to load OpenAI key status");
+        }
+
+        statusEl.textContent = data.configured
+            ? "OpenAI key is already configured."
+            : "OpenAI key is not configured yet.";
+    } catch (error) {
+        statusEl.textContent = "Unable to verify OpenAI key status.";
+        if (typeof Toast !== "undefined") {
+            Toast.error(error.message || "Failed to load OpenAI key status");
+        }
+    }
+}
+
 async function savePrompt(event) {
     event.preventDefault();
     const promptInput = document.getElementById("aiPromptInput");
@@ -100,6 +126,47 @@ async function savePrompt(event) {
     }
 }
 
+async function saveOpenAiKey(event) {
+    event.preventDefault();
+    const input = document.getElementById("openAiApiKeyInput");
+    const saveBtn = document.getElementById("saveOpenAiKeyBtn");
+    const statusEl = document.getElementById("openAiKeyStatus");
+    const apiKey = input.value.trim();
+
+    if (!apiKey) {
+        Toast.warning("OpenAI API key cannot be empty");
+        return;
+    }
+
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Saving...";
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/rag/admin/openai-key`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${getToken()}`
+            },
+            body: JSON.stringify({ api_key: apiKey })
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "Failed to save OpenAI key");
+        }
+
+        input.value = "";
+        statusEl.textContent = "OpenAI key is configured and active.";
+        Toast.success("OpenAI API key updated successfully");
+    } catch (error) {
+        Toast.error(error.message || "OpenAI key save failed");
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Save API Key";
+    }
+}
+
 function bindResetButton() {
     const resetBtn = document.getElementById("resetPromptBtn");
     const promptInput = document.getElementById("aiPromptInput");
@@ -135,5 +202,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     initMobileMenu();
     bindResetButton();
     document.getElementById("aiPromptForm").addEventListener("submit", savePrompt);
+    document.getElementById("openAiKeyForm").addEventListener("submit", saveOpenAiKey);
     await loadPrompt();
+    await loadOpenAiKeyStatus();
 });

@@ -13,6 +13,7 @@
     padding: 24px;
     box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
     max-width: 980px;
+    margin-bottom: 20px;
 }
 
 .settings-header h1 {
@@ -49,6 +50,28 @@
     outline: none;
     border-color: #b59c61;
     box-shadow: 0 0 0 3px rgba(181, 156, 97, 0.15);
+}
+
+#openAiApiKeyInput {
+    width: 100%;
+    border: 1px solid #d8d0c1;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 14px;
+    font-family: "Inter", sans-serif;
+}
+
+#openAiApiKeyInput:focus {
+    outline: none;
+    border-color: #b59c61;
+    box-shadow: 0 0 0 3px rgba(181, 156, 97, 0.15);
+}
+
+.field-hint {
+    display: block;
+    margin-top: 8px;
+    color: #6f6758;
+    font-size: 13px;
 }
 
 .settings-actions {

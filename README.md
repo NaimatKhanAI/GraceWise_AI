@@ -380,3 +380,221 @@ For issues, feature requests, or questions:
 ---
 
 **Last Updated**: January 31, 2026
+
+
+
+# 🟢 SSH LOGIN
+
+```bash
+ssh root@YOUR_SERVER_IP
+```
+
+# 📁 PROJECT LOCATION
+
+```bash
+cd /var/www/GraceWise_AI
+```
+
+Backend:
+
+```bash
+cd /var/www/GraceWise_AI/backend
+```
+
+Frontend:
+
+```bash
+cd /var/www/GraceWise_AI/frontend
+```
+
+---
+
+# 🐍 VENV ACTIVATE
+
+Backend folder me:
+
+```bash
+cd /var/www/GraceWise_AI/backend
+source venv/bin/activate
+```
+
+Deactivate:
+
+```bash
+deactivate
+```
+
+---
+
+# 🔄 BACKEND RESTART (MOST USED)
+
+```bash
+systemctl restart gracewise
+```
+
+Status check:
+
+```bash
+systemctl status gracewise
+```
+
+Stop:
+
+```bash
+systemctl stop gracewise
+```
+
+Start:
+
+```bash
+systemctl start gracewise
+```
+
+---
+
+# 📜 LIVE BACKEND LOGS
+
+Live logs:
+
+```bash
+journalctl -u gracewise -f
+```
+
+Last 100 lines:
+
+```bash
+journalctl -u gracewise -n 100 --no-pager
+```
+
+Service status:
+
+```bash
+systemctl status gracewise --no-pager
+```
+
+---
+
+# 🌐 NGINX CONTROL
+
+Restart nginx:
+
+```bash
+systemctl restart nginx
+```
+
+Status:
+
+```bash
+systemctl status nginx
+```
+
+Test config:
+
+```bash
+nginx -t
+```
+
+---
+
+# 📜 NGINX LOGS
+
+Error log:
+
+```bash
+tail -f /var/log/nginx/error.log
+```
+
+Access log:
+
+```bash
+tail -f /var/log/nginx/access.log
+```
+
+---
+
+# 🔍 CHECK PORT 5000 (backend running?)
+
+```bash
+lsof -i:5000
+```
+
+---
+
+# 💀 KILL PORT (if stuck)
+
+```bash
+pkill -f gunicorn
+pkill -f python
+```
+
+Then restart:
+
+```bash
+systemctl restart gracewise
+```
+
+---
+
+# 🧪 DIRECT BACKEND TEST
+
+```bash
+curl http://127.0.0.1:5000
+```
+
+---
+
+# 🔄 UPDATE CODE FROM GITHUB
+
+```bash
+cd /var/www/GraceWise_AI
+git pull
+```
+
+Then restart:
+
+```bash
+systemctl restart gracewise
+```
+
+---
+
+# 🛢 MYSQL LOGIN
+
+```bash
+mysql -u root -p
+```
+
+Show DB:
+
+```sql
+SHOW DATABASES;
+```
+
+Use DB:
+
+```sql
+USE gracewise;
+```
+
+Show tables:
+
+```sql
+SHOW TABLES;
+```
+
+Exit:
+
+```sql
+EXIT;
+```
+
+---
+
+# ⚠️ FULL DEBUG COMMAND (SEND IF ERROR)
+
+```bash
+systemctl status gracewise --no-pager
+journalctl -u gracewise -n 80 --no-pager
+nginx -t
+lsof -i:5000
+```

@@ -83,6 +83,21 @@
                     </div>
                 </form>
             </div>
+
+            <div class="settings-card">
+                <div class="settings-header">
+                    <h1>OpenAI API Key</h1>
+                    <p>Admin can update OpenAI API key from here without editing server files.</p>
+                </div>
+                <form id="openAiKeyForm">
+                    <label for="openAiApiKeyInput">OpenAI API Key</label>
+                    <input id="openAiApiKeyInput" type="password" placeholder="sk-..." autocomplete="off" required>
+                    <small id="openAiKeyStatus" class="field-hint">Checking current status...</small>
+                    <div class="settings-actions">
+                        <button type="submit" class="btn-primary" id="saveOpenAiKeyBtn">Save API Key</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </body>

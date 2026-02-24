@@ -9,6 +9,7 @@ os.environ["LANGCHAIN_TRACING_V2"] = "false"
 
 rag_bp = Blueprint('rag', __name__, url_prefix="/rag")
 AI_PROMPT_KEY = "ai_assistant_system_prompt"
+OPENAI_API_KEY_SETTING = "openai_api_key"
 DEFAULT_AI_PROMPT = """You are GraceWise, a warm, friendly, faith-based Christian homeschool helper who responds in a natural, human-like way.
 
 Purpose: Support and encourage homeschooling moms with spiritual guidance and practical academic help.
@@ -60,6 +61,15 @@ def get_ai_system_prompt():
     return DEFAULT_AI_PROMPT
 
 
+def get_openai_api_key():
+    from models import AppSetting
+
+    setting = AppSetting.query.filter_by(setting_key=OPENAI_API_KEY_SETTING).first()
+    if setting and setting.setting_value and setting.setting_value.strip():
+        return setting.setting_value.strip()
+    return os.environ.get("OPENAI_API_KEY")
+
+
 def allowed_file(filename):
     """Check if file is allowed"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -79,7 +89,7 @@ def health_check():
     """Health check endpoint"""
     try:
         has_groq = bool(os.environ.get("GROQ_API_KEY"))
-        has_openai = bool(os.environ.get("OPENAI_API_KEY"))
+        has_openai = bool(get_openai_api_key())
         has_docs = documents_exist()
         
         return jsonify({
@@ -138,13 +148,61 @@ def update_admin_prompt():
     }), 200
 
 
+@rag_bp.route("/admin/openai-key", methods=["GET"])
+@jwt_required()
+def get_admin_openai_key_status():
+    if not is_admin_user():
+        return jsonify({"message": "Admin access required"}), 403
+
+    openai_key = get_openai_api_key()
+    return jsonify({
+        "setting_key": OPENAI_API_KEY_SETTING,
+        "configured": bool(openai_key and openai_key.strip())
+    }), 200
+
+
+@rag_bp.route("/admin/openai-key", methods=["PUT"])
+@jwt_required()
+def update_admin_openai_key():
+    if not is_admin_user():
+        return jsonify({"message": "Admin access required"}), 403
+
+    data = request.json or {}
+    api_key = (data.get("api_key") or "").strip()
+
+    if not api_key:
+        return jsonify({"message": "OpenAI API key cannot be empty"}), 400
+
+    if len(api_key) < 20:
+        return jsonify({"message": "OpenAI API key looks invalid"}), 400
+
+    from models import db, AppSetting
+
+    setting = AppSetting.query.filter_by(setting_key=OPENAI_API_KEY_SETTING).first()
+    if not setting:
+        setting = AppSetting(setting_key=OPENAI_API_KEY_SETTING, setting_value=api_key)
+        db.session.add(setting)
+    else:
+        setting.setting_value = api_key
+
+    db.session.commit()
+
+    global llm_cache
+    llm_cache = None
+
+    return jsonify({
+        "message": "OpenAI API key updated successfully",
+        "configured": True
+    }), 200
+
+
 def get_llm():
     global llm_cache
     if llm_cache is not None:
         return llm_cache
     
     groq_key = os.environ.get("GROQ_API_KEY")
-    openai_key = os.environ.get("OPENAI_API_KEY")
+    openai_key = get_openai_api_key()
     
     # Check for placeholder values
     if groq_key and "your_" in groq_key:

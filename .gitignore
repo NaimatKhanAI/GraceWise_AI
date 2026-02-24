@@ -6,3 +6,4 @@ backend/.env.*
 check_db.py
 .venv
 __pycache__
+jawad.md
