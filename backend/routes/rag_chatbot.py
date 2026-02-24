@@ -228,7 +228,7 @@ def test_admin_openai_key():
     try:
         llm = ChatOpenAI(
             openai_api_key=api_key,
-            model="gpt-4o-mini",
+            model="gpt-4.1",
             temperature=0,
             timeout=20,
             max_retries=1,
@@ -289,7 +289,7 @@ def get_llm():
         llm_cache = ChatOpenAI(
             openai_api_key=openai_key,
             # model="openai/gpt-oss-120b",
-            model="gpt-4o-mini",
+            model="gpt-4.1",
             # base_url="https://api.canopywave.io/v1",
             temperature=0.2,
             timeout=30,
