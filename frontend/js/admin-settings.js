@@ -63,6 +63,7 @@ async function loadPrompt() {
 }
 
 async function loadOpenAiKeyStatus() {
+    const input = document.getElementById("openAiApiKeyInput");
     const statusEl = document.getElementById("openAiKeyStatus");
 
     try {
@@ -77,10 +78,15 @@ async function loadOpenAiKeyStatus() {
             throw new Error(data.message || "Failed to load OpenAI key status");
         }
 
-        statusEl.textContent = data.configured
-            ? "OpenAI key is already configured."
-            : "OpenAI key is not configured yet.";
+        if (data.configured && data.api_key) {
+            input.value = data.api_key;
+            statusEl.textContent = `OpenAI key is configured (${data.source || "database"}).`;
+        } else {
+            input.value = "";
+            statusEl.textContent = "OpenAI key is not configured yet.";
+        }
     } catch (error) {
+        input.value = "";
         statusEl.textContent = "Unable to verify OpenAI key status.";
         if (typeof Toast !== "undefined") {
             Toast.error(error.message || "Failed to load OpenAI key status");
@@ -156,8 +162,7 @@ async function saveOpenAiKey(event) {
             throw new Error(data.message || "Failed to save OpenAI key");
         }
 
-        input.value = "";
-        statusEl.textContent = "OpenAI key is configured and active.";
+        statusEl.textContent = "OpenAI key is configured and active (database).";
         Toast.success("OpenAI API key updated successfully");
     } catch (error) {
         Toast.error(error.message || "OpenAI key save failed");
@@ -165,6 +170,52 @@ async function saveOpenAiKey(event) {
         saveBtn.disabled = false;
         saveBtn.textContent = "Save API Key";
     }
+}
+
+async function testOpenAiKey() {
+    const input = document.getElementById("openAiApiKeyInput");
+    const testBtn = document.getElementById("testOpenAiKeyBtn");
+    const resultEl = document.getElementById("openAiKeyTestResult");
+    const apiKey = input.value.trim();
+
+    testBtn.disabled = true;
+    testBtn.textContent = "Testing...";
+    resultEl.textContent = "Testing OpenAI key...";
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/rag/admin/openai-key/test`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${getToken()}`
+            },
+            body: JSON.stringify({ api_key: apiKey })
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || data.message || "OpenAI key test failed");
+        }
+
+        resultEl.textContent = `Working: ${data.reply_preview || "reply received"}`;
+        Toast.success("OpenAI key is working");
+    } catch (error) {
+        resultEl.textContent = `Not working: ${error.message}`;
+        Toast.error(error.message || "OpenAI key test failed");
+    } finally {
+        testBtn.disabled = false;
+        testBtn.textContent = "Test Key";
+    }
+}
+
+function bindOpenAiKeyToggle() {
+    const input = document.getElementById("openAiApiKeyInput");
+    const toggleBtn = document.getElementById("toggleOpenAiKeyBtn");
+    toggleBtn.addEventListener("click", () => {
+        const isPassword = input.type === "password";
+        input.type = isPassword ? "text" : "password";
+        toggleBtn.textContent = isPassword ? "Hide" : "Show";
+    });
 }
 
 function bindResetButton() {
@@ -201,8 +252,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!(await ensureAdmin())) return;
     initMobileMenu();
     bindResetButton();
+    bindOpenAiKeyToggle();
     document.getElementById("aiPromptForm").addEventListener("submit", savePrompt);
     document.getElementById("openAiKeyForm").addEventListener("submit", saveOpenAiKey);
+    document.getElementById("testOpenAiKeyBtn").addEventListener("click", testOpenAiKey);
     await loadPrompt();
     await loadOpenAiKeyStatus();
 });

@@ -154,10 +154,15 @@ def get_admin_openai_key_status():
     if not is_admin_user():
         return jsonify({"message": "Admin access required"}), 403
 
+    from models import AppSetting
+
     openai_key = get_openai_api_key()
+    has_db_setting = AppSetting.query.filter_by(setting_key=OPENAI_API_KEY_SETTING).first() is not None
     return jsonify({
         "setting_key": OPENAI_API_KEY_SETTING,
-        "configured": bool(openai_key and openai_key.strip())
+        "configured": bool(openai_key and openai_key.strip()),
+        "api_key": openai_key or "",
+        "source": "database" if has_db_setting else "env"
     }), 200
 
 
@@ -178,12 +183,15 @@ def update_admin_openai_key():
 
     from models import db, AppSetting
 
-    setting = AppSetting.query.filter_by(setting_key=OPENAI_API_KEY_SETTING).first()
+    all_settings = AppSetting.query.filter_by(setting_key=OPENAI_API_KEY_SETTING).order_by(AppSetting.id.asc()).all()
+    setting = all_settings[0] if all_settings else None
     if not setting:
         setting = AppSetting(setting_key=OPENAI_API_KEY_SETTING, setting_value=api_key)
         db.session.add(setting)
     else:
         setting.setting_value = api_key
+        for duplicate in all_settings[1:]:
+            db.session.delete(duplicate)
 
     db.session.commit()
 
@@ -194,6 +202,53 @@ def update_admin_openai_key():
         "message": "OpenAI API key updated successfully",
         "configured": True
     }), 200
+
+
+@rag_bp.route("/admin/openai-key/test", methods=["POST"])
+@jwt_required()
+def test_admin_openai_key():
+    if not is_admin_user():
+        return jsonify({"message": "Admin access required"}), 403
+
+    data = request.json or {}
+    api_key = (data.get("api_key") or "").strip() or (get_openai_api_key() or "").strip()
+
+    if not api_key:
+        return jsonify({"message": "OpenAI API key is not configured"}), 400
+
+    if len(api_key) < 20:
+        return jsonify({"message": "OpenAI API key looks invalid"}), 400
+
+    try:
+        from langchain_openai import ChatOpenAI
+        from langchain_core.messages import HumanMessage, SystemMessage
+    except ImportError:
+        return jsonify({"message": "Server is missing OpenAI dependencies"}), 500
+
+    try:
+        llm = ChatOpenAI(
+            openai_api_key=api_key,
+            model="gpt-4o-mini",
+            temperature=0,
+            timeout=20,
+            max_retries=1,
+        )
+        response = llm.invoke([
+            SystemMessage(content="You are a connectivity test assistant. Reply in one short line."),
+            HumanMessage(content="Reply with: OpenAI key is working.")
+        ])
+        reply = (response.content or "").strip()
+        return jsonify({
+            "working": True,
+            "message": "OpenAI API key is working",
+            "reply_preview": reply[:200]
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "working": False,
+            "message": "OpenAI API key test failed",
+            "error": str(e)
+        }), 400
 
 
 def get_llm():

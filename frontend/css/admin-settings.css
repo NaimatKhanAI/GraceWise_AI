@@ -61,10 +61,21 @@
     font-family: "Inter", sans-serif;
 }
 
+.key-input-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
 #openAiApiKeyInput:focus {
     outline: none;
     border-color: #b59c61;
     box-shadow: 0 0 0 3px rgba(181, 156, 97, 0.15);
+}
+
+.btn-small {
+    padding: 10px 14px;
+    white-space: nowrap;
 }
 
 .field-hint {
@@ -115,5 +126,10 @@
 
     .settings-actions {
         flex-direction: column;
+    }
+
+    .key-input-row {
+        flex-direction: column;
+        align-items: stretch;
     }
 }

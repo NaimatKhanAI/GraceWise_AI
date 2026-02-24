@@ -91,11 +91,16 @@
                 </div>
                 <form id="openAiKeyForm">
                     <label for="openAiApiKeyInput">OpenAI API Key</label>
-                    <input id="openAiApiKeyInput" type="password" placeholder="sk-..." autocomplete="off" required>
+                    <div class="key-input-row">
+                        <input id="openAiApiKeyInput" type="password" placeholder="sk-..." autocomplete="off" required>
+                        <button type="button" class="btn-secondary btn-small" id="toggleOpenAiKeyBtn">Show</button>
+                    </div>
                     <small id="openAiKeyStatus" class="field-hint">Checking current status...</small>
                     <div class="settings-actions">
                         <button type="submit" class="btn-primary" id="saveOpenAiKeyBtn">Save API Key</button>
+                        <button type="button" class="btn-secondary" id="testOpenAiKeyBtn">Test Key</button>
                     </div>
+                    <small id="openAiKeyTestResult" class="field-hint"></small>
                 </form>
             </div>
         </div>
