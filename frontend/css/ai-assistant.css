@@ -200,6 +200,8 @@
     color: white;
     border-color: #b59c61;
     max-width: min(62ch, 100%);
+    position: relative;
+    padding-right: 38px;
 }
 
 .message-content p,
@@ -359,21 +361,50 @@
 }
 
 .edit-message-btn {
-    margin-top: 10px;
-    padding: 5px 10px;
-    border: 1px solid #d7dde7;
-    border-radius: 999px;
-    background: #fff;
-    color: #53627a;
-    font-size: 12px;
-    font-weight: 500;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.16);
+    color: #ffffff;
+    font-size: 11px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-2px);
+    transition: opacity 0.18s ease, transform 0.18s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.user-message .message-content:hover .edit-message-btn,
+.user-message .message-content:focus-within .edit-message-btn,
+.edit-message-btn:focus-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
 }
 
 .edit-message-btn:hover {
-    border-color: #b59c61;
-    color: #8b7443;
+    border-color: rgba(255, 255, 255, 0.7);
+    background: rgba(0, 0, 0, 0.28);
+}
+
+.edit-message-btn:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.75);
+    outline-offset: 1px;
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .user-message .message-content .edit-message-btn {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+    }
 }
 
 /* Scrollbar Styling */

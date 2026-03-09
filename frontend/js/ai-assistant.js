@@ -155,7 +155,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const editBtn = document.createElement('button');
             editBtn.type = 'button';
             editBtn.className = 'edit-message-btn';
-            editBtn.textContent = 'Edit';
+            editBtn.innerHTML = '<i class="fas fa-pen"></i>';
+            editBtn.setAttribute('aria-label', 'Edit message');
+            editBtn.setAttribute('title', 'Edit message');
             editBtn.addEventListener('click', () => loadMessageForEditing(text));
             content.appendChild(editBtn);
         }
