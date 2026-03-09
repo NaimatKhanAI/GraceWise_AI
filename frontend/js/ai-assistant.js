@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let aiSessionId = null;
     let conversationHistory = []; // stores {role, content} for lesson context
+    const MAX_INPUT_HEIGHT = 180;
 
     // --- Lesson mode detection from URL params ---
     const urlParams = new URLSearchParams(window.location.search);
@@ -105,6 +106,35 @@ document.addEventListener('DOMContentLoaded', function () {
 
     startAiSession();
 
+    function autoResizeInput() {
+        if (!chatInput) return;
+        chatInput.style.height = 'auto';
+        const nextHeight = Math.min(chatInput.scrollHeight, MAX_INPUT_HEIGHT);
+        chatInput.style.height = `${nextHeight}px`;
+        chatInput.style.overflowY = chatInput.scrollHeight > MAX_INPUT_HEIGHT ? 'auto' : 'hidden';
+    }
+
+    function wrapTables(container) {
+        const tables = container.querySelectorAll('table');
+        tables.forEach((table) => {
+            if (table.parentElement && table.parentElement.classList.contains('table-wrapper')) {
+                return;
+            }
+            const wrapper = document.createElement('div');
+            wrapper.className = 'table-wrapper';
+            table.parentNode.insertBefore(wrapper, table);
+            wrapper.appendChild(table);
+        });
+    }
+
+    function loadMessageForEditing(text) {
+        if (!chatInput) return;
+        chatInput.value = text;
+        autoResizeInput();
+        chatInput.focus();
+        chatInput.setSelectionRange(chatInput.value.length, chatInput.value.length);
+    }
+
     function appendMessage(text, sender) {
         const messageEl = document.createElement('div');
         messageEl.className = `message ${sender === 'user' ? 'user-message' : 'bot-message'}`;
@@ -119,6 +149,17 @@ document.addEventListener('DOMContentLoaded', function () {
         const content = document.createElement('div');
         content.className = 'message-content';
         content.innerHTML = marked.parse(text);
+        wrapTables(content);
+
+        if (sender === 'user') {
+            const editBtn = document.createElement('button');
+            editBtn.type = 'button';
+            editBtn.className = 'edit-message-btn';
+            editBtn.textContent = 'Edit';
+            editBtn.addEventListener('click', () => loadMessageForEditing(text));
+            content.appendChild(editBtn);
+        }
+
         messageEl.appendChild(content);
 
         if (sender === 'user') {
@@ -139,6 +180,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         appendMessage(text, 'user');
         chatInput.value = '';
+        autoResizeInput();
         chatInput.focus();
 
         const loadingEl = appendMessage('Thinking...', 'ai');
@@ -191,7 +233,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (loadingEl) {
                 const content = loadingEl.querySelector('.message-content');
-                if (content) content.innerHTML = marked.parse(answer);
+                if (content) {
+                    content.innerHTML = marked.parse(answer);
+                    wrapTables(content);
+                }
             }
         } catch (error) {
             console.error('Chat error:', error);
@@ -217,6 +262,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (chatInput) {
+        autoResizeInput();
+        chatInput.addEventListener('input', autoResizeInput);
         chatInput.addEventListener('keydown', function (e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();

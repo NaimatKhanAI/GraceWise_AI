@@ -268,18 +268,24 @@
 .chat-input-wrapper {
     display: flex;
     gap: 12px;
-    align-items: center;
+    align-items: flex-end;
 }
 
 .chat-input {
     flex: 1;
-    padding: 13px 16px;
+    padding: 12px 16px;
     border: 1px solid #e9ecef;
-    border-radius: 24px;
+    border-radius: 18px;
     font-size: 14px;
+    font-family: inherit;
+    line-height: 1.45;
     outline: none;
     background: #f8f9fa;
     transition: all 0.2s ease;
+    resize: none;
+    min-height: 46px;
+    max-height: 180px;
+    overflow-y: hidden;
 }
 
 .chat-input:focus {
@@ -305,6 +311,69 @@
 .send-btn:hover {
     background: #b59c61;
     transform: translateY(-1px);
+}
+
+.message-content .table-wrapper {
+    max-width: 100%;
+    overflow-x: auto;
+    border: 1px solid #e4e9f0;
+    border-radius: 12px;
+    margin: 10px 0 4px;
+    background: #ffffff;
+}
+
+.message-content table {
+    width: 100%;
+    min-width: 560px;
+    border-collapse: collapse;
+    font-size: 0.93em;
+}
+
+.message-content thead th {
+    background: #f6f8fb;
+    color: #364152;
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid #e4e9f0;
+}
+
+.message-content tbody td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #edf1f6;
+    vertical-align: top;
+}
+
+.message-content tbody tr:nth-child(even) td {
+    background: #fbfcfe;
+}
+
+.message-content tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.message-content th,
+.message-content td {
+    white-space: normal;
+    word-break: break-word;
+}
+
+.edit-message-btn {
+    margin-top: 10px;
+    padding: 5px 10px;
+    border: 1px solid #d7dde7;
+    border-radius: 999px;
+    background: #fff;
+    color: #53627a;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.edit-message-btn:hover {
+    border-color: #b59c61;
+    color: #8b7443;
 }
 
 /* Scrollbar Styling */
