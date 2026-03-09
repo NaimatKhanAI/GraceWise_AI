@@ -191,9 +191,12 @@ document.addEventListener('DOMContentLoaded', function () {
         chatHistoryList.innerHTML = '';
 
         historySessions.forEach((session) => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = `chat-history-item ${session.id === aiSessionId ? 'active' : ''}`;
+            const item = document.createElement('div');
+            item.className = `chat-history-item ${session.id === aiSessionId ? 'active' : ''}`;
+
+            const openBtn = document.createElement('button');
+            openBtn.type = 'button';
+            openBtn.className = 'chat-history-open';
 
             const title = document.createElement('p');
             title.className = 'chat-history-title';
@@ -203,14 +206,48 @@ document.addEventListener('DOMContentLoaded', function () {
             meta.className = 'chat-history-meta';
             meta.textContent = formatHistoryTime(session.updated_at || session.started_at);
 
-            btn.appendChild(title);
-            btn.appendChild(meta);
-
-            btn.addEventListener('click', async () => {
+            openBtn.appendChild(title);
+            openBtn.appendChild(meta);
+            openBtn.addEventListener('click', async () => {
                 await openSession(session.id);
             });
 
-            chatHistoryList.appendChild(btn);
+            const actions = document.createElement('div');
+            actions.className = 'chat-history-actions';
+
+            const renameBtn = document.createElement('button');
+            renameBtn.type = 'button';
+            renameBtn.className = 'history-action-btn';
+            renameBtn.title = 'Rename chat';
+            renameBtn.innerHTML = '<i class="fas fa-pen"></i>';
+            renameBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const currentTitle = session.title || 'New chat';
+                const nextTitle = window.prompt('Enter new chat name:', currentTitle);
+                if (nextTitle === null) return;
+                const trimmed = nextTitle.trim();
+                if (!trimmed || trimmed === currentTitle) return;
+                await renameChatSession(session.id, trimmed);
+            });
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'history-action-btn history-delete-btn';
+            deleteBtn.title = 'Delete chat';
+            deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+            deleteBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const confirmed = window.confirm('Delete this chat permanently?');
+                if (!confirmed) return;
+                await deleteChatSession(session.id);
+            });
+
+            actions.appendChild(renameBtn);
+            actions.appendChild(deleteBtn);
+
+            item.appendChild(openBtn);
+            item.appendChild(actions);
+            chatHistoryList.appendChild(item);
         });
     }
 
@@ -244,6 +281,69 @@ document.addEventListener('DOMContentLoaded', function () {
             historySessions = [];
             renderHistoryList();
             return [];
+        }
+    }
+
+    async function renameChatSession(sessionId, title) {
+        const token = getAccessToken();
+        if (!token) return;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/dashboard/student/ai-sessions/${sessionId}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ title })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Rename session error: ${response.status}`);
+            }
+
+            if (activeSession && activeSession.id === sessionId) {
+                activeSession.title = title;
+            }
+
+            await fetchHistorySessions();
+        } catch (error) {
+            console.error('Error renaming session:', error);
+            if (typeof showError === 'function') showError('Unable to rename chat');
+        }
+    }
+
+    async function deleteChatSession(sessionId) {
+        const token = getAccessToken();
+        if (!token) return;
+
+        try {
+            const deletingActive = sessionId === aiSessionId;
+            const response = await fetch(`${API_BASE_URL}/dashboard/student/ai-sessions/${sessionId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Delete session error: ${response.status}`);
+            }
+
+            const sessions = await fetchHistorySessions();
+
+            if (deletingActive) {
+                clearEditState();
+                if (sessions.length > 0) {
+                    await openSession(sessions[0].id);
+                } else {
+                    await createNewSession();
+                }
+            }
+        } catch (error) {
+            console.error('Error deleting session:', error);
+            if (typeof showError === 'function') showError('Unable to delete chat');
         }
     }
 
