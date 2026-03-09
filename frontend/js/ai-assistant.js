@@ -3,108 +3,40 @@ document.addEventListener('DOMContentLoaded', function () {
     const chatInput = document.getElementById('chatInput');
     const sendBtn = document.getElementById('sendBtn');
     const profileName = document.querySelector('.profile span');
+    const chatHistoryList = document.getElementById('chatHistoryList');
+    const newChatBtn = document.getElementById('newChatBtn');
+    const editState = document.getElementById('editState');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
 
     const API_BASE_URL = window.API_BASE_URL;
 
     let aiSessionId = null;
-    let conversationHistory = []; // stores {role, content} for lesson context
+    let activeSession = null;
+    let historySessions = [];
+    let conversationHistory = [];
+    let editingMessageId = null;
     const MAX_INPUT_HEIGHT = 180;
 
-    // --- Lesson mode detection from URL params ---
     const urlParams = new URLSearchParams(window.location.search);
     const lessonId = urlParams.get('lesson_id');
-    const lessonName = urlParams.get('lesson_name') || 'Lesson';
-    const lessonDesc = urlParams.get('lesson_desc') || '';
+    const rawLessonName = urlParams.get('lesson_name') || 'Lesson';
+    const rawLessonDesc = urlParams.get('lesson_desc') || '';
     const isLessonMode = !!lessonId;
+
+    function decodeParam(value) {
+        try {
+            return decodeURIComponent(value);
+        } catch (_) {
+            return value;
+        }
+    }
+
+    const lessonName = decodeParam(rawLessonName);
+    const lessonDesc = decodeParam(rawLessonDesc);
 
     function getAccessToken() {
         return localStorage.getItem('access_token') || localStorage.getItem('accessToken') || auth?.accessToken;
     }
-
-    // --- Show lesson context banner ---
-    if (isLessonMode) {
-        const lessonBanner = document.getElementById('lessonBanner');
-        const lessonBannerName = document.getElementById('lessonBannerName');
-        const lessonBannerDesc = document.getElementById('lessonBannerDesc');
-        
-        if (lessonBanner) {
-            lessonBanner.style.display = 'flex';
-            lessonBannerName.textContent = decodeURIComponent(lessonName);
-            lessonBannerDesc.textContent = decodeURIComponent(lessonDesc) || 'Ask me anything about this lesson!';
-        }
-
-        // Replace the default greeting with lesson-specific one
-        if (chatMessages) {
-            chatMessages.innerHTML = '';
-            appendMessage(
-                `Hello! I'm your AI tutor for **${decodeURIComponent(lessonName)}**. I have the full lesson document loaded and ready to help you learn!\n\nYou can ask me to:\n- Explain concepts from the lesson\n- Summarize sections\n- Quiz you on the material\n- Clarify anything you don't understand\n\nWhat would you like to know?`,
-                'ai'
-            );
-        }
-
-        // Update page title
-        document.title = `AI Tutor — ${decodeURIComponent(lessonName)} — Gracewise`;
-    }
-
-    // --- Back to curriculum button ---
-    const backBtn = document.getElementById('backToCurriculum');
-    if (backBtn) {
-        backBtn.addEventListener('click', function() {
-            window.location.href = 'curriculum.html';
-        });
-        backBtn.style.display = isLessonMode ? 'inline-flex' : 'none';
-    }
-
-    async function startAiSession() {
-        try {
-            const token = getAccessToken();
-            if (!token) return;
-
-            const response = await fetch(`${API_BASE_URL}/dashboard/student/ai-sessions/start`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (!response.ok) return;
-            const data = await response.json();
-            aiSessionId = data.session_id || null;
-        } catch (error) {
-            console.error('AI session start error:', error);
-        }
-    }
-
-    async function endAiSession() {
-        try {
-            const token = getAccessToken();
-            if (!token || !aiSessionId) return;
-
-            await fetch(`${API_BASE_URL}/dashboard/student/ai-sessions/${aiSessionId}/end`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                keepalive: true
-            });
-        } catch (error) {
-            console.error('AI session end error:', error);
-        }
-    }
-
-    const currentUser = localStorage.getItem('currentUser');
-    if (currentUser && profileName) {
-        try {
-            const user = JSON.parse(currentUser);
-            profileName.textContent = user.first_name || user.firstName || user.name || 'User';
-        } catch (e) {
-            profileName.textContent = 'User';
-        }
-    }
-
-    startAiSession();
 
     function autoResizeInput() {
         if (!chatInput) return;
@@ -117,9 +49,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function wrapTables(container) {
         const tables = container.querySelectorAll('table');
         tables.forEach((table) => {
-            if (table.parentElement && table.parentElement.classList.contains('table-wrapper')) {
-                return;
-            }
+            if (table.parentElement && table.parentElement.classList.contains('table-wrapper')) return;
             const wrapper = document.createElement('div');
             wrapper.className = 'table-wrapper';
             table.parentNode.insertBefore(wrapper, table);
@@ -127,19 +57,34 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    function loadMessageForEditing(text) {
-        if (!chatInput) return;
-        chatInput.value = text;
-        autoResizeInput();
-        chatInput.focus();
-        chatInput.setSelectionRange(chatInput.value.length, chatInput.value.length);
+    function clearEditState() {
+        editingMessageId = null;
+        if (editState) editState.style.display = 'none';
     }
 
-    function appendMessage(text, sender) {
-        const messageEl = document.createElement('div');
-        messageEl.className = `message ${sender === 'user' ? 'user-message' : 'bot-message'}`;
+    function setEditState(messageId, text) {
+        editingMessageId = messageId;
+        if (editState) editState.style.display = 'flex';
+        if (chatInput) {
+            chatInput.value = text;
+            autoResizeInput();
+            chatInput.focus();
+            chatInput.setSelectionRange(chatInput.value.length, chatInput.value.length);
+        }
+    }
 
-        if (sender === 'ai') {
+    function appendMessage(text, sender, options = {}) {
+        if (!chatMessages) return null;
+
+        const normalizedSender = sender === 'assistant' ? 'ai' : sender;
+        const messageEl = document.createElement('div');
+        messageEl.className = `message ${normalizedSender === 'user' ? 'user-message' : 'bot-message'}`;
+
+        if (options.messageId) {
+            messageEl.dataset.messageId = String(options.messageId);
+        }
+
+        if (normalizedSender === 'ai') {
             const avatar = document.createElement('div');
             avatar.className = 'message-avatar';
             avatar.innerHTML = '<i class="fas fa-robot"></i>';
@@ -148,23 +93,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const content = document.createElement('div');
         content.className = 'message-content';
-        content.innerHTML = marked.parse(text);
+        content.innerHTML = marked.parse(text || '');
         wrapTables(content);
 
-        if (sender === 'user') {
+        if (normalizedSender === 'user' && options.allowEdit !== false && options.messageId) {
             const editBtn = document.createElement('button');
             editBtn.type = 'button';
             editBtn.className = 'edit-message-btn';
             editBtn.innerHTML = '<i class="fas fa-pen"></i>';
             editBtn.setAttribute('aria-label', 'Edit message');
             editBtn.setAttribute('title', 'Edit message');
-            editBtn.addEventListener('click', () => loadMessageForEditing(text));
+            editBtn.addEventListener('click', () => setEditState(options.messageId, text));
             content.appendChild(editBtn);
         }
 
         messageEl.appendChild(content);
 
-        if (sender === 'user') {
+        if (normalizedSender === 'user') {
             const avatar = document.createElement('div');
             avatar.className = 'message-avatar';
             avatar.innerHTML = '<i class="fas fa-user"></i>';
@@ -176,16 +121,279 @@ document.addEventListener('DOMContentLoaded', function () {
         return messageEl;
     }
 
+    function renderDefaultConversation() {
+        if (!chatMessages) return;
+        chatMessages.innerHTML = '';
+
+        if (isLessonMode) {
+            appendMessage(
+                `Hello! I'm your AI tutor for **${lessonName}**. I have the full lesson document loaded and ready to help you learn!\n\nYou can ask me to:\n- Explain concepts from the lesson\n- Summarize sections\n- Quiz you on the material\n- Clarify anything you don't understand\n\nWhat would you like to know?`,
+                'ai',
+                { allowEdit: false }
+            );
+            return;
+        }
+
+        appendMessage("Hello! I'm your AI learning assistant. How can I help you today?", 'ai', { allowEdit: false });
+    }
+
+    function setConversationFromMessages(messages) {
+        conversationHistory = (messages || []).map((m) => ({
+            role: m.role === 'assistant' ? 'assistant' : 'user',
+            content: m.content || ''
+        }));
+
+        if (!chatMessages) return;
+        chatMessages.innerHTML = '';
+
+        if (!messages || messages.length === 0) {
+            renderDefaultConversation();
+            return;
+        }
+
+        messages.forEach((msg) => {
+            appendMessage(msg.content || '', msg.role, {
+                messageId: msg.id,
+                allowEdit: msg.role === 'user'
+            });
+        });
+    }
+
+    function sessionMatchesCurrentMode(session) {
+        const chatType = (session.chat_type || 'general').toLowerCase();
+
+        if (isLessonMode) {
+            return chatType === 'lesson' && String(session.lesson_id || '') === String(lessonId || '');
+        }
+
+        return chatType !== 'lesson';
+    }
+
+    function formatHistoryTime(isoDate) {
+        if (!isoDate) return '';
+        const date = new Date(isoDate);
+        const now = new Date();
+        const sameDay = date.toDateString() === now.toDateString();
+        if (sameDay) {
+            return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        }
+        return date.toLocaleDateString();
+    }
+
+    function renderHistoryList() {
+        if (!chatHistoryList) return;
+
+        if (!historySessions.length) {
+            chatHistoryList.innerHTML = '<div class="chat-history-empty">No previous chats</div>';
+            return;
+        }
+
+        chatHistoryList.innerHTML = '';
+
+        historySessions.forEach((session) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `chat-history-item ${session.id === aiSessionId ? 'active' : ''}`;
+
+            const title = document.createElement('p');
+            title.className = 'chat-history-title';
+            title.textContent = session.title || 'New chat';
+
+            const meta = document.createElement('div');
+            meta.className = 'chat-history-meta';
+            meta.textContent = formatHistoryTime(session.updated_at || session.started_at);
+
+            btn.appendChild(title);
+            btn.appendChild(meta);
+
+            btn.addEventListener('click', async () => {
+                await openSession(session.id);
+            });
+
+            chatHistoryList.appendChild(btn);
+        });
+    }
+
+    async function fetchHistorySessions() {
+        const token = getAccessToken();
+        if (!token) {
+            historySessions = [];
+            renderHistoryList();
+            return [];
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/dashboard/student/ai-sessions?limit=80`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Session list error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            historySessions = (data.sessions || []).filter(sessionMatchesCurrentMode);
+            renderHistoryList();
+            return historySessions;
+        } catch (error) {
+            console.error('Error loading chat sessions:', error);
+            historySessions = [];
+            renderHistoryList();
+            return [];
+        }
+    }
+
+    async function loadSessionMessages(sessionId) {
+        const token = getAccessToken();
+        if (!token) return null;
+
+        const response = await fetch(`${API_BASE_URL}/dashboard/student/ai-sessions/${sessionId}/messages`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Session messages error: ${response.status}`);
+        }
+
+        return await response.json();
+    }
+
+    async function refreshCurrentSessionMessages() {
+        if (!aiSessionId) return false;
+
+        try {
+            const data = await loadSessionMessages(aiSessionId);
+            activeSession = data?.session || activeSession;
+            setConversationFromMessages(data?.messages || []);
+            return true;
+        } catch (error) {
+            console.error('Error refreshing session messages:', error);
+            return false;
+        }
+    }
+
+    async function openSession(sessionId) {
+        if (!sessionId) return;
+
+        try {
+            aiSessionId = sessionId;
+            clearEditState();
+            const data = await loadSessionMessages(sessionId);
+            activeSession = data?.session || null;
+            setConversationFromMessages(data?.messages || []);
+            renderHistoryList();
+        } catch (error) {
+            console.error('Error opening session:', error);
+        }
+    }
+
+    async function startAiSession() {
+        const token = getAccessToken();
+        if (!token) return null;
+
+        const payload = {
+            chat_type: isLessonMode ? 'lesson' : 'general',
+            lesson_id: isLessonMode ? Number(lessonId) : null,
+            lesson_name: isLessonMode ? lessonName : null,
+            lesson_desc: isLessonMode ? lessonDesc : null
+        };
+
+        const response = await fetch(`${API_BASE_URL}/dashboard/student/ai-sessions/start`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            throw new Error(`Session start error: ${response.status}`);
+        }
+
+        return await response.json();
+    }
+
+    async function createNewSession() {
+        try {
+            const data = await startAiSession();
+            aiSessionId = data?.session_id || null;
+            activeSession = data?.session || null;
+            conversationHistory = [];
+            clearEditState();
+            renderDefaultConversation();
+            await fetchHistorySessions();
+        } catch (error) {
+            console.error('AI session start error:', error);
+            aiSessionId = null;
+            activeSession = null;
+            conversationHistory = [];
+            renderDefaultConversation();
+        }
+    }
+
+    async function endAiSession(sessionId = aiSessionId) {
+        try {
+            const token = getAccessToken();
+            if (!token || !sessionId) return;
+
+            await fetch(`${API_BASE_URL}/dashboard/student/ai-sessions/${sessionId}/end`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                keepalive: true
+            });
+        } catch (error) {
+            console.error('AI session end error:', error);
+        }
+    }
+
+    async function initializeSessions() {
+        const token = getAccessToken();
+        if (!token) {
+            aiSessionId = null;
+            historySessions = [];
+            renderHistoryList();
+            renderDefaultConversation();
+            return;
+        }
+
+        const sessions = await fetchHistorySessions();
+        if (sessions.length > 0) {
+            await openSession(sessions[0].id);
+            return;
+        }
+
+        await createNewSession();
+    }
+
     async function sendMessage() {
-        const text = chatInput.value.trim();
+        const text = (chatInput?.value || '').trim();
         if (!text) return;
 
-        appendMessage(text, 'user');
+        if (!aiSessionId) {
+            await createNewSession();
+            if (!aiSessionId) {
+                return;
+            }
+        }
+
+        const userPreview = appendMessage(text, 'user', { allowEdit: false });
+        const loadingEl = appendMessage('Thinking...', 'ai', { allowEdit: false });
+
         chatInput.value = '';
         autoResizeInput();
         chatInput.focus();
-
-        const loadingEl = appendMessage('Thinking...', 'ai');
         sendBtn.disabled = true;
 
         try {
@@ -193,20 +401,19 @@ document.addEventListener('DOMContentLoaded', function () {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 60000);
 
-            let url, body;
+            const payload = {
+                question: text,
+                session_id: aiSessionId,
+                history: conversationHistory
+            };
 
-            if (isLessonMode) {
-                // Lesson-specific RAG endpoint with conversation history
-                url = `${API_BASE_URL}/rag/ask-lesson/${lessonId}`;
-                body = JSON.stringify({ 
-                    question: text,
-                    history: conversationHistory
-                });
-            } else {
-                // General AI assistant endpoint
-                url = `${API_BASE_URL}/rag/ask`;
-                body = JSON.stringify({ question: text });
+            if (editingMessageId) {
+                payload.edit_message_id = editingMessageId;
             }
+
+            const url = isLessonMode
+                ? `${API_BASE_URL}/rag/ask-lesson/${lessonId}`
+                : `${API_BASE_URL}/rag/ask`;
 
             const response = await fetch(url, {
                 method: 'POST',
@@ -214,7 +421,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     'Content-Type': 'application/json',
                     ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                 },
-                body: body,
+                body: JSON.stringify(payload),
                 signal: controller.signal
             });
 
@@ -227,23 +434,29 @@ document.addEventListener('DOMContentLoaded', function () {
             const data = await response.json();
             const answer = data.answer || 'Sorry, I could not process your request.';
 
-            // Update conversation history for lesson mode
-            if (isLessonMode) {
+            const refreshed = await refreshCurrentSessionMessages();
+            if (!refreshed) {
                 conversationHistory.push({ role: 'user', content: text });
                 conversationHistory.push({ role: 'assistant', content: answer });
+                if (loadingEl) {
+                    const content = loadingEl.querySelector('.message-content');
+                    if (content) {
+                        content.innerHTML = marked.parse(answer);
+                        wrapTables(content);
+                    }
+                }
             }
 
-            if (loadingEl) {
-                const content = loadingEl.querySelector('.message-content');
-                if (content) {
-                    content.innerHTML = marked.parse(answer);
-                    wrapTables(content);
-                }
+            clearEditState();
+            await fetchHistorySessions();
+
+            if (refreshed && userPreview) {
+                userPreview.remove();
             }
         } catch (error) {
             console.error('Chat error:', error);
             let errorMessage = 'Sorry, there was an error processing your request.';
-            
+
             if (error.name === 'AbortError') {
                 errorMessage = 'Request timed out. Please try again.';
             } else if (error.message.includes('Failed to fetch')) {
@@ -259,8 +472,51 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Lesson context banner
+    if (isLessonMode) {
+        const lessonBanner = document.getElementById('lessonBanner');
+        const lessonBannerName = document.getElementById('lessonBannerName');
+        const lessonBannerDesc = document.getElementById('lessonBannerDesc');
+
+        if (lessonBanner) {
+            lessonBanner.style.display = 'flex';
+            lessonBannerName.textContent = lessonName;
+            lessonBannerDesc.textContent = lessonDesc || 'Ask me anything about this lesson!';
+        }
+
+        document.title = `AI Tutor - ${lessonName} - Gracewise`;
+    }
+
+    const backBtn = document.getElementById('backToCurriculum');
+    if (backBtn) {
+        backBtn.addEventListener('click', function() {
+            window.location.href = 'curriculum.html';
+        });
+        backBtn.style.display = isLessonMode ? 'inline-flex' : 'none';
+    }
+
+    const currentUser = localStorage.getItem('currentUser');
+    if (currentUser && profileName) {
+        try {
+            const user = JSON.parse(currentUser);
+            profileName.textContent = user.first_name || user.firstName || user.name || 'User';
+        } catch (e) {
+            profileName.textContent = 'User';
+        }
+    }
+
     if (sendBtn) {
         sendBtn.addEventListener('click', sendMessage);
+    }
+
+    if (newChatBtn) {
+        newChatBtn.addEventListener('click', async () => {
+            await createNewSession();
+        });
+    }
+
+    if (cancelEditBtn) {
+        cancelEditBtn.addEventListener('click', clearEditState);
     }
 
     if (chatInput) {
@@ -303,9 +559,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function displayNotifications(notifications) {
         const notificationList = document.getElementById('notificationList');
-        
+
         if (!notificationList) return;
-        
+
         if (!notifications || notifications.length === 0) {
             notificationList.innerHTML = '<div class="no-notifications">No notifications yet</div>';
             return;
@@ -330,7 +586,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function updateNotificationBadge(count) {
         const badge = document.getElementById('notificationBadge');
         if (!badge) return;
-        
+
         if (count > 0) {
             badge.textContent = count;
             badge.style.display = 'flex';
@@ -390,25 +646,25 @@ document.addEventListener('DOMContentLoaded', function () {
         const date = new Date(dateString);
         const now = new Date();
         const diffInSeconds = Math.floor((now - date) / 1000);
-        
+
         if (diffInSeconds < 60) return 'Just now';
         if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
         if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
         if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-        
+
         return date.toLocaleDateString();
     }
 
     function initNotificationDropdown() {
         const notificationBell = document.getElementById('notificationBell');
         const notificationDropdown = document.getElementById('notificationDropdown');
-        
+
         if (notificationBell && notificationDropdown) {
             notificationBell.addEventListener('click', function(e) {
                 e.stopPropagation();
                 notificationDropdown.classList.toggle('active');
             });
-            
+
             document.addEventListener('click', function(e) {
                 if (!notificationBell.contains(e.target) && !notificationDropdown.contains(e.target)) {
                     notificationDropdown.classList.remove('active');
@@ -420,24 +676,35 @@ document.addEventListener('DOMContentLoaded', function () {
     window.openProfileModal = function() {
         const user = auth?.getCurrentUser();
         if (user) {
-            document.getElementById('userNameDisplay').textContent = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'User';
-            document.getElementById('userEmailDisplay').value = user.email || '';
-            document.getElementById('userFullNameDisplay').value = [user.first_name, user.last_name].filter(Boolean).join(' ') || '';
+            const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'User';
+            const nameDisplay = document.getElementById('userNameDisplay');
+            const emailDisplay = document.getElementById('userEmailDisplay');
+            const fullNameDisplay = document.getElementById('userFullNameDisplay');
+
+            if (nameDisplay) nameDisplay.textContent = fullName;
+            if (emailDisplay) emailDisplay.value = user.email || '';
+            if (fullNameDisplay) fullNameDisplay.value = fullName;
         }
-        document.getElementById('profileModal').classList.add('active');
+
+        const profileModal = document.getElementById('profileModal');
+        if (profileModal) profileModal.classList.add('active');
     };
 
     window.closeProfileModal = function() {
-        document.getElementById('profileModal').classList.remove('active');
+        const profileModal = document.getElementById('profileModal');
+        if (profileModal) profileModal.classList.remove('active');
     };
 
     window.openChangePasswordModal = function() {
-        document.getElementById('changePasswordModal').classList.add('active');
+        const changePasswordModal = document.getElementById('changePasswordModal');
+        if (changePasswordModal) changePasswordModal.classList.add('active');
     };
 
     window.closeChangePasswordModal = function() {
-        document.getElementById('changePasswordModal').classList.remove('active');
-        document.getElementById('passwordForm').reset();
+        const changePasswordModal = document.getElementById('changePasswordModal');
+        if (changePasswordModal) changePasswordModal.classList.remove('active');
+        const passwordForm = document.getElementById('passwordForm');
+        if (passwordForm) passwordForm.reset();
     };
 
     window.handleChangePassword = async function(event) {
@@ -482,18 +749,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    // Initialize notifications
     initNotificationDropdown();
     fetchNotifications();
     setInterval(fetchNotifications, 30000);
 
-   // Avatar button click
     const avatarBtn = document.getElementById('avatarBtn');
     if (avatarBtn) {
         avatarBtn.addEventListener('click', window.openProfileModal);
     }
 
-    // Profile modal outside click
     const profileModal = document.getElementById('profileModal');
     if (profileModal) {
         profileModal.addEventListener('click', (e) => {
@@ -501,7 +765,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Change password modal outside click
     const changePasswordModal = document.getElementById('changePasswordModal');
     if (changePasswordModal) {
         changePasswordModal.addEventListener('click', (e) => {
@@ -509,6 +772,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    window.addEventListener('pagehide', endAiSession);
-    window.addEventListener('beforeunload', endAiSession);
+    initializeSessions();
+
+    window.addEventListener('pagehide', () => endAiSession());
+    window.addEventListener('beforeunload', () => endAiSession());
 });

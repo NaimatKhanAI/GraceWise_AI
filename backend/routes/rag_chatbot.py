@@ -83,6 +83,161 @@ def documents_exist():
     return False
 
 
+def _trim_title(text, max_len=60):
+    text = (text or "").strip()
+    if not text:
+        return "New chat"
+    return text[:max_len].strip() + ("..." if len(text) > max_len else "")
+
+
+def _build_langchain_history(history):
+    from langchain_core.messages import HumanMessage, AIMessage
+
+    messages = []
+    for msg in history[-20:]:
+        role = msg.get("role")
+        content = (msg.get("content") or "").strip()
+        if not content:
+            continue
+        if role == "user":
+            messages.append(HumanMessage(content=content))
+        elif role in ("assistant", "ai"):
+            messages.append(AIMessage(content=content))
+    return messages
+
+
+def _prepare_chat_state(question, data, expected_chat_type=None, expected_lesson_id=None):
+    """
+    Prepare session/history for normal send and edited-message regeneration.
+    Returns: (session, model_history, persist_state, error_dict_or_none)
+    """
+    from models import db, AiSession, AiChatMessage
+
+    user_id = get_user_id()
+    fallback_history = data.get("history", [])
+    session_id = data.get("session_id")
+    edit_message_id = data.get("edit_message_id")
+
+    if not user_id or not session_id:
+        return None, fallback_history, None, None
+
+    try:
+        session_id = int(session_id)
+    except (TypeError, ValueError):
+        return None, fallback_history, None, {"answer": "Invalid session_id."}
+
+    session = AiSession.query.filter_by(id=session_id, user_id=user_id).first()
+    if not session:
+        return None, fallback_history, None, {"answer": "Session not found."}
+
+    session_chat_type = (session.chat_type or "general").strip().lower()
+    if expected_chat_type and session_chat_type != expected_chat_type:
+        return None, fallback_history, None, {"answer": "Session type mismatch."}
+
+    if expected_lesson_id is not None and session.lesson_id not in (None, expected_lesson_id):
+        return None, fallback_history, None, {"answer": "Session lesson mismatch."}
+
+    messages = (
+        AiChatMessage.query
+        .filter_by(session_id=session.id, user_id=user_id)
+        .order_by(AiChatMessage.turn_index.asc(), AiChatMessage.id.asc())
+        .all()
+    )
+
+    if edit_message_id is not None:
+        try:
+            edit_message_id = int(edit_message_id)
+        except (TypeError, ValueError):
+            return None, fallback_history, None, {"answer": "Invalid edit_message_id."}
+
+        target = next((m for m in messages if m.id == edit_message_id and m.role == "user"), None)
+        if not target:
+            return None, fallback_history, None, {"answer": "Editable user message not found."}
+
+        # Keep context only up to the edited turn (excluding the edited message itself).
+        model_history = [{"role": m.role, "content": m.content} for m in messages if m.turn_index < target.turn_index]
+
+        # Replace edited prompt and remove all following messages to regenerate from this point.
+        target.content = question
+        target.updated_at = datetime.utcnow()
+        AiChatMessage.query.filter(
+            AiChatMessage.session_id == session.id,
+            AiChatMessage.user_id == user_id,
+            AiChatMessage.turn_index > target.turn_index
+        ).delete(synchronize_session=False)
+
+        session.updated_at = datetime.utcnow()
+        db.session.flush()
+
+        persist_state = {
+            "user_id": user_id,
+            "session": session,
+            "mode": "edit",
+            "user_message": target,
+            "assistant_turn_index": target.turn_index + 1,
+        }
+        return session, model_history, persist_state, None
+
+    model_history = [{"role": m.role, "content": m.content} for m in messages]
+    next_turn_index = (messages[-1].turn_index if messages else 0) + 1
+    persist_state = {
+        "user_id": user_id,
+        "session": session,
+        "mode": "new",
+        "user_turn_index": next_turn_index,
+    }
+    return session, model_history, persist_state, None
+
+
+def _persist_chat_exchange(persist_state, question, answer):
+    from models import db, AiChatMessage
+
+    if not persist_state:
+        return {}
+
+    session = persist_state["session"]
+    user_id = persist_state["user_id"]
+
+    if persist_state["mode"] == "edit":
+        user_message = persist_state["user_message"]
+        assistant_message = AiChatMessage(
+            session_id=session.id,
+            user_id=user_id,
+            role="assistant",
+            content=answer,
+            turn_index=persist_state["assistant_turn_index"],
+        )
+        db.session.add(assistant_message)
+    else:
+        user_message = AiChatMessage(
+            session_id=session.id,
+            user_id=user_id,
+            role="user",
+            content=question,
+            turn_index=persist_state["user_turn_index"],
+        )
+        assistant_message = AiChatMessage(
+            session_id=session.id,
+            user_id=user_id,
+            role="assistant",
+            content=answer,
+            turn_index=persist_state["user_turn_index"] + 1,
+        )
+        db.session.add(user_message)
+        db.session.add(assistant_message)
+
+    if not (session.title or "").strip():
+        session.title = _trim_title(question)
+    session.updated_at = datetime.utcnow()
+    db.session.commit()
+
+    return {
+        "session_id": session.id,
+        "user_message_id": user_message.id,
+        "assistant_message_id": assistant_message.id,
+    }
+
+
 # ==================== HEALTH CHECK ====================
 @rag_bp.route("/health", methods=["GET"])
 def health_check():
@@ -381,114 +536,75 @@ def get_qa_chain():
 
 # ==================== ASK QUESTION ====================
 @rag_bp.route("/ask", methods=["POST"])
+@jwt_required(optional=True)
 def ask():
-    data = request.json
-    question = data.get("question")
+    data = request.json or {}
+    question = (data.get("question") or "").strip()
     if not question:
         return jsonify({"answer": "Please provide a question."}), 400
 
+    persist_state = None
     try:
+        _, conversation_history, persist_state, state_error = _prepare_chat_state(
+            question=question,
+            data=data,
+            expected_chat_type="general"
+        )
+        if state_error:
+            return jsonify(state_error), 400
+
+        from langchain_core.messages import SystemMessage, HumanMessage
+
         if not documents_exist():
-            print(f"No documents, using direct LLM for: {question}")
             llm = get_llm()
             if llm == "ERROR_NO_KEY":
-                return jsonify({"answer": "❌ API Key is missing. Please add a valid GROQ_API_KEY or OPENAI_API_KEY to the backend/.env file and restart the server."}), 500
+                return jsonify({"answer": "API key is missing. Please add a valid GROQ_API_KEY or OPENAI_API_KEY and restart backend."}), 500
             if llm == "ERROR_IMPORT":
                 return jsonify({"answer": "Server is missing required LLM dependencies."}), 500
 
-            from langchain_core.messages import SystemMessage, HumanMessage
-            
-            print("Invoking LLM...")
-            dynamic_prompt = get_ai_system_prompt()
-            try:
-                response = llm.invoke([
-                    SystemMessage(content=dynamic_prompt),
-                    HumanMessage(content=question)
-                ])
-                print(f"LLM response received: {len(response.content)} chars")
-                return jsonify({"answer": response.content, "sources_count": 0}), 200
-            except Exception as llm_error:
-                print(f"LLM invocation error: {llm_error}")
-                return jsonify({"answer": f"❌ Error calling LLM: {str(llm_error)}"}), 500
+            messages = [SystemMessage(content=get_ai_system_prompt())]
+            messages.extend(_build_langchain_history(conversation_history))
+            messages.append(HumanMessage(content=question))
 
-            try:
-                response = llm.invoke([
-                    SystemMessage(content="""You are GraceWise — a warm, friendly, faith-based Christian homeschool helper who responds in a natural, human-like way.
-
-Purpose: Support and encourage homeschooling moms with spiritual guidance and practical academic help.
-
-Guidelines:
-• Be kind, simple, and faith-centered.
-• Include Scripture or gentle encouragement when helpful.
-• Give clear homeschooling advice (lessons, schedules, motivation).
-• Respond warmly to greetings, thanks, or casual messages (e.g., hi, hello) with friendly, human conversation.
-• Use provided context when relevant.
-• Avoid negativity
-• End with an uplifting line like: "You're doing great — keep trusting God!"""),
-                    HumanMessage(content=question)
-                ])
-                print(f"LLM response received: {len(response.content)} chars")
-                return jsonify({"answer": response.content, "sources_count": 0}), 200
-            except Exception as llm_error:
-                print(f"LLM invocation error: {llm_error}")
-                return jsonify({"answer": f"❌ Error calling LLM: {str(llm_error)}"}), 500
+            response = llm.invoke(messages)
+            answer = response.content
+            ids = _persist_chat_exchange(persist_state, question, answer)
+            return jsonify({"answer": answer, "sources_count": 0, **ids}), 200
 
         result = get_qa_chain()
         if result == "ERROR_NO_KEY":
-            return jsonify({"answer": "❌ API Key is missing. Please add a valid GROQ_API_KEY or OPENAI_API_KEY to the backend/.env file and restart the server."}), 500
+            return jsonify({"answer": "API key is missing. Please add a valid GROQ_API_KEY or OPENAI_API_KEY and restart backend."}), 500
         if result == "ERROR_IMPORT":
             return jsonify({"answer": "Server is missing required RAG dependencies."}), 500
         if result is None:
             return jsonify({"answer": "No documents found. Please add PDFs to 'documents' folder and restart server."}), 404
-        
-        chunks, chunk_embeddings, llm, embed_model, is_groq = result
-        print(f"Querying: {question}")
-        
-        # Get query embedding locally
+
+        chunks, chunk_embeddings, llm, embed_model, _ = result
+
         import numpy as np
         query_emb = embed_model.encode([question])[0]
-        
-        # Simple Cosine Similarity
         similarities = [np.dot(query_emb, ce) / (np.linalg.norm(query_emb) * np.linalg.norm(ce)) for ce in chunk_embeddings]
         top_idx = np.argsort(similarities)[-3:][::-1]
         context = "\n\n".join([chunks[i] for i in top_idx])
-        
-        # Call LLM using LangChain
-        from langchain_core.messages import SystemMessage, HumanMessage
+
         dynamic_prompt_with_context = (
             get_ai_system_prompt()
             + "\n\nAnswer based on the context provided below. If the answer is not in the context, "
             + "provide helpful Christian homeschooling guidance based on your knowledge."
         )
 
-        response = llm.invoke([
-            SystemMessage(content=dynamic_prompt_with_context),
-            HumanMessage(content=f"Context:\n{context}\n\nQuestion: {question}")
-        ])
+        messages = [SystemMessage(content=dynamic_prompt_with_context)]
+        messages.extend(_build_langchain_history(conversation_history))
+        messages.append(HumanMessage(content=f"Context:\n{context}\n\nQuestion: {question}"))
 
-        return jsonify({"answer": response.content, "sources_count": 3}), 200
+        response = llm.invoke(messages)
+        answer = response.content
+        ids = _persist_chat_exchange(persist_state, question, answer)
+        return jsonify({"answer": answer, "sources_count": 3, **ids}), 200
 
-        response = llm.invoke([
-            SystemMessage(content="""You are GraceWise — a warm, friendly, faith-based Christian homeschool helper who responds in a natural, human-like way.
-
-Purpose: Support and encourage homeschooling moms with spiritual guidance and practical academic help.
-
-Guidelines:
-• Be kind, simple, and faith-centered.
-• Include Scripture or gentle encouragement when helpful.
-• Give clear homeschooling advice (lessons, schedules, motivation).
-• Respond warmly to greetings, thanks, or casual messages (e.g., hi, hello) with friendly, human conversation.
-• Use provided context when relevant.
-• Avoid negativity
-• End with an uplifting line like: "You're doing great — keep trusting God!"
-
-Answer based on the context provided below. If the answer is not in the context, provide helpful Christian homeschooling guidance based on your knowledge."""),
-            HumanMessage(content=f"Context:\n{context}\n\nQuestion: {question}")
-        ])
-
-        return jsonify({"answer": response.content, "sources_count": 3}), 200
-        
     except Exception as e:
+        from models import db
+        db.session.rollback()
         import traceback
         traceback.print_exc()
         return jsonify({"answer": f"Error: {str(e)}"}), 500
@@ -753,36 +869,39 @@ def _retrieve_from_lesson(query, lesson_data, top_k=5):
 @rag_bp.route("/ask-lesson/<int:lesson_id>", methods=["POST"])
 @jwt_required()
 def ask_lesson(lesson_id):
-    """Ask a question about a specific lesson — LLM uses retrieval as a tool"""
-    from models import Lesson
-    
-    data = request.json
-    question = data.get("question")
-    conversation_history = data.get("history", [])  # [{role, content}, ...]
-    
+    """Ask a question about a specific lesson and persist chat history."""
+    data = request.json or {}
+    question = (data.get("question") or "").strip()
+
     if not question:
         return jsonify({"answer": "Please provide a question."}), 400
 
+    persist_state = None
     try:
-        # Load lesson data (cached)
+        _, conversation_history, persist_state, state_error = _prepare_chat_state(
+            question=question,
+            data=data,
+            expected_chat_type="lesson",
+            expected_lesson_id=lesson_id,
+        )
+        if state_error and data.get("session_id") is not None:
+            return jsonify(state_error), 400
+
         lesson_data = _load_lesson_data(lesson_id)
         if lesson_data is None:
-            return jsonify({"answer": "❌ Lesson file not found or unreadable."}), 404
-        
+            return jsonify({"answer": "Lesson file not found or unreadable."}), 404
+
         lesson = lesson_data["lesson"]
-        
-        # Get LLM
+
         llm = get_llm()
         if llm == "ERROR_NO_KEY":
-            return jsonify({"answer": "❌ API Key is missing."}), 500
+            return jsonify({"answer": "API key is missing."}), 500
         if llm == "ERROR_IMPORT":
             return jsonify({"answer": "Server is missing required LLM dependencies."}), 500
 
-        # Step 1: LLM decides what to search for (tool use pattern)
         from langchain_core.messages import SystemMessage, HumanMessage
-        
-        # Generate search queries from the LLM
-        search_planning_prompt = f"""You are an AI tutor helping a student with the lesson: "{lesson.name}".
+
+        search_planning_prompt = f"""You are an AI tutor helping a student with the lesson: \"{lesson.name}\".
 
 Given the student's question, generate 1-3 short search queries that would help find the most relevant information from the lesson document. Return ONLY the search queries, one per line, nothing else.
 
@@ -790,35 +909,31 @@ Student's question: {question}"""
 
         search_response = llm.invoke([
             SystemMessage(content="You generate search queries to retrieve information from a document. Return only the queries, one per line."),
-            HumanMessage(content=search_planning_prompt)
+            HumanMessage(content=search_planning_prompt),
         ])
-        
-        search_queries = [q.strip() for q in search_response.content.strip().split('\n') if q.strip()]
+
+        search_queries = [q.strip() for q in search_response.content.strip().split("\n") if q.strip()]
         if not search_queries:
             search_queries = [question]
-        
-        print(f"[Lesson {lesson_id}] Search queries: {search_queries}")
-        
-        # Step 2: Execute retrieval for each query
+
         all_retrieved = []
         seen_indices = set()
-        for query in search_queries[:3]:  # max 3 queries
+        for query in search_queries[:3]:
             results = _retrieve_from_lesson(query, lesson_data, top_k=3)
-            for r in results:
-                if r["chunk_index"] not in seen_indices:
-                    seen_indices.add(r["chunk_index"])
-                    all_retrieved.append(r)
-        
-        # Sort by score and take top 5
+            for item in results:
+                if item["chunk_index"] not in seen_indices:
+                    seen_indices.add(item["chunk_index"])
+                    all_retrieved.append(item)
+
         all_retrieved.sort(key=lambda x: x["score"], reverse=True)
         top_chunks = all_retrieved[:5]
-        
-        retrieved_context = "\n\n---\n\n".join([f"[Section {r['chunk_index']+1}] (relevance: {r['score']})\n{r['text']}" for r in top_chunks])
-        
-        print(f"[Lesson {lesson_id}] Retrieved {len(top_chunks)} chunks, scores: {[r['score'] for r in top_chunks]}")
-        
-        # Step 3: Build conversation with retrieved context and history
-        system_prompt = f"""You are a friendly and knowledgeable AI tutor helping a student learn from the lesson: "{lesson.name}".
+
+        retrieved_context = "\n\n---\n\n".join([
+            f"[Section {r['chunk_index'] + 1}] (relevance: {r['score']})\n{r['text']}"
+            for r in top_chunks
+        ])
+
+        system_prompt = f"""You are a friendly and knowledgeable AI tutor helping a student learn from the lesson: \"{lesson.name}\".
 
 Your role:
 - Help the student understand the lesson content deeply
@@ -836,29 +951,24 @@ Below are the most relevant sections retrieved from the lesson document:
 Use these sections to answer the student's question accurately. You may also draw on your general knowledge to supplement explanations, but always ground your answers in the lesson content first."""
 
         messages = [SystemMessage(content=system_prompt)]
-        
-        # Add conversation history (max last 10 exchanges)
-        for msg in conversation_history[-20:]:
-            if msg.get("role") == "user":
-                messages.append(HumanMessage(content=msg["content"]))
-            elif msg.get("role") == "assistant":
-                from langchain_core.messages import AIMessage
-                messages.append(AIMessage(content=msg["content"]))
-        
-        # Add current question
+        messages.extend(_build_langchain_history(conversation_history))
         messages.append(HumanMessage(content=question))
-        
-        # Step 4: Get LLM answer
+
         response = llm.invoke(messages)
+        answer = response.content
+        ids = _persist_chat_exchange(persist_state, question, answer)
 
         return jsonify({
-            "answer": response.content,
+            "answer": answer,
             "lesson_name": lesson.name,
             "sources_count": len(top_chunks),
-            "search_queries": search_queries
+            "search_queries": search_queries,
+            **ids,
         }), 200
-        
+
     except Exception as e:
+        from models import db
+        db.session.rollback()
         import traceback
         traceback.print_exc()
-        return jsonify({"answer": f"❌ Error: {str(e)}"}), 500
+        return jsonify({"answer": f"Error: {str(e)}"}), 500

@@ -1,6 +1,6 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, User, Child, DevotionalProgress, Planner, Quiz, QuizResult, Notification, AiSession
+from models import db, User, Child, DevotionalProgress, Planner, Quiz, QuizResult, Notification, AiSession, AiChatMessage
 from datetime import datetime, timedelta
 from sqlalchemy import func, and_
 
@@ -268,16 +268,127 @@ def student_progress_summary():
 
 
 # ==================== AI SESSION TRACKING ====================
+@dashboard_bp.route("/student/ai-sessions", methods=["GET"])
+@jwt_required()
+def list_ai_sessions():
+    """List user's AI sessions with a preview for chat history panel"""
+    try:
+        user_id = get_user_id()
+        limit = request.args.get("limit", 40, type=int)
+        limit = max(1, min(limit, 100))
+
+        sessions = (
+            AiSession.query
+            .filter_by(user_id=user_id)
+            .order_by(AiSession.updated_at.desc(), AiSession.started_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+        session_items = []
+        for session in sessions:
+            messages = (
+                AiChatMessage.query
+                .filter_by(session_id=session.id, user_id=user_id)
+                .order_by(AiChatMessage.turn_index.asc(), AiChatMessage.id.asc())
+                .all()
+            )
+
+            first_user_msg = next((m.content for m in messages if m.role == "user"), "")
+            last_msg = messages[-1].content if messages else ""
+
+            title = (session.title or "").strip()
+            if not title:
+                base = first_user_msg or (
+                    f"Lesson: {session.lesson_name}" if session.chat_type == "lesson" and session.lesson_name else "New chat"
+                )
+                title = (base[:60] + "...") if len(base) > 60 else base
+
+            session_items.append({
+                "id": session.id,
+                "chat_type": session.chat_type,
+                "title": title,
+                "lesson_id": session.lesson_id,
+                "lesson_name": session.lesson_name,
+                "lesson_desc": session.lesson_desc,
+                "started_at": session.started_at.isoformat() if session.started_at else None,
+                "updated_at": session.updated_at.isoformat() if session.updated_at else None,
+                "ended_at": session.ended_at.isoformat() if session.ended_at else None,
+                "duration_minutes": session.duration_minutes,
+                "messages_count": len(messages),
+                "last_message_preview": (last_msg[:80] + "...") if len(last_msg) > 80 else last_msg
+            })
+
+        return jsonify({"sessions": session_items}), 200
+    except Exception as e:
+        return jsonify({"message": f"Error listing sessions: {str(e)}"}), 500
+
+
+@dashboard_bp.route("/student/ai-sessions/<int:session_id>/messages", methods=["GET"])
+@jwt_required()
+def get_ai_session_messages(session_id):
+    """Get all chat messages for one AI session"""
+    try:
+        user_id = get_user_id()
+        session = AiSession.query.filter_by(id=session_id, user_id=user_id).first()
+        if not session:
+            return jsonify({"message": "Session not found"}), 404
+
+        messages = (
+            AiChatMessage.query
+            .filter_by(session_id=session_id, user_id=user_id)
+            .order_by(AiChatMessage.turn_index.asc(), AiChatMessage.id.asc())
+            .all()
+        )
+
+        return jsonify({
+            "session": session.to_dict(),
+            "messages": [m.to_dict() for m in messages]
+        }), 200
+    except Exception as e:
+        return jsonify({"message": f"Error loading session messages: {str(e)}"}), 500
+
+
 @dashboard_bp.route("/student/ai-sessions/start", methods=["POST"])
 @jwt_required()
 def start_ai_session():
-    """Start an AI assistant session for time tracking"""
+    """Start a new AI assistant session"""
     try:
         user_id = get_user_id()
-        session = AiSession(user_id=user_id)
+        data = request.get_json(silent=True) or {}
+        chat_type = (data.get("chat_type") or "general").strip().lower()
+        if chat_type not in ("general", "lesson"):
+            chat_type = "general"
+
+        raw_lesson_id = data.get("lesson_id")
+        lesson_id = None
+        if raw_lesson_id not in (None, ""):
+            try:
+                lesson_id = int(raw_lesson_id)
+            except (TypeError, ValueError):
+                lesson_id = None
+        lesson_name = (data.get("lesson_name") or "").strip() or None
+        lesson_desc = (data.get("lesson_desc") or "").strip() or None
+        title = (data.get("title") or "").strip() or None
+
+        if chat_type == "lesson" and not title and lesson_name:
+            title = f"Lesson: {lesson_name}"
+
+        session = AiSession(
+            user_id=user_id,
+            chat_type=chat_type,
+            title=title,
+            lesson_id=lesson_id,
+            lesson_name=lesson_name,
+            lesson_desc=lesson_desc
+        )
         db.session.add(session)
         db.session.commit()
-        return jsonify({"session_id": session.id, "started_at": session.started_at.isoformat()}), 201
+        return jsonify({
+            "session_id": session.id,
+            "started_at": session.started_at.isoformat(),
+            "session": session.to_dict()
+        }), 201
     except Exception as e:
         return jsonify({"message": f"Error starting AI session: {str(e)}"}), 500
 

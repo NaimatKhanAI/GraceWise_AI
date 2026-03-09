@@ -125,28 +125,44 @@
             </div>
 
             <div class="chat-container">
-                <div class="chat-messages" id="chatMessages">
-                    <div class="message bot-message">
-                        <div class="message-avatar">
-                            <i class="fas fa-robot"></i>
-                        </div>
-                        <div class="message-content">
-                            <p>Hello! I'm your AI learning assistant. How can I help you today?</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="chat-input-container">
-                    <div class="chat-input-wrapper">
-                        <textarea
-                            placeholder="Ask me anything..."
-                            class="chat-input"
-                            id="chatInput"
-                            rows="1"
-                        ></textarea>
-                        <button class="send-btn" id="sendBtn">
-                            <i class="fas fa-paper-plane"></i>
+                <div class="chat-layout">
+                    <aside class="chat-history-panel" id="chatHistoryPanel">
+                        <button class="new-chat-btn" id="newChatBtn" type="button">
+                            <i class="fas fa-plus"></i>
+                            New chat
                         </button>
+                        <div class="chat-history-list" id="chatHistoryList"></div>
+                    </aside>
+
+                    <div class="chat-main">
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="message bot-message">
+                                <div class="message-avatar">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                <div class="message-content">
+                                    <p>Hello! I'm your AI learning assistant. How can I help you today?</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chat-input-container">
+                            <div class="edit-state" id="editState" style="display: none;">
+                                <span class="edit-state-text">Editing previous prompt</span>
+                                <button type="button" class="edit-cancel-btn" id="cancelEditBtn">Cancel</button>
+                            </div>
+                            <div class="chat-input-wrapper">
+                                <textarea
+                                    placeholder="Ask me anything..."
+                                    class="chat-input"
+                                    id="chatInput"
+                                    rows="1"
+                                ></textarea>
+                                <button class="send-btn" id="sendBtn">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

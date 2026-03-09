@@ -133,6 +133,44 @@ with app.app_context():
         print(f"⚠️  Planner migration note: {str(e)}")
         db.session.rollback()
     
+    # Migrate ai_session table if needed
+    try:
+        from sqlalchemy import text
+        inspector = db.inspect(db.engine)
+
+        if 'ai_session' in inspector.get_table_names():
+            existing_columns = [col['name'] for col in inspector.get_columns('ai_session')]
+            columns_to_add = []
+
+            if 'chat_type' not in existing_columns:
+                columns_to_add.append("ADD COLUMN chat_type VARCHAR(20) DEFAULT 'general'")
+            if 'title' not in existing_columns:
+                columns_to_add.append("ADD COLUMN title VARCHAR(255)")
+            if 'lesson_id' not in existing_columns:
+                columns_to_add.append("ADD COLUMN lesson_id INTEGER")
+            if 'lesson_name' not in existing_columns:
+                columns_to_add.append("ADD COLUMN lesson_name VARCHAR(255)")
+            if 'lesson_desc' not in existing_columns:
+                columns_to_add.append("ADD COLUMN lesson_desc TEXT")
+            if 'updated_at' not in existing_columns:
+                columns_to_add.append("ADD COLUMN updated_at DATETIME")
+
+            if columns_to_add:
+                print("\n" + "="*50)
+                print(f"Migrating ai_session table - adding {len(columns_to_add)} columns...")
+                print("="*50)
+                for column_def in columns_to_add:
+                    sql = f"ALTER TABLE ai_session {column_def}"
+                    db.session.execute(text(sql))
+                db.session.execute(text("UPDATE ai_session SET chat_type = 'general' WHERE chat_type IS NULL OR chat_type = ''"))
+                db.session.execute(text("UPDATE ai_session SET updated_at = started_at WHERE updated_at IS NULL"))
+                db.session.commit()
+                print("AI session migration completed.")
+                print("="*50 + "\n")
+    except Exception as e:
+        print(f"AI session migration note: {str(e)}")
+        db.session.rollback()
+
     # Initialize admin user
     from models import User, AppSetting
     from routes.rag_chatbot import AI_PROMPT_KEY, DEFAULT_AI_PROMPT
