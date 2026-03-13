@@ -1,8 +1,12 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, send_from_directory
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
+import csv
+import re
+from io import StringIO
+from uuid import uuid4
 
 # Ensure tracing is disabled
 os.environ["LANGCHAIN_TRACING_V2"] = "false"
@@ -32,12 +36,15 @@ MANDATORY_CONTINUITY_RULES = """Conversation continuity rules:
 
 # Configure upload settings
 UPLOAD_FOLDER = 'documents'
+EXPORT_FOLDER = os.path.join(UPLOAD_FOLDER, 'exports')
 ALLOWED_EXTENSIONS = {'pdf', 'txt'}
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 
 # Ensure documents folder exists
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
+if not os.path.exists(EXPORT_FOLDER):
+    os.makedirs(EXPORT_FOLDER)
 
 # Global variables for lazy initialization
 vector_data = None
@@ -115,6 +122,147 @@ def _build_langchain_history(history):
         elif role in ("assistant", "ai"):
             messages.append(AIMessage(content=content))
     return messages
+
+
+def _has_download_intent(text):
+    text = (text or "").strip().lower()
+    if not text:
+        return False
+    keywords = [
+        "download", "downloadable", "export", "csv", "pdf", "file", "link",
+        "isko", "iska", "uska", "is table", "that table", "this table",
+    ]
+    return any(k in text for k in keywords)
+
+
+def _split_markdown_row(row):
+    row = row.strip()
+    if row.startswith("|"):
+        row = row[1:]
+    if row.endswith("|"):
+        row = row[:-1]
+    return [cell.strip() for cell in row.split("|")]
+
+
+def _is_separator_row(row):
+    cells = _split_markdown_row(row)
+    if not cells:
+        return False
+    return all(re.fullmatch(r":?-{3,}:?", cell or "") for cell in cells)
+
+
+def _extract_latest_markdown_table(history):
+    """
+    Find the latest assistant markdown table from conversation history.
+    Returns table lines or None.
+    """
+    for msg in reversed(history or []):
+        if msg.get("role") not in ("assistant", "ai"):
+            continue
+        content = (msg.get("content") or "").strip()
+        if not content:
+            continue
+
+        lines = content.splitlines()
+        block = []
+        latest_valid = None
+        for line in lines:
+            stripped = line.strip()
+            if "|" in stripped and stripped.startswith("|"):
+                block.append(stripped)
+                continue
+            if len(block) >= 2 and _is_separator_row(block[1]):
+                latest_valid = block[:]
+            block = []
+
+        if len(block) >= 2 and _is_separator_row(block[1]):
+            latest_valid = block[:]
+
+        if latest_valid:
+            return latest_valid
+    return None
+
+
+def _table_lines_to_csv(table_lines):
+    if not table_lines or len(table_lines) < 2:
+        return None
+
+    header = _split_markdown_row(table_lines[0])
+    if not header:
+        return None
+
+    rows = []
+    for row_line in table_lines[2:]:
+        cells = _split_markdown_row(row_line)
+        if not any(cells):
+            continue
+        if len(cells) < len(header):
+            cells.extend([""] * (len(header) - len(cells)))
+        elif len(cells) > len(header):
+            cells = cells[:len(header)]
+        rows.append(cells)
+
+    output = StringIO()
+    writer = csv.writer(output)
+    writer.writerow(header)
+    writer.writerows(rows)
+    return output.getvalue()
+
+
+def _save_export_csv(csv_text):
+    if not csv_text:
+        return None
+
+    filename = f"chat-table-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}-{uuid4().hex[:8]}.csv"
+    file_path = os.path.join(EXPORT_FOLDER, filename)
+    with open(file_path, "w", encoding="utf-8", newline="") as f:
+        f.write(csv_text)
+    return filename
+
+
+def _build_export_links(filename):
+    base = (request.headers.get("Origin") or request.url_root or "").rstrip("/")
+    if not base:
+        return {
+            "api_link": f"/api/rag/exports/{filename}",
+            "direct_link": f"/rag/exports/{filename}",
+        }
+    return {
+        "api_link": f"{base}/api/rag/exports/{filename}",
+        "direct_link": f"{base}/rag/exports/{filename}",
+    }
+
+
+def _try_auto_table_export(question, history):
+    """
+    If user asks for download/export and the latest assistant response contains a markdown table,
+    auto-generate CSV and return answer payload.
+    """
+    if not _has_download_intent(question):
+        return None
+
+    table_lines = _extract_latest_markdown_table(history)
+    if not table_lines:
+        return None
+
+    csv_text = _table_lines_to_csv(table_lines)
+    filename = _save_export_csv(csv_text)
+    if not filename:
+        return None
+
+    links = _build_export_links(filename)
+    answer = (
+        "I created a downloadable CSV from the table in our previous message.\n\n"
+        f"- Primary link: {links['api_link']}\n"
+        f"- Fallback link: {links['direct_link']}"
+    )
+
+    return {
+        "answer": answer,
+        "export_filename": filename,
+        "download_url": links["api_link"],
+        "download_url_fallback": links["direct_link"],
+    }
 
 
 def _prepare_chat_state(question, data, expected_chat_type=None, expected_lesson_id=None):
@@ -564,6 +712,11 @@ def ask():
         if state_error:
             return jsonify(state_error), 400
 
+        auto_export = _try_auto_table_export(question, conversation_history)
+        if auto_export:
+            ids = _persist_chat_exchange(persist_state, question, auto_export["answer"])
+            return jsonify({**auto_export, "sources_count": 0, **ids}), 200
+
         from langchain_core.messages import SystemMessage, HumanMessage
 
         if not documents_exist():
@@ -898,6 +1051,17 @@ def ask_lesson(lesson_id):
         if state_error and data.get("session_id") is not None:
             return jsonify(state_error), 400
 
+        auto_export = _try_auto_table_export(question, conversation_history)
+        if auto_export:
+            ids = _persist_chat_exchange(persist_state, question, auto_export["answer"])
+            return jsonify({
+                **auto_export,
+                "lesson_name": None,
+                "sources_count": 0,
+                "search_queries": [],
+                **ids,
+            }), 200
+
         lesson_data = _load_lesson_data(lesson_id)
         if lesson_data is None:
             return jsonify({"answer": "Lesson file not found or unreadable."}), 404
@@ -983,3 +1147,16 @@ Use these sections to answer the student's question accurately. You may also dra
         import traceback
         traceback.print_exc()
         return jsonify({"answer": f"Error: {str(e)}"}), 500
+
+
+@rag_bp.route("/exports/<filename>", methods=["GET"])
+def download_export(filename):
+    safe_name = secure_filename(filename)
+    if not safe_name:
+        return jsonify({"message": "Invalid filename"}), 400
+
+    file_path = os.path.join(EXPORT_FOLDER, safe_name)
+    if not os.path.exists(file_path):
+        return jsonify({"message": "File not found"}), 404
+
+    return send_from_directory(EXPORT_FOLDER, safe_name, as_attachment=True)

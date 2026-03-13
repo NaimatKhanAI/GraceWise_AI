@@ -1,0 +1,11 @@
+﻿# Weekly Meal Plan (6-Year-Old)
+
+| Day | Breakfast | Lunch | Snack | Dinner |
+|---|---|---|---|---|
+| Monday | Oatmeal + berries | Turkey & cheese roll-ups | Apple slices | Chicken, rice & broccoli |
+| Tuesday | Scrambled eggs + toast | Hummus & veggie wraps | Yogurt | Spaghetti with meatballs |
+| Wednesday | Greek yogurt + granola | Grilled cheese + tomato soup | Carrot sticks | Baked fish, sweet potato |
+| Thursday | Pancakes + banana slices | Chicken quesadilla | Cheese cubes | Stir-fry beef & veggies |
+| Friday | Cereal + milk + strawberries | Sunbutter & jelly sandwich | Grapes | Homemade pizza |
+| Saturday | Waffles + blueberries | Pasta salad with veggies | Crackers & hummus | Tacos with ground turkey |
+| Sunday | Muffins + orange slices | Egg salad sandwich | Cucumber slices | Roast chicken, potatoes, peas |

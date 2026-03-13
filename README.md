@@ -441,7 +441,7 @@ For issues, feature requests, or questions:
 # 🟢 SSH LOGIN
 
 ```bash
-ssh root@YOUR_SERVER_IP
+ssh root@72.62.35.115
 ```
 
 # 📁 PROJECT LOCATION
