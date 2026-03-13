@@ -23,6 +23,12 @@ Guidelines:
 - Avoid negativity.
 - End with an uplifting line like: "You're doing great - keep trusting God!"
 """
+MANDATORY_CONTINUITY_RULES = """Conversation continuity rules:
+- Always use prior turns from this same chat session as your primary conversation memory.
+- Resolve follow-up references like "ye", "isko", "us table ko", "download link do" using the most recent relevant assistant output.
+- If the user asks for a follow-up action (download/export/reformat/share), apply it to the last generated result unless they specify a different target.
+- Ask a short clarification question only if more than one previous item could match the user's request.
+"""
 
 # Configure upload settings
 UPLOAD_FOLDER = 'documents'
@@ -56,9 +62,14 @@ def get_ai_system_prompt():
     from models import AppSetting
 
     setting = AppSetting.query.filter_by(setting_key=AI_PROMPT_KEY).first()
+    base_prompt = DEFAULT_AI_PROMPT
     if setting and setting.setting_value and setting.setting_value.strip():
-        return setting.setting_value
-    return DEFAULT_AI_PROMPT
+        base_prompt = setting.setting_value
+
+    if MANDATORY_CONTINUITY_RULES.strip() in base_prompt:
+        return base_prompt
+
+    return f"{base_prompt.rstrip()}\n\n{MANDATORY_CONTINUITY_RULES}"
 
 
 def get_openai_api_key():
@@ -94,7 +105,7 @@ def _build_langchain_history(history):
     from langchain_core.messages import HumanMessage, AIMessage
 
     messages = []
-    for msg in history[-20:]:
+    for msg in history:
         role = msg.get("role")
         content = (msg.get("content") or "").strip()
         if not content:
