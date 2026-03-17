@@ -7,7 +7,7 @@ import csv
 import re
 from io import StringIO
 from uuid import uuid4
-from textwrap import wrap
+from html import escape
 
 # Ensure tracing is disabled
 os.environ["LANGCHAIN_TRACING_V2"] = "false"
@@ -191,26 +191,39 @@ def _table_lines_to_csv(table_lines):
     if not table_lines or len(table_lines) < 2:
         return None
 
-    header = _split_markdown_row(table_lines[0])
-    if not header:
+    rows = _normalize_markdown_table_rows(table_lines)
+    if not rows:
         return None
 
-    rows = []
+    output = StringIO()
+    writer = csv.writer(output)
+    writer.writerow(rows[0])
+    writer.writerows(rows[1:])
+    return output.getvalue()
+
+
+def _normalize_markdown_table_rows(table_lines):
+    if not table_lines or len(table_lines) < 2:
+        return []
+
+    header = _split_markdown_row(table_lines[0])
+    if not header:
+        return []
+
+    col_count = len(header)
+    rows = [header]
+
     for row_line in table_lines[2:]:
         cells = _split_markdown_row(row_line)
         if not any(cells):
             continue
-        if len(cells) < len(header):
-            cells.extend([""] * (len(header) - len(cells)))
-        elif len(cells) > len(header):
-            cells = cells[:len(header)]
+        if len(cells) < col_count:
+            cells.extend([""] * (col_count - len(cells)))
+        elif len(cells) > col_count:
+            cells = cells[:col_count]
         rows.append(cells)
 
-    output = StringIO()
-    writer = csv.writer(output)
-    writer.writerow(header)
-    writer.writerows(rows)
-    return output.getvalue()
+    return rows
 
 
 def _save_export_csv(csv_text):
@@ -237,28 +250,134 @@ def _save_export_text(text_content, extension="txt"):
 
 
 def _markdown_to_plain_text(markdown_text):
-    text = (markdown_text or "").strip()
-    if not text:
-        return ""
+    blocks = _extract_markdown_blocks(markdown_text)
+    rendered = []
 
-    # Keep link meaning while removing markdown formatting.
+    for block in blocks:
+        if block["type"] == "text":
+            text = _normalize_markdown_text_block(block["text"])
+            if text:
+                rendered.append(text)
+        elif block["type"] == "table":
+            ascii_table = _render_ascii_table(block["rows"])
+            if ascii_table:
+                rendered.append(ascii_table)
+
+    return "\n\n".join(rendered).strip()
+
+
+def _strip_markdown_inline(text):
     text = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r"\1 (\2)", text)
-    text = re.sub(r"^#{1,6}\s*", "", text, flags=re.MULTILINE)
-    text = re.sub(r"^>\s*", "", text, flags=re.MULTILINE)
     text = re.sub(r"`([^`]+)`", r"\1", text)
     text = text.replace("**", "").replace("__", "")
-    return text.strip()
+    return text
+
+
+def _normalize_markdown_text_block(text):
+    cleaned_lines = []
+    for raw_line in (text or "").splitlines():
+        line = raw_line.rstrip()
+        if not line.strip():
+            cleaned_lines.append("")
+            continue
+
+        line = re.sub(r"^#{1,6}\s*", "", line)
+        line = re.sub(r"^>\s*", "", line)
+        line = _strip_markdown_inline(line)
+        cleaned_lines.append(line.strip())
+
+    normalized = "\n".join(cleaned_lines).strip()
+    normalized = re.sub(r"\n{3,}", "\n\n", normalized)
+    return normalized
+
+
+def _extract_markdown_blocks(markdown_text):
+    lines = (markdown_text or "").splitlines()
+    if not lines:
+        return []
+
+    blocks = []
+    text_buffer = []
+    idx = 0
+
+    def flush_text():
+        if not text_buffer:
+            return
+        combined = "\n".join(text_buffer).strip()
+        if combined:
+            blocks.append({"type": "text", "text": combined})
+        text_buffer.clear()
+
+    while idx < len(lines):
+        line = lines[idx].strip()
+        if (
+            line.startswith("|")
+            and idx + 1 < len(lines)
+            and _is_separator_row(lines[idx + 1].strip())
+        ):
+            flush_text()
+            table_lines = [lines[idx].strip(), lines[idx + 1].strip()]
+            idx += 2
+
+            while idx < len(lines):
+                next_line = lines[idx].strip()
+                if next_line.startswith("|"):
+                    table_lines.append(next_line)
+                    idx += 1
+                else:
+                    break
+
+            rows = _normalize_markdown_table_rows(table_lines)
+            if rows:
+                blocks.append({"type": "table", "rows": rows})
+            continue
+
+        text_buffer.append(lines[idx])
+        idx += 1
+
+    flush_text()
+    return blocks
+
+
+def _render_ascii_table(rows):
+    if not rows:
+        return ""
+
+    normalized_rows = []
+    col_count = max(len(row) for row in rows)
+    for row in rows:
+        normalized = [(_strip_markdown_inline(str(cell or ""))).replace("\n", " ").strip() for cell in row]
+        if len(normalized) < col_count:
+            normalized.extend([""] * (col_count - len(normalized)))
+        normalized_rows.append(normalized)
+
+    col_widths = [0] * col_count
+    for row in normalized_rows:
+        for idx, cell in enumerate(row):
+            col_widths[idx] = max(col_widths[idx], len(cell))
+
+    def format_row(row):
+        return "| " + " | ".join(cell.ljust(col_widths[idx]) for idx, cell in enumerate(row)) + " |"
+
+    separator = "+-" + "-+-".join("-" * width for width in col_widths) + "-+"
+    output_lines = [separator, format_row(normalized_rows[0]), separator]
+    for row in normalized_rows[1:]:
+        output_lines.append(format_row(row))
+    output_lines.append(separator)
+    return "\n".join(output_lines)
 
 
 def _save_export_pdf(markdown_text):
-    content = _markdown_to_plain_text(markdown_text)
-    if not content:
+    blocks = _extract_markdown_blocks(markdown_text)
+    if not blocks:
         return None, "No content available to export."
 
     try:
+        from reportlab.lib import colors
         from reportlab.lib.pagesizes import LETTER
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
         from reportlab.lib.units import inch
-        from reportlab.pdfgen import canvas
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
     except Exception:
         return None, "PDF export dependency is missing. Please install reportlab."
 
@@ -266,30 +385,76 @@ def _save_export_pdf(markdown_text):
     file_path = os.path.join(EXPORT_FOLDER, filename)
 
     try:
-        pdf = canvas.Canvas(file_path, pagesize=LETTER)
-        _, page_height = LETTER
-        margin = 0.75 * inch
-        y = page_height - margin
-        line_height = 14
+        doc = SimpleDocTemplate(
+            file_path,
+            pagesize=LETTER,
+            leftMargin=0.7 * inch,
+            rightMargin=0.7 * inch,
+            topMargin=0.7 * inch,
+            bottomMargin=0.7 * inch,
+        )
+        styles = getSampleStyleSheet()
+        body_style = styles["BodyText"]
+        body_style.leading = 14
+        table_header_style = ParagraphStyle(
+            "TableHeader",
+            parent=styles["BodyText"],
+            fontName="Helvetica-Bold",
+            leading=13,
+        )
 
-        for raw_line in content.splitlines():
-            wrapped_lines = wrap(raw_line, width=95) if raw_line.strip() else [""]
-            for line in wrapped_lines:
-                if y <= margin:
-                    pdf.showPage()
-                    y = page_height - margin
-                pdf.drawString(margin, y, line)
-                y -= line_height
+        story = [Paragraph("GraceWise Assistant Export", styles["Title"]), Spacer(1, 0.18 * inch)]
 
-        pdf.save()
+        for block in blocks:
+            if block["type"] == "text":
+                text_block = _normalize_markdown_text_block(block["text"])
+                if not text_block:
+                    continue
+                paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text_block) if p.strip()]
+                for paragraph in paragraphs:
+                    safe_text = escape(paragraph).replace("\n", "<br/>")
+                    story.append(Paragraph(safe_text, body_style))
+                    story.append(Spacer(1, 0.1 * inch))
+                continue
+
+            if block["type"] == "table":
+                rows = block["rows"]
+                if not rows:
+                    continue
+                col_count = len(rows[0]) if rows[0] else 1
+                table_data = []
+                for row_index, row in enumerate(rows):
+                    paragraph_style = table_header_style if row_index == 0 else body_style
+                    table_data.append([
+                        Paragraph(escape(str(cell or "")).replace("\n", "<br/>"), paragraph_style)
+                        for cell in row
+                    ])
+
+                col_width = doc.width / max(col_count, 1)
+                table = Table(table_data, repeatRows=1, colWidths=[col_width] * col_count)
+                table.setStyle(TableStyle([
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#f2ecdf")),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#3d3220")),
+                    ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#d3c4a3")),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+                    ("TOPPADDING", (0, 0), (-1, -1), 5),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#fbf8f2")]),
+                ]))
+                story.append(table)
+                story.append(Spacer(1, 0.14 * inch))
+
+        doc.build(story)
         return filename, None
     except Exception as exc:
         return None, str(exc)
 
 
 def _save_export_docx(markdown_text):
-    content = _markdown_to_plain_text(markdown_text)
-    if not content:
+    blocks = _extract_markdown_blocks(markdown_text)
+    if not blocks:
         return None, "No content available to export."
 
     try:
@@ -303,11 +468,29 @@ def _save_export_docx(markdown_text):
     try:
         doc = Document()
         doc.add_heading("GraceWise Assistant Export", level=1)
-        blocks = [b.strip() for b in re.split(r"\n\s*\n", content) if b.strip()]
-        if not blocks:
-            blocks = [content]
+
         for block in blocks:
-            doc.add_paragraph(block)
+            if block["type"] == "text":
+                text_block = _normalize_markdown_text_block(block["text"])
+                paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text_block) if p.strip()]
+                for paragraph in paragraphs:
+                    doc.add_paragraph(paragraph)
+                continue
+
+            if block["type"] == "table":
+                rows = block["rows"]
+                if not rows:
+                    continue
+                table = doc.add_table(rows=len(rows), cols=len(rows[0]))
+                table.style = "Table Grid"
+                for row_index, row in enumerate(rows):
+                    for col_index, cell in enumerate(row):
+                        table_cell = table.rows[row_index].cells[col_index]
+                        table_cell.text = str(cell or "")
+                        if row_index == 0 and table_cell.paragraphs and table_cell.paragraphs[0].runs:
+                            table_cell.paragraphs[0].runs[0].bold = True
+                doc.add_paragraph("")
+
         doc.save(file_path)
         return filename, None
     except Exception as exc:
