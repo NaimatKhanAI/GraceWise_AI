@@ -406,6 +406,25 @@
     background: rgba(255, 255, 255, 0.2);
 }
 
+.message-content a.download-link {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 7px 12px;
+    border-radius: 9px;
+    border: 1px solid #d8c8a0;
+    background: #fff9ec;
+    color: #6d5525;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.2s ease;
+}
+
+.message-content a.download-link:hover {
+    border-color: #b59c61;
+    background: #f4e9d2;
+}
+
 .chat-input-container {
     border-top: 1px solid #e9ecef;
     padding-top: 14px;

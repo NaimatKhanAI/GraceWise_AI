@@ -32,6 +32,8 @@ chromadb
 
 # PDF loading
 pypdf
+reportlab
+python-docx
 
 # Embeddings
 sentence-transformers

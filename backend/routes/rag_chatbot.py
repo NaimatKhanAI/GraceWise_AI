@@ -7,6 +7,7 @@ import csv
 import re
 from io import StringIO
 from uuid import uuid4
+from textwrap import wrap
 
 # Ensure tracing is disabled
 os.environ["LANGCHAIN_TRACING_V2"] = "false"
@@ -128,11 +129,14 @@ def _has_download_intent(text):
     text = (text or "").strip().lower()
     if not text:
         return False
-    keywords = [
-        "download", "downloadable", "export", "csv", "pdf", "file", "link",
+    action_keywords = [
+        "download", "downloadable", "export", "file", "link",
+        "create", "generate", "make", "save",
+        "bna", "bana", "banado", "bna do", "bana do",
         "isko", "iska", "uska", "is table", "that table", "this table",
     ]
-    return any(k in text for k in keywords)
+    format_pattern = re.compile(r"\b(csv|pdf|docx|txt)\b", re.IGNORECASE)
+    return any(k in text for k in action_keywords) or bool(format_pattern.search(text))
 
 
 def _split_markdown_row(row):
@@ -220,6 +224,141 @@ def _save_export_csv(csv_text):
     return filename
 
 
+def _save_export_text(text_content, extension="txt"):
+    text_content = (text_content or "").strip()
+    if not text_content:
+        return None
+
+    filename = f"chat-export-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}-{uuid4().hex[:8]}.{extension}"
+    file_path = os.path.join(EXPORT_FOLDER, filename)
+    with open(file_path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(text_content)
+    return filename
+
+
+def _markdown_to_plain_text(markdown_text):
+    text = (markdown_text or "").strip()
+    if not text:
+        return ""
+
+    # Keep link meaning while removing markdown formatting.
+    text = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r"\1 (\2)", text)
+    text = re.sub(r"^#{1,6}\s*", "", text, flags=re.MULTILINE)
+    text = re.sub(r"^>\s*", "", text, flags=re.MULTILINE)
+    text = re.sub(r"`([^`]+)`", r"\1", text)
+    text = text.replace("**", "").replace("__", "")
+    return text.strip()
+
+
+def _save_export_pdf(markdown_text):
+    content = _markdown_to_plain_text(markdown_text)
+    if not content:
+        return None, "No content available to export."
+
+    try:
+        from reportlab.lib.pagesizes import LETTER
+        from reportlab.lib.units import inch
+        from reportlab.pdfgen import canvas
+    except Exception:
+        return None, "PDF export dependency is missing. Please install reportlab."
+
+    filename = f"chat-export-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}-{uuid4().hex[:8]}.pdf"
+    file_path = os.path.join(EXPORT_FOLDER, filename)
+
+    try:
+        pdf = canvas.Canvas(file_path, pagesize=LETTER)
+        _, page_height = LETTER
+        margin = 0.75 * inch
+        y = page_height - margin
+        line_height = 14
+
+        for raw_line in content.splitlines():
+            wrapped_lines = wrap(raw_line, width=95) if raw_line.strip() else [""]
+            for line in wrapped_lines:
+                if y <= margin:
+                    pdf.showPage()
+                    y = page_height - margin
+                pdf.drawString(margin, y, line)
+                y -= line_height
+
+        pdf.save()
+        return filename, None
+    except Exception as exc:
+        return None, str(exc)
+
+
+def _save_export_docx(markdown_text):
+    content = _markdown_to_plain_text(markdown_text)
+    if not content:
+        return None, "No content available to export."
+
+    try:
+        from docx import Document
+    except Exception:
+        return None, "Word export dependency is missing. Please install python-docx."
+
+    filename = f"chat-export-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}-{uuid4().hex[:8]}.docx"
+    file_path = os.path.join(EXPORT_FOLDER, filename)
+
+    try:
+        doc = Document()
+        doc.add_heading("GraceWise Assistant Export", level=1)
+        blocks = [b.strip() for b in re.split(r"\n\s*\n", content) if b.strip()]
+        if not blocks:
+            blocks = [content]
+        for block in blocks:
+            doc.add_paragraph(block)
+        doc.save(file_path)
+        return filename, None
+    except Exception as exc:
+        return None, str(exc)
+
+
+def _detect_requested_export_format(text):
+    text = (text or "").lower()
+    if not text:
+        return None
+
+    format_keywords = {
+        "docx": ["docx", "word document", "word file", "ms word", "word", ".docx", ".doc"],
+        "pdf": ["pdf", ".pdf"],
+        "csv": ["csv", "excel", ".csv"],
+        "txt": ["txt", "text file", ".txt"],
+    }
+
+    matches = []
+    for export_format, keywords in format_keywords.items():
+        indices = [text.find(k) for k in keywords if text.find(k) != -1]
+        if indices:
+            matches.append((min(indices), export_format))
+
+    if not matches:
+        return None
+    matches.sort(key=lambda item: item[0])
+    return matches[0][1]
+
+
+def _extract_latest_assistant_content(history):
+    for msg in reversed(history or []):
+        if msg.get("role") not in ("assistant", "ai"):
+            continue
+        content = (msg.get("content") or "").strip()
+        if content:
+            return content
+    return None
+
+
+def _download_link_label(filename):
+    ext = (filename.rsplit(".", 1)[-1] if "." in filename else "").lower()
+    if ext == "csv":
+        return "Download the CSV"
+    if ext == "pdf":
+        return "Download the PDF"
+    if ext in ("doc", "docx"):
+        return "Download the Word Document"
+    return "Download the Document"
+
+
 def _build_export_links(filename):
     base = (request.headers.get("Origin") or request.url_root or "").rstrip("/")
     if not base:
@@ -233,33 +372,59 @@ def _build_export_links(filename):
     }
 
 
-def _try_auto_table_export(question, history):
+def _try_auto_export(question, history):
     """
-    If user asks for download/export and the latest assistant response contains a markdown table,
-    auto-generate CSV and return answer payload.
+    If user asks for download/export, auto-generate a file from the latest assistant response.
+    - Default: export latest markdown table to CSV when available
+    - If requested: PDF / Word / TXT from latest assistant response
     """
     if not _has_download_intent(question):
         return None
 
-    table_lines = _extract_latest_markdown_table(history)
-    if not table_lines:
+    latest_content = _extract_latest_assistant_content(history)
+    if not latest_content:
         return None
 
-    csv_text = _table_lines_to_csv(table_lines)
-    filename = _save_export_csv(csv_text)
+    requested_format = _detect_requested_export_format(question)
+    table_lines = _extract_latest_markdown_table(history)
+    export_format = requested_format or ("csv" if table_lines else "txt")
+
+    filename = None
+    export_note = ""
+    export_error = None
+
+    if export_format == "csv":
+        if not table_lines:
+            export_format = "txt"
+            export_note = "I could not find a table, so I exported the latest response as a text document.\n\n"
+        else:
+            csv_text = _table_lines_to_csv(table_lines)
+            filename = _save_export_csv(csv_text)
+    elif export_format == "pdf":
+        filename, export_error = _save_export_pdf(latest_content)
+    elif export_format == "docx":
+        filename, export_error = _save_export_docx(latest_content)
+    else:
+        filename = _save_export_text(_markdown_to_plain_text(latest_content), extension="txt")
+        export_format = "txt"
+
     if not filename:
+        if export_error:
+            return {"answer": f"I could not generate that file yet. {export_error}"}
         return None
 
     links = _build_export_links(filename)
+    label = _download_link_label(filename)
     answer = (
-        "I created a downloadable CSV from the table in our previous message.\n\n"
-        f"- Primary link: {links['api_link']}\n"
-        f"- Fallback link: {links['direct_link']}"
+        f"{export_note}Your file is ready.\n\n"
+        f"- [{label}]({links['api_link']})\n"
+        f"- [Backup Download Link]({links['direct_link']})"
     )
 
     return {
         "answer": answer,
         "export_filename": filename,
+        "export_format": export_format,
         "download_url": links["api_link"],
         "download_url_fallback": links["direct_link"],
     }
@@ -712,7 +877,7 @@ def ask():
         if state_error:
             return jsonify(state_error), 400
 
-        auto_export = _try_auto_table_export(question, conversation_history)
+        auto_export = _try_auto_export(question, conversation_history)
         if auto_export:
             ids = _persist_chat_exchange(persist_state, question, auto_export["answer"])
             return jsonify({**auto_export, "sources_count": 0, **ids}), 200
@@ -1051,7 +1216,7 @@ def ask_lesson(lesson_id):
         if state_error and data.get("session_id") is not None:
             return jsonify(state_error), 400
 
-        auto_export = _try_auto_table_export(question, conversation_history)
+        auto_export = _try_auto_export(question, conversation_history)
         if auto_export:
             ids = _persist_chat_exchange(persist_state, question, auto_export["answer"])
             return jsonify({

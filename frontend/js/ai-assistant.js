@@ -57,6 +57,55 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    function isDownloadHref(href) {
+        if (!href) return false;
+        const normalized = href.trim().toLowerCase();
+        if (!normalized) return false;
+
+        if (normalized.includes('/rag/exports/')) return true;
+        return /\.(csv|pdf|doc|docx|txt)(\?|#|$)/i.test(normalized);
+    }
+
+    function getDownloadLinkLabel(href) {
+        if (!href) return 'Download the Document';
+        const cleanHref = href.split('#')[0].split('?')[0];
+        const fileName = cleanHref.split('/').pop() || '';
+        const extension = (fileName.includes('.') ? fileName.split('.').pop() : '').toLowerCase();
+
+        if (extension === 'csv') return 'Download the CSV';
+        if (extension === 'pdf') return 'Download the PDF';
+        if (extension === 'doc' || extension === 'docx') return 'Download the Word Document';
+        if (extension === 'txt') return 'Download the Text File';
+        return 'Download the Document';
+    }
+
+    function normalizeDownloadLinks(container) {
+        if (!container) return;
+
+        const links = container.querySelectorAll('a[href]');
+        links.forEach((link) => {
+            const href = (link.getAttribute('href') || '').trim();
+            if (!isDownloadHref(href)) return;
+
+            const currentText = (link.textContent || '').trim();
+            const isRawDisplay = !currentText
+                || currentText === href
+                || /^https?:\/\//i.test(currentText)
+                || currentText.startsWith('/rag/exports/')
+                || currentText.startsWith('/api/rag/exports/')
+                || /^(primary|fallback|download)\s+link$/i.test(currentText);
+
+            if (isRawDisplay) {
+                link.textContent = getDownloadLinkLabel(href);
+            }
+
+            link.setAttribute('target', '_blank');
+            link.setAttribute('rel', 'noopener noreferrer');
+            link.setAttribute('download', '');
+            link.classList.add('download-link');
+        });
+    }
+
     function clearEditState() {
         editingMessageId = null;
         if (editState) editState.style.display = 'none';
@@ -95,6 +144,7 @@ document.addEventListener('DOMContentLoaded', function () {
         content.className = 'message-content';
         content.innerHTML = marked.parse(text || '');
         wrapTables(content);
+        normalizeDownloadLinks(content);
 
         if (normalizedSender === 'user' && options.allowEdit !== false && options.messageId) {
             const editBtn = document.createElement('button');
@@ -543,6 +593,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (content) {
                         content.innerHTML = marked.parse(answer);
                         wrapTables(content);
+                        normalizeDownloadLinks(content);
                     }
                 }
             }
