@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let historySessions = [];
     let conversationHistory = [];
     let editingMessageId = null;
+    let downloadCountdownTimer = null;
     const MAX_INPUT_HEIGHT = 180;
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -106,6 +107,77 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    function formatCountdown(msRemaining) {
+        const totalSeconds = Math.max(0, Math.floor(msRemaining / 1000));
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function setDownloadLinksExpiredState(container, isExpired) {
+        if (!container) return;
+        const links = container.querySelectorAll('a.download-link');
+        links.forEach((link) => {
+            if (isExpired) {
+                link.classList.add('expired-link');
+                link.setAttribute('aria-disabled', 'true');
+                link.setAttribute('title', 'This link has expired');
+            } else {
+                link.classList.remove('expired-link');
+                link.removeAttribute('aria-disabled');
+                link.removeAttribute('title');
+            }
+        });
+    }
+
+    function refreshDownloadCountdowns(scope = document) {
+        const root = scope && typeof scope.querySelectorAll === 'function' ? scope : document;
+        const badges = root.querySelectorAll('.download-expiry[data-expires-at]');
+
+        if (!badges.length) {
+            if (downloadCountdownTimer) {
+                clearInterval(downloadCountdownTimer);
+                downloadCountdownTimer = null;
+            }
+            return;
+        }
+
+        let hasActive = false;
+
+        badges.forEach((badge) => {
+            const expiresAtRaw = badge.getAttribute('data-expires-at') || '';
+            const expiresAtMs = Date.parse(expiresAtRaw);
+            if (Number.isNaN(expiresAtMs)) {
+                badge.classList.add('expired');
+                badge.textContent = 'Download expiry unavailable';
+                return;
+            }
+
+            const remainingMs = expiresAtMs - Date.now();
+            const messageContent = badge.closest('.message-content');
+
+            if (remainingMs <= 0) {
+                badge.classList.add('expired');
+                badge.textContent = 'Download link expired';
+                setDownloadLinksExpiredState(messageContent, true);
+                return;
+            }
+
+            hasActive = true;
+            badge.classList.remove('expired');
+            badge.textContent = `Time remaining: ${formatCountdown(remainingMs)}`;
+            setDownloadLinksExpiredState(messageContent, false);
+        });
+
+        if (hasActive && !downloadCountdownTimer) {
+            downloadCountdownTimer = setInterval(() => refreshDownloadCountdowns(), 1000);
+        } else if (!hasActive && downloadCountdownTimer) {
+            clearInterval(downloadCountdownTimer);
+            downloadCountdownTimer = null;
+        }
+    }
+
     function clearEditState() {
         editingMessageId = null;
         if (editState) editState.style.display = 'none';
@@ -145,6 +217,7 @@ document.addEventListener('DOMContentLoaded', function () {
         content.innerHTML = marked.parse(text || '');
         wrapTables(content);
         normalizeDownloadLinks(content);
+        refreshDownloadCountdowns(content);
 
         if (normalizedSender === 'user' && options.allowEdit !== false && options.messageId) {
             const editBtn = document.createElement('button');
@@ -594,6 +667,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         content.innerHTML = marked.parse(answer);
                         wrapTables(content);
                         normalizeDownloadLinks(content);
+                        refreshDownloadCountdowns(content);
                     }
                 }
             }

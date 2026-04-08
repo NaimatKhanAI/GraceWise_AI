@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, send_from_directory
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import csv
 import re
 from io import StringIO
@@ -42,6 +42,7 @@ UPLOAD_FOLDER = 'documents'
 EXPORT_FOLDER = os.path.join(UPLOAD_FOLDER, 'exports')
 ALLOWED_EXTENSIONS = {'pdf', 'txt'}
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+EXPORT_TTL_SECONDS = 3 * 60 * 60  # 3 hours
 
 # Ensure documents folder exists
 if not os.path.exists(UPLOAD_FOLDER):
@@ -249,6 +250,40 @@ def _save_export_text(text_content, extension="txt"):
     with open(file_path, "w", encoding="utf-8", newline="\n") as f:
         f.write(text_content)
     return filename
+
+
+def _export_expires_at_from_path(file_path):
+    try:
+        modified_at = datetime.utcfromtimestamp(os.path.getmtime(file_path))
+    except OSError:
+        return None
+    return modified_at + timedelta(seconds=EXPORT_TTL_SECONDS)
+
+
+def _is_export_expired(file_path):
+    expires_at = _export_expires_at_from_path(file_path)
+    if not expires_at:
+        return False
+    return datetime.utcnow() >= expires_at
+
+
+def _cleanup_expired_exports():
+    if not os.path.isdir(EXPORT_FOLDER):
+        return 0
+
+    removed = 0
+    for name in os.listdir(EXPORT_FOLDER):
+        path = os.path.join(EXPORT_FOLDER, name)
+        if not os.path.isfile(path):
+            continue
+        if not _is_export_expired(path):
+            continue
+        try:
+            os.remove(path)
+            removed += 1
+        except OSError:
+            continue
+    return removed
 
 
 def _markdown_to_plain_text(markdown_text):
@@ -688,6 +723,8 @@ def _try_auto_export(question, history):
     - Default: export latest markdown table to CSV when available
     - If requested: PDF / Word / TXT from latest assistant response
     """
+    _cleanup_expired_exports()
+
     if not _has_download_intent(question):
         return None
 
@@ -725,8 +762,15 @@ def _try_auto_export(question, history):
 
     links = _build_export_links(filename)
     label = _download_link_label(filename)
+    expires_at = (datetime.utcnow() + timedelta(seconds=EXPORT_TTL_SECONDS)).replace(microsecond=0).isoformat() + "Z"
+    countdown_html = (
+        f'<div class="download-expiry" data-expires-at="{escape(expires_at)}">'
+        "Time remaining: calculating..."
+        "</div>"
+    )
     answer = (
         f"{export_note}Your file is ready.\n\n"
+        f"{countdown_html}\n\n"
         f"- [{label}]({links['api_link']})\n"
         f"- [Backup Download Link]({links['direct_link']})"
     )
@@ -737,6 +781,8 @@ def _try_auto_export(question, history):
         "export_format": export_format,
         "download_url": links["api_link"],
         "download_url_fallback": links["direct_link"],
+        "expires_at": expires_at,
+        "ttl_seconds": EXPORT_TTL_SECONDS,
     }
 
 
@@ -1643,5 +1689,14 @@ def download_export(filename):
     file_path = os.path.join(EXPORT_FOLDER, safe_name)
     if not os.path.exists(file_path):
         return jsonify({"message": "File not found"}), 404
+
+    if _is_export_expired(file_path):
+        try:
+            os.remove(file_path)
+        except OSError:
+            pass
+        return jsonify({"message": "This download link has expired. Please generate a new file."}), 410
+
+    _cleanup_expired_exports()
 
     return send_from_directory(EXPORT_FOLDER, safe_name, as_attachment=True)
