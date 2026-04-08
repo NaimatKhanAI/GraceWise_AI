@@ -33,6 +33,8 @@ MANDATORY_CONTINUITY_RULES = """Conversation continuity rules:
 - Resolve follow-up references like "ye", "isko", "us table ko", "download link do" using the most recent relevant assistant output.
 - If the user asks for a follow-up action (download/export/reformat/share), apply it to the last generated result unless they specify a different target.
 - Ask a short clarification question only if more than one previous item could match the user's request.
+- If your previous reply asked coaching/probing questions and the user responds, treat that as the answer to those exact questions first.
+- Do not repeat the same options/questions after the user has answered; continue the same thread with the requested next step.
 """
 
 # Configure upload settings
@@ -529,6 +531,131 @@ def _extract_latest_assistant_content(history):
         if content:
             return content
     return None
+
+
+def _extract_questions_from_text(text, max_questions=3):
+    text = (text or "").strip()
+    if not text:
+        return []
+
+    questions = []
+    seen = set()
+    lines = text.splitlines()
+
+    for line in lines:
+        cleaned = re.sub(r"^\s*[-*+]\s*", "", line.strip())
+        cleaned = re.sub(r"^\s*\d+[\).\:-]\s*", "", cleaned)
+        if "?" not in cleaned:
+            continue
+
+        # Normalize likely encoding artifacts like "family?s" where "?" appears inside a word.
+        normalized = re.sub(r"(?<=\w)\?(?=\w)", "'", cleaned)
+
+        if normalized.count("?") <= 1:
+            parts = [normalized]
+        else:
+            parts = [f"{part.strip()}?" for part in normalized.split("?") if part.strip()]
+
+        for part in parts:
+            question = " ".join(part.split())
+            if len(question) < 4 or question in seen:
+                continue
+            seen.add(question)
+            questions.append(question)
+            if len(questions) >= max_questions:
+                return questions
+
+    if questions:
+        return questions
+
+    prose_parts = re.findall(r"[^?]{3,}\?", text)
+    for part in prose_parts:
+        question = " ".join(part.split())
+        if len(question) < 4 or question in seen:
+            continue
+        seen.add(question)
+        questions.append(question)
+        if len(questions) >= max_questions:
+            break
+    return questions
+
+
+def _extract_recent_assistant_questions(history, max_questions=3, assistant_turns=3):
+    questions = []
+    remaining_turns = assistant_turns
+
+    for msg in reversed(history or []):
+        if remaining_turns <= 0 or len(questions) >= max_questions:
+            break
+        if msg.get("role") not in ("assistant", "ai"):
+            continue
+
+        remaining_turns -= 1
+        content = (msg.get("content") or "").strip()
+        if not content:
+            continue
+
+        fresh = _extract_questions_from_text(content, max_questions=max_questions)
+        for q in fresh:
+            if q not in questions:
+                questions.append(q)
+            if len(questions) >= max_questions:
+                break
+
+    return questions
+
+
+def _is_followup_answer_style(question):
+    text = (question or "").strip().lower()
+    if not text:
+        return False
+
+    markers = [
+        "yes",
+        "no",
+        "both",
+        "either",
+        "first",
+        "second",
+        "weekly rhythm",
+        "reading",
+        "spelling",
+        "support",
+        "doable",
+        "let's",
+        "i would like",
+        "i'd like",
+        "start with",
+        "focus on",
+        "for now",
+    ]
+    if any(marker in text for marker in markers):
+        return True
+
+    # Most follow-up answers are short statements without a new question.
+    if "?" not in text and len(text) <= 500:
+        return True
+
+    return False
+
+
+def _build_followup_anchor_message(history, question):
+    questions = _extract_recent_assistant_questions(history, max_questions=3, assistant_turns=1)
+    if not questions:
+        return None
+    if not _is_followup_answer_style(question):
+        return None
+
+    rendered_questions = "\n".join(f"{idx + 1}. {q}" for idx, q in enumerate(questions))
+    return (
+        "High-priority continuity instruction:\n"
+        "The user's latest message is a reply to earlier coaching/probing questions in this same chat.\n"
+        f"Questions asked previously:\n{rendered_questions}\n\n"
+        "How to respond:\n"
+        "- First acknowledge and answer the user's choice/reply to these questions.\n"
+        "- Continue that same thread with concrete next steps.\n"
+        "- Do not repeat the same option list or restate the same probing questions unless the user asks."
+    )
 
 
 def _download_link_label(filename):
@@ -1060,6 +1187,8 @@ def ask():
         if state_error:
             return jsonify(state_error), 400
 
+        followup_anchor = _build_followup_anchor_message(conversation_history, question)
+
         auto_export = _try_auto_export(question, conversation_history)
         if auto_export:
             ids = _persist_chat_exchange(persist_state, question, auto_export["answer"])
@@ -1075,6 +1204,8 @@ def ask():
                 return jsonify({"answer": "Server is missing required LLM dependencies."}), 500
 
             messages = [SystemMessage(content=get_ai_system_prompt())]
+            if followup_anchor:
+                messages.append(SystemMessage(content=followup_anchor))
             messages.extend(_build_langchain_history(conversation_history))
             messages.append(HumanMessage(content=question))
 
@@ -1106,6 +1237,8 @@ def ask():
         )
 
         messages = [SystemMessage(content=dynamic_prompt_with_context)]
+        if followup_anchor:
+            messages.append(SystemMessage(content=followup_anchor))
         messages.extend(_build_langchain_history(conversation_history))
         messages.append(HumanMessage(content=f"Context:\n{context}\n\nQuestion: {question}"))
 
@@ -1399,6 +1532,8 @@ def ask_lesson(lesson_id):
         if state_error and data.get("session_id") is not None:
             return jsonify(state_error), 400
 
+        followup_anchor = _build_followup_anchor_message(conversation_history, question)
+
         auto_export = _try_auto_export(question, conversation_history)
         if auto_export:
             ids = _persist_chat_exchange(persist_state, question, auto_export["answer"])
@@ -1474,6 +1609,8 @@ Below are the most relevant sections retrieved from the lesson document:
 Use these sections to answer the student's question accurately. You may also draw on your general knowledge to supplement explanations, but always ground your answers in the lesson content first."""
 
         messages = [SystemMessage(content=system_prompt)]
+        if followup_anchor:
+            messages.append(SystemMessage(content=followup_anchor))
         messages.extend(_build_langchain_history(conversation_history))
         messages.append(HumanMessage(content=question))
 
