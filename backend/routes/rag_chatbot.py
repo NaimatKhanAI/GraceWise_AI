@@ -568,6 +568,93 @@ def _extract_latest_assistant_content(history):
     return None
 
 
+def _is_clarifying_prompt_line(line):
+    text = (line or "").strip().lower()
+    if not text:
+        return False
+
+    normalized = text.rstrip(":")
+    if normalized in ("coaching questions", "probing questions", "clarifying questions"):
+        return True
+
+    starters = (
+        "thanks for clarifying",
+        "before i put this together",
+        "before i create this",
+        "before i create that",
+        "to tailor this",
+        "to tailor that",
+        "for example",
+    )
+    return any(text.startswith(prefix) for prefix in starters)
+
+
+def _is_question_like_line(line):
+    text = (line or "").strip()
+    if not text:
+        return False
+    text = re.sub(r"^[-*+]\s*", "", text)
+    text = re.sub(r"^\d+[\).\:-]\s*", "", text)
+    return text.endswith("?")
+
+
+def _sanitize_export_markdown(markdown_text):
+    lines = (markdown_text or "").splitlines()
+    if not lines:
+        return ""
+
+    output = []
+    idx = 0
+
+    while idx < len(lines):
+        current = lines[idx]
+        stripped = current.strip()
+
+        if _is_clarifying_prompt_line(current):
+            idx += 1
+            while idx < len(lines):
+                probe = lines[idx]
+                probe_stripped = probe.strip()
+                if not probe_stripped:
+                    idx += 1
+                    continue
+                if _is_clarifying_prompt_line(probe) or _is_question_like_line(probe):
+                    idx += 1
+                    continue
+                # Keep skipping bullet/numbered items that are written as questions.
+                if re.match(r"^[-*+]\s+", probe_stripped) and "?" in probe_stripped:
+                    idx += 1
+                    continue
+                if re.match(r"^\d+[\).\:-]\s+", probe_stripped) and "?" in probe_stripped:
+                    idx += 1
+                    continue
+                break
+
+            while output and not output[-1].strip():
+                output.pop()
+            continue
+
+        output.append(current)
+        idx += 1
+
+    cleaned = "\n".join(output).strip()
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+    return cleaned
+
+
+def _extract_latest_exportable_assistant_content(history):
+    for msg in reversed(history or []):
+        if msg.get("role") not in ("assistant", "ai"):
+            continue
+        content = (msg.get("content") or "").strip()
+        if not content:
+            continue
+        sanitized = _sanitize_export_markdown(content)
+        if sanitized:
+            return sanitized
+    return None
+
+
 def _extract_questions_from_text(text, max_questions=3):
     text = (text or "").strip()
     if not text:
@@ -728,12 +815,14 @@ def _try_auto_export(question, history):
     if not _has_download_intent(question):
         return None
 
-    latest_content = _extract_latest_assistant_content(history)
+    latest_content = _extract_latest_exportable_assistant_content(history)
     if not latest_content:
-        return None
+        return {
+            "answer": "I could not find finalized content to export yet. Please ask me to generate the plan/content first, then request download."
+        }
 
     requested_format = _detect_requested_export_format(question)
-    table_lines = _extract_latest_markdown_table(history)
+    table_lines = _extract_latest_markdown_table([{"role": "assistant", "content": latest_content}])
     export_format = requested_format or ("csv" if table_lines else "txt")
 
     filename = None
