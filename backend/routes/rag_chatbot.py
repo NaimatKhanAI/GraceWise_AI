@@ -477,17 +477,263 @@ def _render_ascii_table(rows):
     return "\n".join(output_lines)
 
 
+def _reportlab_inline_markup(text):
+    """Limited markdown inline → ReportLab Paragraph XML (escape first)."""
+    t = escape(text or "")
+    t = re.sub(r"`([^`]+)`", r'<font face="Courier" size="9">\1</font>', t)
+    t = re.sub(r"\*\*([^*]+)\*\*", r"<b>\1</b>", t)
+    t = re.sub(r"(?<!\*)\*([^*]+)\*(?!\*)", r"<i>\1</i>", t)
+    return t.replace("\n", "<br/>")
+
+
+def _build_pdf_styles():
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_LEFT
+
+    base = getSampleStyleSheet()
+    body = ParagraphStyle(
+        "GWBody",
+        parent=base["BodyText"],
+        fontName="Helvetica",
+        fontSize=11,
+        leading=15,
+        spaceAfter=8,
+        alignment=TA_LEFT,
+    )
+    label_you = ParagraphStyle(
+        "GWYou",
+        parent=base["Heading2"],
+        fontName="Helvetica-Bold",
+        fontSize=12,
+        textColor=base["BodyText"].textColor,
+        spaceBefore=14,
+        spaceAfter=6,
+        leading=14,
+    )
+    label_coach = ParagraphStyle(
+        "GWCoach",
+        parent=base["Heading2"],
+        fontName="Helvetica-Bold",
+        fontSize=12,
+        textColor=base["BodyText"].textColor,
+        spaceBefore=14,
+        spaceAfter=6,
+        leading=14,
+    )
+    h3 = ParagraphStyle(
+        "GWH3",
+        parent=body,
+        fontName="Helvetica-Bold",
+        fontSize=11,
+        leading=14,
+        spaceBefore=8,
+        spaceAfter=4,
+    )
+    table_header = ParagraphStyle(
+        "GWTableHead",
+        parent=body,
+        fontName="Helvetica-Bold",
+        leading=13,
+        fontSize=10,
+    )
+    return {"body": body, "label_you": label_you, "label_coach": label_coach, "h3": h3, "table_header": table_header}
+
+
+def _pdf_append_rl_table(story, rows, doc_width, body_style, table_header_style):
+    from reportlab.lib import colors
+    from reportlab.platypus import Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.units import inch
+
+    if not rows:
+        return
+    col_count = len(rows[0]) if rows[0] else 1
+    table_data = []
+    for row_index, row in enumerate(rows):
+        pstyle = table_header_style if row_index == 0 else body_style
+        table_data.append([
+            Paragraph(escape(str(cell or "")).replace("\n", "<br/>"), pstyle)
+            for cell in row
+        ])
+    col_w = doc_width / max(col_count, 1)
+    tbl = Table(table_data, repeatRows=1, colWidths=[col_w] * col_count)
+    tbl.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#f2ecdf")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#3d3220")),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#d3c4a3")),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+                ("TOPPADDING", (0, 0), (-1, -1), 5),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#fbf8f2")]),
+            ]
+        )
+    )
+    story.append(tbl)
+    story.append(Spacer(1, 0.14 * inch))
+
+
+def _pdf_append_formatted_body(story, text_block, doc_width, styles):
+    """Format a body: ### headings, bullets, numbered lists, paragraphs; nested tables via blocks."""
+    from reportlab.platypus import Paragraph, Spacer, ListFlowable, ListItem
+    from reportlab.lib.units import inch
+
+    if not (text_block or "").strip():
+        return
+
+    for block in _extract_markdown_blocks(text_block.strip()):
+        if block["type"] == "table":
+            _pdf_append_rl_table(
+                story,
+                block["rows"],
+                doc_width,
+                styles["body"],
+                styles["table_header"],
+            )
+            continue
+
+        raw = block["text"]
+        lines = raw.splitlines()
+        i = 0
+        while i < len(lines):
+            stripped = lines[i].strip()
+            if not stripped:
+                story.append(Spacer(1, 0.05 * inch))
+                i += 1
+                continue
+            if stripped.startswith("### "):
+                story.append(Paragraph(_reportlab_inline_markup(stripped[4:]), styles["h3"]))
+                i += 1
+                continue
+            if re.match(r"^[-*]\s+", stripped):
+                items = []
+                while i < len(lines):
+                    s = lines[i].strip()
+                    if re.match(r"^[-*]\s+", s):
+                        items.append(re.sub(r"^[-*]\s+", "", s))
+                        i += 1
+                    else:
+                        break
+                list_items = [
+                    ListItem(
+                        Paragraph(_reportlab_inline_markup(t), styles["body"]),
+                        leftIndent=12,
+                        bulletDedent="auto",
+                    )
+                    for t in items
+                    if t.strip()
+                ]
+                if list_items:
+                    story.append(
+                        ListFlowable(
+                            list_items,
+                            bulletType="bullet",
+                            bulletFontSize=9,
+                            leftPadding=18,
+                        )
+                    )
+                    story.append(Spacer(1, 0.08 * inch))
+                continue
+            if re.match(r"^\d+\.\s+", stripped):
+                items = []
+                while i < len(lines):
+                    s = lines[i].strip()
+                    if re.match(r"^\d+\.\s+", s):
+                        items.append(re.sub(r"^\d+\.\s+", "", s))
+                        i += 1
+                    else:
+                        break
+                list_items = [
+                    ListItem(
+                        Paragraph(_reportlab_inline_markup(t), styles["body"]),
+                        leftIndent=14,
+                        bulletDedent="auto",
+                    )
+                    for t in items
+                    if t.strip()
+                ]
+                if list_items:
+                    story.append(
+                        ListFlowable(
+                            list_items,
+                            bulletType="1",
+                            leftPadding=22,
+                        )
+                    )
+                    story.append(Spacer(1, 0.08 * inch))
+                continue
+            para_lines = []
+            while i < len(lines):
+                s = lines[i].strip()
+                if not s:
+                    break
+                if s.startswith("### ") or re.match(r"^[-*]\s+", s) or re.match(r"^\d+\.\s+", s):
+                    break
+                para_lines.append(s)
+                i += 1
+            if para_lines:
+                merged = " ".join(para_lines)
+                story.append(Paragraph(_reportlab_inline_markup(merged), styles["body"]))
+                story.append(Spacer(1, 0.06 * inch))
+
+
+def _pdf_story_from_markdown(markdown_text, doc_width):
+    """Build flowables: chat transcript (## You / ## AI Coach) or plain markdown document."""
+    from reportlab.platypus import Paragraph, Spacer
+    from reportlab.lib.units import inch
+
+    story = []
+    styles = _build_pdf_styles()
+    md = (markdown_text or "").strip()
+    if not md:
+        return story
+
+    if re.search(r"(?m)^## (You|AI Coach)\s*\n", md):
+        chunks = re.split(r"(?m)^## ([^\n]+)\n", md)
+        preamble = (chunks[0] or "").strip()
+        if preamble:
+            _pdf_append_formatted_body(story, preamble, doc_width, styles)
+        it = iter(chunks[1:])
+        for title, body in zip(it, it):
+            t = (title or "").strip()
+            b = (body or "").strip()
+            tl = t.lower()
+            if tl == "you":
+                story.append(Paragraph("You", styles["label_you"]))
+            elif tl == "ai coach":
+                story.append(Paragraph("AI Coach", styles["label_coach"]))
+            else:
+                story.append(Paragraph(_reportlab_inline_markup(t), styles["h3"]))
+            story.append(Spacer(1, 0.04 * inch))
+            _pdf_append_formatted_body(story, b, doc_width, styles)
+            story.append(Spacer(1, 0.1 * inch))
+        return story
+
+    for block in _extract_markdown_blocks(md):
+        if block["type"] == "table":
+            _pdf_append_rl_table(
+                story,
+                block["rows"],
+                doc_width,
+                styles["body"],
+                styles["table_header"],
+            )
+        else:
+            _pdf_append_formatted_body(story, block["text"], doc_width, styles)
+    return story
+
+
 def _save_export_pdf(markdown_text):
-    blocks = _extract_markdown_blocks(markdown_text)
-    if not blocks:
+    md = (markdown_text or "").strip()
+    if not md:
         return None, "No content available to export."
 
     try:
-        from reportlab.lib import colors
         from reportlab.lib.pagesizes import LETTER
-        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
         from reportlab.lib.units import inch
-        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+        from reportlab.platypus import SimpleDocTemplate
     except Exception:
         return None, "PDF export dependency is missing. Please install reportlab."
 
@@ -498,63 +744,14 @@ def _save_export_pdf(markdown_text):
         doc = SimpleDocTemplate(
             file_path,
             pagesize=LETTER,
-            leftMargin=0.7 * inch,
-            rightMargin=0.7 * inch,
-            topMargin=0.7 * inch,
-            bottomMargin=0.7 * inch,
+            leftMargin=0.75 * inch,
+            rightMargin=0.75 * inch,
+            topMargin=0.75 * inch,
+            bottomMargin=0.75 * inch,
         )
-        styles = getSampleStyleSheet()
-        body_style = styles["BodyText"]
-        body_style.leading = 14
-        table_header_style = ParagraphStyle(
-            "TableHeader",
-            parent=styles["BodyText"],
-            fontName="Helvetica-Bold",
-            leading=13,
-        )
-
-        story = [Paragraph("GraceWise Assistant Export", styles["Title"]), Spacer(1, 0.18 * inch)]
-
-        for block in blocks:
-            if block["type"] == "text":
-                text_block = _normalize_markdown_text_block(block["text"])
-                if not text_block:
-                    continue
-                paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text_block) if p.strip()]
-                for paragraph in paragraphs:
-                    safe_text = escape(paragraph).replace("\n", "<br/>")
-                    story.append(Paragraph(safe_text, body_style))
-                    story.append(Spacer(1, 0.1 * inch))
-                continue
-
-            if block["type"] == "table":
-                rows = block["rows"]
-                if not rows:
-                    continue
-                col_count = len(rows[0]) if rows[0] else 1
-                table_data = []
-                for row_index, row in enumerate(rows):
-                    paragraph_style = table_header_style if row_index == 0 else body_style
-                    table_data.append([
-                        Paragraph(escape(str(cell or "")).replace("\n", "<br/>"), paragraph_style)
-                        for cell in row
-                    ])
-
-                col_width = doc.width / max(col_count, 1)
-                table = Table(table_data, repeatRows=1, colWidths=[col_width] * col_count)
-                table.setStyle(TableStyle([
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#f2ecdf")),
-                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#3d3220")),
-                    ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#d3c4a3")),
-                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 6),
-                    ("RIGHTPADDING", (0, 0), (-1, -1), 6),
-                    ("TOPPADDING", (0, 0), (-1, -1), 5),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#fbf8f2")]),
-                ]))
-                story.append(table)
-                story.append(Spacer(1, 0.14 * inch))
+        story = _pdf_story_from_markdown(md, doc.width)
+        if not story:
+            return None, "No content available to export."
 
         doc.build(story)
         return filename, None
@@ -562,9 +759,80 @@ def _save_export_pdf(markdown_text):
         return None, str(exc)
 
 
+def _docx_flush_buffer(doc, buffer_lines):
+    if not buffer_lines:
+        return
+    doc.add_paragraph(" ".join(buffer_lines))
+
+
+def _docx_append_text_body(doc, text_block):
+    """Headings, bullets, numbered lists, plain paragraphs (Word)."""
+    lines = (text_block or "").splitlines()
+    buf = []
+    i = 0
+    while i < len(lines):
+        raw = lines[i]
+        s = raw.strip()
+        if not s:
+            _docx_flush_buffer(doc, buf)
+            buf = []
+            i += 1
+            continue
+        if s.startswith("### "):
+            _docx_flush_buffer(doc, buf)
+            buf = []
+            doc.add_heading(s[4:].strip(), level=3)
+            i += 1
+            continue
+        if re.match(r"^[-*]\s+", s):
+            _docx_flush_buffer(doc, buf)
+            buf = []
+            while i < len(lines):
+                ls = lines[i].strip()
+                if re.match(r"^[-*]\s+", ls):
+                    doc.add_paragraph(re.sub(r"^[-*]\s+", "", ls), style="List Bullet")
+                    i += 1
+                else:
+                    break
+            continue
+        if re.match(r"^\d+\.\s+", s):
+            _docx_flush_buffer(doc, buf)
+            buf = []
+            while i < len(lines):
+                ls = lines[i].strip()
+                if re.match(r"^\d+\.\s+", ls):
+                    doc.add_paragraph(re.sub(r"^\d+\.\s+", "", ls), style="List Number")
+                    i += 1
+                else:
+                    break
+            continue
+        buf.append(s)
+        i += 1
+    _docx_flush_buffer(doc, buf)
+
+
+def _docx_append_markdown_chunk(doc, md_text):
+    for block in _extract_markdown_blocks((md_text or "").strip()):
+        if block["type"] == "table":
+            rows = block["rows"]
+            if not rows:
+                continue
+            table = doc.add_table(rows=len(rows), cols=len(rows[0]))
+            table.style = "Table Grid"
+            for row_index, row in enumerate(rows):
+                for col_index, cell in enumerate(row):
+                    table_cell = table.rows[row_index].cells[col_index]
+                    table_cell.text = str(cell or "")
+                    if row_index == 0 and table_cell.paragraphs and table_cell.paragraphs[0].runs:
+                        table_cell.paragraphs[0].runs[0].bold = True
+            doc.add_paragraph("")
+            continue
+        _docx_append_text_body(doc, block["text"])
+
+
 def _save_export_docx(markdown_text):
-    blocks = _extract_markdown_blocks(markdown_text)
-    if not blocks:
+    md = (markdown_text or "").strip()
+    if not md:
         return None, "No content available to export."
 
     try:
@@ -577,29 +845,18 @@ def _save_export_docx(markdown_text):
 
     try:
         doc = Document()
-        doc.add_heading("GraceWise Assistant Export", level=1)
 
-        for block in blocks:
-            if block["type"] == "text":
-                text_block = _normalize_markdown_text_block(block["text"])
-                paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text_block) if p.strip()]
-                for paragraph in paragraphs:
-                    doc.add_paragraph(paragraph)
-                continue
-
-            if block["type"] == "table":
-                rows = block["rows"]
-                if not rows:
-                    continue
-                table = doc.add_table(rows=len(rows), cols=len(rows[0]))
-                table.style = "Table Grid"
-                for row_index, row in enumerate(rows):
-                    for col_index, cell in enumerate(row):
-                        table_cell = table.rows[row_index].cells[col_index]
-                        table_cell.text = str(cell or "")
-                        if row_index == 0 and table_cell.paragraphs and table_cell.paragraphs[0].runs:
-                            table_cell.paragraphs[0].runs[0].bold = True
-                doc.add_paragraph("")
+        if re.search(r"(?m)^## (You|AI Coach)\s*\n", md):
+            chunks = re.split(r"(?m)^## ([^\n]+)\n", md)
+            preamble = (chunks[0] or "").strip()
+            if preamble:
+                _docx_append_markdown_chunk(doc, preamble)
+            it = iter(chunks[1:])
+            for title, body in zip(it, it):
+                doc.add_heading((title or "").strip(), level=2)
+                _docx_append_markdown_chunk(doc, (body or "").strip())
+        else:
+            _docx_append_markdown_chunk(doc, md)
 
         doc.save(file_path)
         return filename, None
@@ -639,6 +896,58 @@ def _extract_latest_assistant_content(history):
         if content:
             return content
     return None
+
+
+def _is_assistant_export_delivery_message(content):
+    """True for auto-generated 'your file is ready' assistant bubbles (not real chat)."""
+    if not content:
+        return False
+    low = content.lower()
+    if "your file is ready" in low:
+        return True
+    if "download-expiry" in low or "data-expires-at" in low:
+        return True
+    if "/rag/exports/" in content or "/api/rag/exports/" in content:
+        if "download" in low or "backup" in low:
+            return True
+    return False
+
+
+def _conversation_transcript_markdown(history, max_messages=100):
+    """
+    Full chat as markdown: ## You / ## AI Coach sections (chronological).
+    Omits export-stub assistant messages so PDF matches the real conversation.
+    """
+    if not history:
+        return ""
+    slice_hist = history[-max_messages:]
+    parts = []
+    for msg in slice_hist:
+        role = (msg.get("role") or "").lower()
+        content = (msg.get("content") or "").strip()
+        if not content:
+            continue
+        if role in ("assistant", "ai"):
+            if _is_assistant_export_delivery_message(content):
+                continue
+            parts.append(f"## AI Coach\n\n{content}")
+        elif role == "user":
+            parts.append(f"## You\n\n{content}")
+    return "\n\n".join(parts).strip()
+
+
+def _prose_markdown_for_document_export(history):
+    """Prefer full transcript; fall back to latest assistant reply."""
+    transcript = _conversation_transcript_markdown(history)
+    if len(transcript.strip()) >= 40:
+        return transcript
+    latest = _extract_latest_exportable_assistant_content(history)
+    if latest and len(latest.strip()) >= 10:
+        return latest
+    raw = _extract_latest_assistant_content(history)
+    if raw and not _is_assistant_export_delivery_message(raw):
+        return raw.strip()
+    return transcript
 
 
 def _is_clarifying_prompt_line(line):
@@ -877,23 +1186,21 @@ def _build_export_links(filename):
 
 def _try_auto_export(question, history):
     """
-    If user asks for download/export, auto-generate a file from the latest assistant response.
-    - Default: export latest markdown table to CSV when available
-    - If requested: PDF / Word / TXT from latest assistant response
+    If user asks for download/export, generate a file.
+    - CSV: latest assistant markdown table (if any).
+    - PDF / Word / TXT: full chat transcript when possible (You + AI Coach), else latest assistant reply.
     """
     _cleanup_expired_exports()
 
     if not _has_download_intent(question):
         return None
 
+    latest_raw = _extract_latest_assistant_content(history)
     latest_content = _extract_latest_exportable_assistant_content(history)
-    if not latest_content:
-        return {
-            "answer": "I could not find finalized content to export yet. Please ask me to generate the plan/content first, then request download."
-        }
+    prose_md = _prose_markdown_for_document_export(history)
 
     requested_format = _detect_requested_export_format(question)
-    table_lines = _extract_latest_markdown_table([{"role": "assistant", "content": latest_content}])
+    table_lines = _extract_latest_markdown_table([{"role": "assistant", "content": latest_raw or ""}])
     export_format = requested_format or ("csv" if table_lines else "txt")
 
     filename = None
@@ -903,16 +1210,28 @@ def _try_auto_export(question, history):
     if export_format == "csv":
         if not table_lines:
             export_format = "txt"
-            export_note = "I could not find a table, so I exported the latest response as a text document.\n\n"
+            export_note = "I could not find a table, so I exported the conversation as a text document.\n\n"
         else:
             csv_text = _table_lines_to_csv(table_lines)
             filename = _save_export_csv(csv_text)
     elif export_format == "pdf":
-        filename, export_error = _save_export_pdf(latest_content)
+        if not (prose_md or "").strip():
+            return {
+                "answer": "I could not find conversation content to export yet. Chat a bit first, then ask for the PDF."
+            }
+        filename, export_error = _save_export_pdf(prose_md)
     elif export_format == "docx":
-        filename, export_error = _save_export_docx(latest_content)
+        if not (prose_md or "").strip():
+            return {
+                "answer": "I could not find conversation content to export yet. Chat a bit first, then ask for the Word file."
+            }
+        filename, export_error = _save_export_docx(prose_md)
     else:
-        filename = _save_export_text(_markdown_to_plain_text(latest_content), extension="txt")
+        if not (prose_md or "").strip():
+            return {
+                "answer": "I could not find conversation content to export yet. Chat a bit first, then ask for the file."
+            }
+        filename = _save_export_text(_markdown_to_plain_text(prose_md), extension="txt")
         export_format = "txt"
 
     if not filename:
