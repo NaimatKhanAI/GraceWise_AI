@@ -15,19 +15,28 @@ os.environ["LANGCHAIN_TRACING_V2"] = "false"
 rag_bp = Blueprint('rag', __name__, url_prefix="/rag")
 AI_PROMPT_KEY = "ai_assistant_system_prompt"
 OPENAI_API_KEY_SETTING = "openai_api_key"
-DEFAULT_AI_PROMPT = """You are GraceWise, a warm, friendly, faith-based Christian homeschool helper who responds in a natural, human-like way.
+DEFAULT_AI_PROMPT = """You are GraceWise AI Coach: the voice of an experienced, calm homeschool parent and mentor—faith-centered, practical, and easy to talk to.
 
-Purpose: Support and encourage homeschooling moms with spiritual guidance and practical academic help.
+Who you are talking to: homeschooling parents (often tired, juggling multiple kids, and needing clarity fast). Speak with them, not at them.
 
-Guidelines:
-- Be kind, simple, and faith-centered.
-- Include Scripture or gentle encouragement when helpful.
-- Give clear homeschooling advice (lessons, schedules, motivation).
-- Respond warmly to greetings, thanks, or casual messages (e.g., hi, hello) with friendly, human conversation.
-- Use provided context when relevant.
-- Avoid negativity.
-- End with an uplifting line like: "You're doing great - keep trusting God!"
-"""
+How to sound natural:
+- Use everyday language. Short sentences are fine. Avoid corporate or textbook tone.
+- Match their energy: if they are stressed, be steady and kind; if they are chatty, you can be a little warmer and lighter.
+- Do not start every reply with filler praise ("Great question!", "Absolutely!") unless it truly fits.
+- Vary how you open and close. Do not end every message with the same catchphrase or Bible-adjacent sign-off.
+- When Scripture or encouragement fits, keep it gentle and brief—not preachy.
+- If they mix English with Roman Urdu or short Urdu phrases, understand intent and reply helpfully (you may stay in clear English unless they write fully in Urdu).
+
+What you help with:
+- Planning rhythms, subjects, pacing, and realistic schedules.
+- Motivation, burnout, sibling days, and "what do I do tomorrow?"
+- Gentle faith perspective when it helps—not forced into every answer.
+
+Keep answers as long as they need to be: quick questions get concise answers; "help me think this through" can be longer with bullets or steps."""
+COACH_RAG_SUPPLEMENT = """
+When reference excerpts from the family's library are included in the user message:
+- Use them when they clearly apply; blend facts into a natural reply without repeating "according to the context."
+- If excerpts are off-topic or thin, say that lightly and still coach from experience—do not pretend the documents said something they did not."""
 MANDATORY_CONTINUITY_RULES = """Conversation continuity rules:
 - Always use prior turns from this same chat session as your primary conversation memory.
 - Resolve follow-up references like "ye", "isko", "us table ko", "download link do" using the most recent relevant assistant output.
@@ -77,10 +86,74 @@ def get_ai_system_prompt():
     if setting and setting.setting_value and setting.setting_value.strip():
         base_prompt = setting.setting_value
 
-    if MANDATORY_CONTINUITY_RULES.strip() in base_prompt:
-        return base_prompt
+    merged = base_prompt.rstrip()
+    if COACH_RAG_SUPPLEMENT.strip() not in merged:
+        merged = f"{merged}\n{COACH_RAG_SUPPLEMENT}"
 
-    return f"{base_prompt.rstrip()}\n\n{MANDATORY_CONTINUITY_RULES}"
+    if MANDATORY_CONTINUITY_RULES.strip() in merged:
+        return merged
+
+    return f"{merged}\n\n{MANDATORY_CONTINUITY_RULES}"
+
+
+def _coach_llm_temperature():
+    try:
+        return float(os.environ.get("COACH_LLM_TEMPERATURE", "0.65"))
+    except (TypeError, ValueError):
+        return 0.65
+
+
+def _build_retrieval_query_text(question, conversation_history, max_user_turns=3, max_chars=900):
+    """
+    Blend recent user turns with the latest message so embeddings catch follow-ups
+    like "what about math?" or "same thing for my 7 year old".
+    """
+    user_chunks = []
+    for msg in reversed(conversation_history or []):
+        if msg.get("role") != "user":
+            continue
+        c = (msg.get("content") or "").strip()
+        if c:
+            user_chunks.append(c)
+        if len(user_chunks) >= max_user_turns:
+            break
+    user_chunks.reverse()
+    parts = user_chunks + [(question or "").strip()]
+    combined = "\n".join(p for p in parts if p).strip()
+    if len(combined) <= max_chars:
+        return combined or (question or "").strip()
+    return combined[-max_chars:]
+
+
+def _parent_library_retrieve(question, conversation_history, chunks, chunk_embeddings, embed_model, top_k=6):
+    """Semantic search over uploaded PDF chunks; returns (context_text, indices_used, weak_match)."""
+    import numpy as np
+
+    query_text = _build_retrieval_query_text(question, conversation_history)
+    if not query_text.strip():
+        return "", [], True
+
+    query_emb = embed_model.encode([query_text])[0]
+    qn = float(np.linalg.norm(query_emb))
+    similarities = []
+    for ce in chunk_embeddings:
+        cn = float(np.linalg.norm(ce))
+        if cn < 1e-10 or qn < 1e-10:
+            similarities.append(0.0)
+        else:
+            similarities.append(float(np.dot(query_emb, ce) / (qn * cn)))
+
+    ranked = sorted(range(len(similarities)), key=lambda i: similarities[i], reverse=True)
+    top_idx = ranked[:top_k]
+    if not top_idx:
+        return "", [], True
+
+    top_scores = [similarities[i] for i in top_idx[:3]]
+    avg_top3 = sum(top_scores) / len(top_scores)
+    weak_match = avg_top3 < 0.18
+
+    context = "\n\n---\n\n".join(chunks[i] for i in top_idx)
+    return context, top_idx, weak_match
 
 
 def get_openai_api_key():
@@ -770,13 +843,11 @@ def _build_followup_anchor_message(history, question):
 
     rendered_questions = "\n".join(f"{idx + 1}. {q}" for idx, q in enumerate(questions))
     return (
-        "High-priority continuity instruction:\n"
-        "The user's latest message is a reply to earlier coaching/probing questions in this same chat.\n"
-        f"Questions asked previously:\n{rendered_questions}\n\n"
-        "How to respond:\n"
-        "- First acknowledge and answer the user's choice/reply to these questions.\n"
-        "- Continue that same thread with concrete next steps.\n"
-        "- Do not repeat the same option list or restate the same probing questions unless the user asks."
+        "Continuity (natural follow-up):\n"
+        "Their latest message is probably answering something you asked earlier in this chat.\n"
+        f"You had asked:\n{rendered_questions}\n\n"
+        "Respond like a real coach: acknowledge what they picked or said, then move the conversation forward with clear next steps. "
+        "Do not re-list the same choices unless they seem lost."
     )
 
 
@@ -1200,12 +1271,13 @@ def get_llm():
         print(f"Import error: {e}")
         return "ERROR_IMPORT"
 
+    _temp = _coach_llm_temperature()
     if groq_key:
         print("Using Groq LLM")
         llm_cache = ChatGroq(
             groq_api_key=groq_key,
             model="llama-3.3-70b-versatile",
-            temperature=0.2,
+            temperature=_temp,
             timeout=60,
         )
     else:
@@ -1215,7 +1287,7 @@ def get_llm():
             # model="openai/gpt-oss-120b",
             model="gpt-4.1",
             # base_url="https://api.canopywave.io/v1",
-            temperature=0.2,
+            temperature=_temp,
             timeout=30,
             max_retries=2
         )
@@ -1359,28 +1431,31 @@ def ask():
 
         chunks, chunk_embeddings, llm, embed_model, _ = result
 
-        import numpy as np
-        query_emb = embed_model.encode([question])[0]
-        similarities = [np.dot(query_emb, ce) / (np.linalg.norm(query_emb) * np.linalg.norm(ce)) for ce in chunk_embeddings]
-        top_idx = np.argsort(similarities)[-3:][::-1]
-        context = "\n\n".join([chunks[i] for i in top_idx])
-
-        dynamic_prompt_with_context = (
-            get_ai_system_prompt()
-            + "\n\nAnswer based on the context provided below. If the answer is not in the context, "
-            + "provide helpful Christian homeschooling guidance based on your knowledge."
+        context, top_idx, weak_match = _parent_library_retrieve(
+            question, conversation_history, chunks, chunk_embeddings, embed_model, top_k=6
         )
 
-        messages = [SystemMessage(content=dynamic_prompt_with_context)]
+        dynamic_prompt = get_ai_system_prompt()
+        if weak_match:
+            dynamic_prompt += (
+                "\n\nNote: The uploaded library may only loosely match this question. "
+                "Coach naturally from experience; you can briefly mention that a more on-topic document would sharpen answers later."
+            )
+
+        messages = [SystemMessage(content=dynamic_prompt)]
         if followup_anchor:
             messages.append(SystemMessage(content=followup_anchor))
         messages.extend(_build_langchain_history(conversation_history))
-        messages.append(HumanMessage(content=f"Context:\n{context}\n\nQuestion: {question}"))
+        user_block = (
+            "Reference library excerpts (from the family's uploaded documents):\n"
+            f"{context}\n\n---\n\nParent's message:\n{question}"
+        )
+        messages.append(HumanMessage(content=user_block))
 
         response = llm.invoke(messages)
         answer = response.content
         ids = _persist_chat_exchange(persist_state, question, answer)
-        return jsonify({"answer": answer, "sources_count": 3, **ids}), 200
+        return jsonify({"answer": answer, "sources_count": len(top_idx), **ids}), 200
 
     except Exception as e:
         from models import db
@@ -1694,14 +1769,23 @@ def ask_lesson(lesson_id):
 
         from langchain_core.messages import SystemMessage, HumanMessage
 
-        search_planning_prompt = f"""You are an AI tutor helping a student with the lesson: \"{lesson.name}\".
+        recent_for_search = _build_retrieval_query_text(
+            question, conversation_history, max_user_turns=2, max_chars=500
+        )
+        search_planning_prompt = f"""Lesson title: "{lesson.name}".
 
-Given the student's question, generate 1-3 short search queries that would help find the most relevant information from the lesson document. Return ONLY the search queries, one per line, nothing else.
+Recent chat (may include follow-ups like "what about the second part?"):
+{recent_for_search}
 
-Student's question: {question}"""
+Latest message:
+{question}
+
+Write 1-3 very short search phrases (keywords) to find the right part of the lesson PDF. One phrase per line. No numbering, no explanation."""
 
         search_response = llm.invoke([
-            SystemMessage(content="You generate search queries to retrieve information from a document. Return only the queries, one per line."),
+            SystemMessage(
+                content="You output only search phrases, one per line, to retrieve lesson text. No preamble."
+            ),
             HumanMessage(content=search_planning_prompt),
         ])
 
@@ -1726,22 +1810,14 @@ Student's question: {question}"""
             for r in top_chunks
         ])
 
-        system_prompt = f"""You are a friendly and knowledgeable AI tutor helping a student learn from the lesson: \"{lesson.name}\".
+        system_prompt = f"""You are a warm, human-sounding tutor for the lesson "{lesson.name}".
 
-Your role:
-- Help the student understand the lesson content deeply
-- Answer questions with clear, educational explanations
-- Use examples and analogies when helpful
-- Encourage the student and praise good questions
-- If the student asks something not covered in the lesson, be honest about it and explain what the lesson does cover
-- Reference specific parts of the lesson when answering
-- Keep answers focused and structured (use bullet points, headers, etc.)
+Sound natural—like a patient teacher or parent, not a textbook. Use clear, plain language. Short questions deserve focused answers; bigger "explain this" questions can use bullets or small sections.
 
-Below are the most relevant sections retrieved from the lesson document:
+Use the retrieved excerpts below as your first source. If something is not there, say so honestly and say what the lesson does cover. You may add a small analogy or example when it truly helps.
 
-{retrieved_context}
-
-Use these sections to answer the student's question accurately. You may also draw on your general knowledge to supplement explanations, but always ground your answers in the lesson content first."""
+Retrieved lesson excerpts:
+{retrieved_context}"""
 
         messages = [SystemMessage(content=system_prompt)]
         if followup_anchor:

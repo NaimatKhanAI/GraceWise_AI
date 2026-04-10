@@ -208,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (normalizedSender === 'ai') {
             const avatar = document.createElement('div');
             avatar.className = 'message-avatar';
-            avatar.innerHTML = '<i class="fas fa-robot"></i>';
+            avatar.innerHTML = '<i class="fas fa-comments"></i>';
             messageEl.appendChild(avatar);
         }
 
@@ -244,13 +244,75 @@ document.addEventListener('DOMContentLoaded', function () {
         return messageEl;
     }
 
+    function removeCoachStarters() {
+        document.getElementById('coachStartersRow')?.remove();
+    }
+
+    function renderCoachStarters() {
+        if (!chatMessages || isLessonMode) return;
+        removeCoachStarters();
+        const row = document.createElement('div');
+        row.id = 'coachStartersRow';
+        row.className = 'coach-starters-row';
+        const chips = [
+            { t: 'Help me plan tomorrow with multiple ages', q: 'Help me plan tomorrow. I homeschool multiple ages and feel scattered—where do I start?' },
+            { t: 'My child is stuck on one subject', q: 'My child is really stuck on one subject. How do I adjust without burning us both out?' },
+            { t: 'Simple rhythm for a hard week', q: 'We are having a hard week. Can you suggest a simple rhythm that still keeps learning moving?' }
+        ];
+        row.innerHTML =
+            '<p class="coach-starters-label">Or tap a starter:</p>' +
+            '<div class="coach-starters-chips">' +
+            chips
+                .map(
+                    (c) =>
+                        `<button type="button" class="coach-starter-chip" data-q="${encodeURIComponent(c.q)}">${c.t}</button>`
+                )
+                .join('') +
+            '</div>';
+        row.querySelectorAll('.coach-starter-chip').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                let q = '';
+                try {
+                    q = decodeURIComponent(btn.getAttribute('data-q') || '');
+                } catch (e) {
+                    q = '';
+                }
+                if (chatInput && q) {
+                    chatInput.value = q;
+                    autoResizeInput();
+                    sendMessage();
+                }
+            });
+        });
+        chatMessages.appendChild(row);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function appendCoachThinking() {
+        if (!chatMessages) return null;
+        const messageEl = document.createElement('div');
+        messageEl.className = 'message bot-message coach-thinking';
+        const avatar = document.createElement('div');
+        avatar.className = 'message-avatar';
+        avatar.innerHTML = '<i class="fas fa-comments"></i>';
+        messageEl.appendChild(avatar);
+        const content = document.createElement('div');
+        content.className = 'message-content';
+        content.innerHTML =
+            '<span class="coach-typing" aria-hidden="true"><span class="coach-dot"></span><span class="coach-dot"></span><span class="coach-dot"></span></span> <span class="coach-typing-text">Coach is thinking…</span>';
+        messageEl.appendChild(content);
+        chatMessages.appendChild(messageEl);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        return messageEl;
+    }
+
     function renderDefaultConversation() {
         if (!chatMessages) return;
         chatMessages.innerHTML = '';
 
         if (isLessonMode) {
             appendMessage(
-                `Hello! I'm your AI tutor for **${lessonName}**. I have the full lesson document loaded and ready to help you learn!\n\nYou can ask me to:\n- Explain concepts from the lesson\n- Summarize sections\n- Quiz you on the material\n- Clarify anything you don't understand\n\nWhat would you like to know?`,
+                `Hi! I am here to walk through **${lessonName}** with you—the full lesson is loaded.\n\nAsk in your own words: explain a paragraph, slow something down, give a quick check-for-understanding, or connect an idea to real life. What should we look at first?`,
                 'ai',
                 { allowEdit: false }
             );
@@ -258,10 +320,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         appendMessage(
-            'Hello! I am your AI Coach—here for planning help, troubleshooting, and encouragement. What is on your mind today?',
+            'Hi! I am your AI Coach. Think of this as a calm chat—planning, tough days, curriculum questions, or just "what would you do?"\n\nShare whatever is on your mind, in whatever tone you have today.',
             'ai',
             { allowEdit: false }
         );
+        renderCoachStarters();
     }
 
     function setConversationFromMessages(messages) {
@@ -284,6 +347,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 allowEdit: msg.role === 'user'
             });
         });
+        removeCoachStarters();
     }
 
     function sessionMatchesCurrentMode(session) {
@@ -615,8 +679,10 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
+        removeCoachStarters();
+
         const userPreview = appendMessage(text, 'user', { allowEdit: false });
-        const loadingEl = appendMessage('Thinking...', 'ai', { allowEdit: false });
+        const loadingEl = appendCoachThinking();
 
         chatInput.value = '';
         autoResizeInput();
@@ -679,8 +745,9 @@ document.addEventListener('DOMContentLoaded', function () {
             clearEditState();
             await fetchHistorySessions();
 
-            if (refreshed && userPreview) {
-                userPreview.remove();
+            if (refreshed) {
+                if (loadingEl) loadingEl.remove();
+                if (userPreview) userPreview.remove();
             }
         } catch (error) {
             console.error('Chat error:', error);
@@ -694,7 +761,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (loadingEl) {
                 const content = loadingEl.querySelector('.message-content');
-                if (content) content.textContent = errorMessage;
+                if (content) {
+                    content.innerHTML = '';
+                    content.textContent = errorMessage;
+                }
             }
         } finally {
             sendBtn.disabled = false;
@@ -710,10 +780,12 @@ document.addEventListener('DOMContentLoaded', function () {
         if (lessonBanner) {
             lessonBanner.style.display = 'flex';
             lessonBannerName.textContent = lessonName;
-            lessonBannerDesc.textContent = lessonDesc || 'Ask me anything about this lesson!';
+            lessonBannerDesc.textContent = lessonDesc || 'Ask in your own words—we will pull answers from this lesson.';
         }
 
-        document.title = `AI Tutor - ${lessonName} - Gracewise`;
+        document.title = `Lesson help — ${lessonName} | Gracewise`;
+    } else {
+        document.title = 'AI Coach — Gracewise';
     }
 
     const backBtn = document.getElementById('backToCurriculum');
