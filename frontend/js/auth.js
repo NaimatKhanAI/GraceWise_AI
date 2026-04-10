@@ -118,7 +118,20 @@ class AuthSystem {
             }
         }
         
-        const userPages = ['dashboard.html', 'curriculum.html', 'ai-assistant.html', 'devotional.html', 'progress.html'];
+        const userPages = [
+            'dashboard.html',
+            'family.html',
+            'learning.html',
+            'records.html',
+            'child-profile.html',
+            'curriculum.html',
+            'planner.html',
+            'quiz.html',
+            'ai-assistant.html',
+            'devotional.html',
+            'progress.html',
+            'settings.html'
+        ];
         if (userPages.includes(currentPage)) {
             if (!this.isLoggedIn()) {
                 if (typeof showWarning === 'function') {

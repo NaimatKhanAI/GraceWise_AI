@@ -7,13 +7,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/parent-views.css">
     <link rel="stylesheet" href="css/notifications.css">
+    <script src="js/parent-nav.js" defer></script>
     <script src="js/notifications.js" defer></script>
     <script src="js/auth.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="js/config.js"></script>
 </head>
-<body>
+<body data-nav="dashboard">
     <!-- Mobile Menu Toggle -->
     <div class="mobile-menu-toggle">
         <i class="fas fa-bars"></i>
@@ -27,36 +29,7 @@
         <div class="logo">
             <img src="assest/logo/main_logo.png" alt="Gracewise Logo">
         </div>
-        <nav class="nav-menu">
-            <a href="dashboard.html" class="nav-item active">
-                <i class="fas fa-th-large"></i>
-                <span>Dashboard</span>
-            </a>
-            <a href="ai-assistant.html" class="nav-item" onclick="window.location.href='ai-assistant.html'">
-                <i class="fas fa-robot"></i>
-                <span>AI Assistant</span>
-            </a>
-            <!-- <a href="devotional.html" class="nav-item">
-                <i class="fas fa-heart"></i>
-                <span>Devotionals</span>
-            </a> -->
-            <a href="progress.html" class="nav-item">
-                <i class="fas fa-chart-line"></i>
-                <span>Child progress</span>
-            </a>
-            <a href="planner.html" class="nav-item">
-                <i class="fas fa-calendar-alt"></i>
-                <span>Planners</span>
-            </a>
-            <a href="curriculum.html" class="nav-item">
-                <i class="fas fa-book"></i>
-                <span>Curriculum</span>
-            </a>
-            <a href="quiz.html" class="nav-item">
-                <i class="fas fa-question-circle"></i>
-                <span>Quizzes</span>
-            </a>
-        </nav>
+        <nav class="nav-menu" id="parent-nav-menu"></nav>
         <div class="sidebar-bottom">
             <a href="premium-plan.html" class="upgrade-card" onclick="openPremiumModal()">
                 <i class="fas fa-crown"></i>
@@ -175,7 +148,36 @@
             <!-- Welcome Section -->
             <div class="welcome-section">
                 <h1>Dashboard</h1>
-                <p>Welcome back, <span id="welcomeName">Student</span>! Here's what's happening today 😊</p>
+                <p>Welcome back, <span id="welcomeName">there</span>! Your homeschool command center for today.</p>
+            </div>
+
+            <div class="command-center-grid">
+                <div class="cc-card">
+                    <h3><i class="fas fa-calendar-day"></i> Today's plan</h3>
+                    <p>See this week's schedule and adjust today's blocks in the planner.</p>
+                    <a href="planner.html" class="cc-btn">Open weekly planner <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="cc-card">
+                    <h3><i class="fas fa-bell"></i> Alerts</h3>
+                    <p id="dashboardAlertsSummary">Loading notifications…</p>
+                    <a href="#" class="cc-btn" id="dashboardOpenNotifications">Open notification bell <i class="fas fa-arrow-right"></i></a>
+                </div>
+                <div class="cc-card">
+                    <h3><i class="fas fa-link"></i> Quick links</h3>
+                    <p>
+                        <a href="family.html" class="cc-btn">Family</a>
+                        &nbsp;·&nbsp;
+                        <a href="learning.html" class="cc-btn">Learning</a>
+                        &nbsp;·&nbsp;
+                        <a href="records.html" class="cc-btn">Records</a>
+                        &nbsp;·&nbsp;
+                        <a href="ai-assistant.html" class="cc-btn">AI Coach</a>
+                    </p>
+                </div>
+                <div class="cc-card cc-encouragement">
+                    <h3><i class="fas fa-seedling"></i> Encouragement</h3>
+                    <p id="dashboardEncouragement">Small steps today add up to a strong year. You've got this.</p>
+                </div>
             </div>
 
             <!-- Stats Cards -->
@@ -238,33 +240,33 @@
                                 <a href="#" class="view-all">View All</a>
                             </div>
                             <div class="actions-list">
+                                <div class="action-item" onclick="window.location.href='family.html'">
+                                    <div class="action-icon">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <div class="action-content">
+                                        <h4>Family</h4>
+                                        <p>Children & calendar hub</p>
+                                    </div>
+                                    <i class="fas fa-chevron-right"></i>
+                                </div>
+                                <div class="action-item" onclick="window.location.href='learning.html'">
+                                    <div class="action-icon">
+                                        <i class="fas fa-graduation-cap"></i>
+                                    </div>
+                                    <div class="action-content">
+                                        <h4>Learning</h4>
+                                        <p>Curriculum, planner & assignments</p>
+                                    </div>
+                                    <i class="fas fa-chevron-right"></i>
+                                </div>
                                 <div class="action-item" onclick="window.location.href='ai-assistant.html'">
                                     <div class="action-icon">
-                                        <i class="fas fa-robot"></i>
+                                        <i class="fas fa-comments"></i>
                                     </div>
                                     <div class="action-content">
-                                        <h4>AI Assistant</h4>
-                                        <p>Get help now</p>
-                                    </div>
-                                    <i class="fas fa-chevron-right"></i>
-                                </div>
-                                <div class="action-item" onclick="window.location.href='quiz.html'">
-                                    <div class="action-icon">
-                                        <i class="fas fa-question-circle"></i>
-                                    </div>
-                                    <div class="action-content">
-                                        <h4>Take a Quiz</h4>
-                                        <p>Test your knowledge</p>
-                                    </div>
-                                    <i class="fas fa-chevron-right"></i>
-                                </div>
-                                <div class="action-item" onclick="window.location.href='progress.html'">
-                                    <div class="action-icon">
-                                        <i class="fas fa-chart-line"></i>
-                                    </div>
-                                    <div class="action-content">
-                                        <h4>View Progress</h4>
-                                        <p>Track learning</p>
+                                        <h4>AI Coach</h4>
+                                        <p>Planning help & encouragement</p>
                                     </div>
                                     <i class="fas fa-chevron-right"></i>
                                 </div>

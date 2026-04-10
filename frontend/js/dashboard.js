@@ -66,6 +66,8 @@ async function fetchNotifications() {
 
         if (!response.ok) {
             console.error('Failed to fetch notifications:', response.statusText);
+            const alertEl = document.getElementById('dashboardAlertsSummary');
+            if (alertEl) alertEl.textContent = 'Could not load alerts. Try again from the bell icon.';
             return;
         }
 
@@ -74,7 +76,34 @@ async function fetchNotifications() {
         updateNotificationBadge(data.unread_count);
     } catch (error) {
         console.error('Error fetching notifications:', error);
+        const alertEl = document.getElementById('dashboardAlertsSummary');
+        if (alertEl) alertEl.textContent = 'Could not load alerts. Try again from the bell icon.';
     }
+}
+
+function updateDashboardAlertsSummary(notifications, unreadCount) {
+    const el = document.getElementById('dashboardAlertsSummary');
+    if (!el) return;
+    if (!notifications || notifications.length === 0) {
+        el.textContent = 'No alerts right now. You are all caught up.';
+        return;
+    }
+    const unread =
+        typeof unreadCount === 'number'
+            ? unreadCount
+            : notifications.filter(function (n) {
+                  return !n.is_read;
+              }).length;
+    const preview = notifications
+        .slice(0, 2)
+        .map(function (n) {
+            return n.title || n.message || 'Update';
+        })
+        .join(' · ');
+    el.textContent =
+        unread > 0
+            ? unread + ' unread. Latest: ' + preview + '.'
+            : 'All caught up. Latest: ' + preview + '.';
 }
 
 // Display notifications
@@ -88,6 +117,7 @@ function displayNotifications(notifications) {
     
     if (!notifications || notifications.length === 0) {
         notificationList.innerHTML = '<div class="no-notifications">No notifications yet</div>';
+        updateDashboardAlertsSummary([], 0);
         return;
     }
 
@@ -105,6 +135,11 @@ function displayNotifications(notifications) {
             </div>
         </div>
     `).join('');
+
+    const unread = notifications.filter(function (n) {
+        return !n.is_read;
+    }).length;
+    updateDashboardAlertsSummary(notifications, unread);
 }
 
 // Update notification badge
@@ -287,6 +322,26 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize modules
     initTabs();
     initNotificationDropdown();
+
+    const encouragementEl = document.getElementById('dashboardEncouragement');
+    if (encouragementEl) {
+        var quotes = [
+            'Small steps today add up to a strong year. You have got this.',
+            'Consistency beats perfection. One lesson at a time is enough.',
+            'You are the right parent for this job. Rest when you need to.',
+            'Progress is rarely linear. Celebrate what got done today.'
+        ];
+        encouragementEl.textContent = quotes[new Date().getDate() % quotes.length];
+    }
+
+    var dashOpenAlerts = document.getElementById('dashboardOpenNotifications');
+    var notificationBell = document.getElementById('notificationBell');
+    if (dashOpenAlerts && notificationBell) {
+        dashOpenAlerts.addEventListener('click', function (e) {
+            e.preventDefault();
+            notificationBell.click();
+        });
+    }
 
     // Welcome message name
     const welcomeName = document.getElementById('welcomeName');

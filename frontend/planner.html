@@ -10,10 +10,11 @@
     <link rel="stylesheet" href="css/planner.css">
     <link rel="stylesheet" href="css/notifications.css">
     <script src="js/config.js"></script>
+    <script src="js/parent-nav.js" defer></script>
     <script src="js/auth.js" defer></script>
     <script src="js/notifications.js" defer></script>
 </head>
-<body>
+<body data-nav="learning">
     <!-- Mobile Menu Toggle -->
     <div class="mobile-menu-toggle">
         <i class="fas fa-bars"></i>
@@ -27,32 +28,7 @@
         <div class="logo">
             <img src="assest/logo/main_logo.png" alt="Gracewise Logo">
         </div>
-        <nav class="nav-menu">
-            <a href="dashboard.html" class="nav-item">
-                <i class="fas fa-th-large"></i>
-                <span>Dashboard</span>
-            </a>
-            <a href="ai-assistant.html" class="nav-item" onclick="window.location.href='ai-assistant.html'">
-                <i class="fas fa-robot"></i>
-                <span>AI Assistant</span>
-            </a>
-            <a href="progress.html" class="nav-item">
-                <i class="fas fa-chart-line"></i>
-                <span>Child progress</span>
-            </a>
-            <a href="planner.html" class="nav-item active">
-                <i class="fas fa-calendar-alt"></i>
-                <span>Planners</span>
-            </a>
-            <a href="curriculum.html" class="nav-item">
-                <i class="fas fa-book"></i>
-                <span>Curriculum</span>
-            </a>
-            <a href="quiz.html" class="nav-item">
-                <i class="fas fa-question-circle"></i>
-                <span>Quizzes</span>
-            </a>
-        </nav>
+        <nav class="nav-menu" id="parent-nav-menu"></nav>
         <div class="sidebar-bottom">
             <a href="premium-plan.html" class="upgrade-card" onclick="openPremiumModal()">
                 <i class="fas fa-crown"></i>

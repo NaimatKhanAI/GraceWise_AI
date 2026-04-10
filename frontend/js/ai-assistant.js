@@ -257,7 +257,11 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        appendMessage("Hello! I'm your AI learning assistant. How can I help you today?", 'ai', { allowEdit: false });
+        appendMessage(
+            'Hello! I am your AI Coach—here for planning help, troubleshooting, and encouragement. What is on your mind today?',
+            'ai',
+            { allowEdit: false }
+        );
     }
 
     function setConversationFromMessages(messages) {

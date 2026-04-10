@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Records - Gracewise</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/parent-views.css">
+    <link rel="stylesheet" href="css/notifications.css">
+    <script src="js/config.js"></script>
+    <script src="js/parent-nav.js" defer></script>
+    <script src="js/auth.js" defer></script>
+    <script src="js/notifications.js" defer></script>
+</head>
+<body data-nav="records">
+    <div class="mobile-menu-toggle">
+        <i class="fas fa-bars"></i>
+    </div>
+    <div class="mobile-overlay"></div>
+
+    <div class="sidebar">
+        <div class="logo">
+            <img src="assest/logo/main_logo.png" alt="Gracewise Logo">
+        </div>
+        <nav class="nav-menu" id="parent-nav-menu"></nav>
+        <div class="sidebar-bottom">
+            <a href="premium-plan.html" class="upgrade-card" onclick="document.getElementById('premiumModal').style.display='block'">
+                <i class="fas fa-crown"></i>
+                <span>Upgrade to Pro</span>
+            </a>
+            <a href="settings.html" class="nav-item">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+            <a href="#" class="nav-item" onclick="auth.logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <header class="header">
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search">
+            </div>
+            <div class="header-right">
+                <div class="notification-wrapper">
+                    <div class="notification" id="notificationBell">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                    </div>
+                    <div class="notification-dropdown" id="notificationDropdown">
+                        <div class="notification-header">
+                            <h3>Notifications</h3>
+                            <button class="mark-all-read" onclick="markAllNotificationsRead()">Mark All as Read</button>
+                        </div>
+                        <div class="notification-list" id="notificationList">
+                            <div class="no-notifications">No notifications yet</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="avatar" id="avatarBtn">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard-content">
+            <div class="page-intro">
+                <h1>Records</h1>
+                <p>Long-term storage and compliance live here—one place to answer “Where is our paperwork?” You can jump in from a child’s profile; files stay organized centrally.</p>
+            </div>
+
+            <div class="records-sections">
+                <section class="records-section">
+                    <h2><i class="fas fa-file-alt"></i> Transcripts</h2>
+                    <p>Course history and credits for each learner. (Connect your export tools here as the product grows.)</p>
+                </section>
+                <section class="records-section">
+                    <h2><i class="fas fa-user-check"></i> Attendance</h2>
+                    <p>Log instructional days and hours to match your state or umbrella requirements.</p>
+                </section>
+                <section class="records-section">
+                    <h2><i class="fas fa-award"></i> Report cards</h2>
+                    <p>Term summaries and grades in one archive—easy to print or share.</p>
+                </section>
+                <section class="records-section">
+                    <h2><i class="fas fa-cloud-upload-alt"></i> Portfolio &amp; uploads</h2>
+                    <p>Artifacts, samples of work, and documents stored with clear dates and tags.</p>
+                </section>
+            </div>
+
+            <p class="gw-muted" style="margin-top:20px;">
+                <a href="family.html" class="cc-btn">? Back to Family</a>
+            </p>
+        </div>
+    </div>
+
+    <div id="premiumModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close" onclick="document.getElementById('premiumModal').style.display='none'">&times;</span>
+            <p style="padding:24px;">Premium plans coming soon.</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var toggle = document.querySelector('.mobile-menu-toggle');
+            var sidebar = document.querySelector('.sidebar');
+            var overlay = document.querySelector('.mobile-overlay');
+            if (toggle && sidebar) {
+                toggle.addEventListener('click', function () {
+                    sidebar.classList.toggle('mobile-open');
+                    if (overlay) overlay.classList.toggle('active');
+                    var icon = toggle.querySelector('i');
+                    icon.className = sidebar.classList.contains('mobile-open') ? 'fas fa-times' : 'fas fa-bars';
+                });
+            }
+            if (overlay && sidebar) {
+                overlay.addEventListener('click', function () {
+                    sidebar.classList.remove('mobile-open');
+                    overlay.classList.remove('active');
+                });
+            }
+            if (typeof initNotificationDropdown === 'function') initNotificationDropdown();
+            if (typeof fetchNotifications === 'function') fetchNotifications();
+        });
+    </script>
+</body>
+</html>

@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Assistant - Gracewise</title>
+    <title>AI Coach - Gracewise</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/ai-assistant.css">
     <link rel="stylesheet" href="css/notifications.css">
+    <script src="js/parent-nav.js" defer></script>
     <script src="js/notifications.js" defer></script>
     <script src="js/auth.js" defer></script>
     <script src="js/ai-assistant.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="js/config.js"></script>
 </head>
-<body>
+<body data-nav="coach">
     <!-- Mobile Menu Toggle -->
     <div class="mobile-menu-toggle">
         <i class="fas fa-bars"></i>
@@ -29,36 +30,7 @@
         <div class="logo">
             <img src="assest/logo/main_logo.png" alt="Gracewise Logo">
         </div>
-        <nav class="nav-menu">
-            <a href="dashboard.html" class="nav-item">
-                <i class="fas fa-th-large"></i>
-                <span>Dashboard</span>
-            </a>
-            <a href="#" class="nav-item active">
-                <i class="fas fa-robot"></i>
-                <span>AI Assistant</span>
-            </a>
-            <!-- <a href="devotional.html" class="nav-item">
-                <i class="fas fa-heart"></i>
-                <span>Devotionals</span>
-            </a> -->
-            <a href="progress.html" class="nav-item">
-                <i class="fas fa-chart-line"></i>
-                <span>Child progress</span>
-            </a>
-            <a href="planner.html" class="nav-item">
-                <i class="fas fa-calendar-alt"></i>
-                <span>Planners</span>
-            </a>
-            <a href="curriculum.html" class="nav-item">
-                <i class="fas fa-book"></i>
-                <span>Curriculum</span>
-            </a>
-            <a href="quiz.html" class="nav-item">
-                <i class="fas fa-question-circle"></i>
-                <span>Quizzes</span>
-            </a>
-        </nav>
+        <nav class="nav-menu" id="parent-nav-menu"></nav>
         <div class="sidebar-bottom">
             <a href="#" class="upgrade-card" onclick="openPremiumModal()">
                 <i class="fas fa-crown"></i>
@@ -105,7 +77,7 @@
             </div>
         </header>
 
-        <!-- AI Assistant Content -->
+        <!-- AI Coach -->
         <div class="dashboard-content">
             <!-- Lesson Context Banner (hidden by default, shown when coming from curriculum) -->
             <div class="lesson-banner" id="lessonBanner" style="display: none;">
@@ -141,7 +113,7 @@
                                     <i class="fas fa-robot"></i>
                                 </div>
                                 <div class="message-content">
-                                    <p>Hello! I'm your AI learning assistant. How can I help you today?</p>
+                                    <p>Hello! I am your AI Coach—here for planning help, troubleshooting, and encouragement. What is on your mind today?</p>
                                 </div>
                             </div>
                         </div>

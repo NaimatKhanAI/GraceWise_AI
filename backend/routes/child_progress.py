@@ -3,7 +3,21 @@ from models import db, Child, Devotional, DevotionalProgress
 
 child_progress_bp = Blueprint("child_progress", __name__)
 
-#Add a test child (for testing purposes)
+
+@child_progress_bp.route("/children", methods=["GET"])
+def list_children():
+    """All learners in the system (family hub)."""
+    children = Child.query.order_by(Child.id.asc()).all()
+    return jsonify(
+        {
+            "children": [
+                {"id": c.id, "name": c.name or f"Learner {c.id}"} for c in children
+            ]
+        }
+    )
+
+
+# Add a test child (for testing purposes)
 @child_progress_bp.route("/add_child", methods=["POST"])
 def add_child():
     child = Child(name="Test Child")
