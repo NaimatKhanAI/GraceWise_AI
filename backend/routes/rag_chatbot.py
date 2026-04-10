@@ -1171,6 +1171,37 @@ def _download_link_label(filename):
     return "Download the Document"
 
 
+def _export_ready_chat_message(export_note, export_format, api_link, filename):
+    """Single friendly download (no backup link), with a small card for the button + timer."""
+    blurbs = {
+        "pdf": "I saved our conversation as a **PDF** — easy to read later or print.",
+        "docx": "I put everything into a **Word document** so you can edit it if you like.",
+        "csv": "Here is your **spreadsheet (CSV)** — handy for sorting or sharing that table.",
+        "txt": "Here is a **plain text** copy of the chat if you want something simple.",
+    }
+    blurb = blurbs.get(export_format, "Here is the file you asked for.")
+    label = _download_link_label(filename)
+    expires_at = (datetime.utcnow() + timedelta(seconds=EXPORT_TTL_SECONDS)).replace(microsecond=0).isoformat() + "Z"
+    href = escape(api_link, quote=True)
+    safe_label = escape(label)
+    countdown = (
+        f'<div class="download-expiry" data-expires-at="{escape(expires_at)}">'
+        "Time remaining: calculating…"
+        "</div>"
+    )
+    card = (
+        '<div class="chat-download-card">'
+        f'<p class="chat-download-hint">Tap when you are ready — the link stays good for a few hours, then you can ask me to export again.</p>'
+        f"{countdown}"
+        f'<a href="{href}" class="download-link chat-download-button" target="_blank" rel="noopener noreferrer">{safe_label}</a>'
+        "</div>"
+    )
+    prefix = (export_note or "").strip()
+    if prefix:
+        prefix = prefix + "\n\n"
+    return prefix + blurb + "\n\n" + card
+
+
 def _build_export_links(filename):
     base = (request.headers.get("Origin") or request.url_root or "").rstrip("/")
     if not base:
@@ -1240,26 +1271,14 @@ def _try_auto_export(question, history):
         return None
 
     links = _build_export_links(filename)
-    label = _download_link_label(filename)
     expires_at = (datetime.utcnow() + timedelta(seconds=EXPORT_TTL_SECONDS)).replace(microsecond=0).isoformat() + "Z"
-    countdown_html = (
-        f'<div class="download-expiry" data-expires-at="{escape(expires_at)}">'
-        "Time remaining: calculating..."
-        "</div>"
-    )
-    answer = (
-        f"{export_note}Your file is ready.\n\n"
-        f"{countdown_html}\n\n"
-        f"- [{label}]({links['api_link']})\n"
-        f"- [Backup Download Link]({links['direct_link']})"
-    )
+    answer = _export_ready_chat_message(export_note, export_format, links["api_link"], filename)
 
     return {
         "answer": answer,
         "export_filename": filename,
         "export_format": export_format,
         "download_url": links["api_link"],
-        "download_url_fallback": links["direct_link"],
         "expires_at": expires_at,
         "ttl_seconds": EXPORT_TTL_SECONDS,
     }

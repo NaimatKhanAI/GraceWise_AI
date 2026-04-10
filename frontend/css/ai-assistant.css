@@ -406,6 +406,28 @@
     background: rgba(255, 255, 255, 0.2);
 }
 
+.message-content .chat-download-card {
+    margin-top: 12px;
+    padding: 16px 18px;
+    border-radius: 14px;
+    border: 1px solid #e8dfd0;
+    background: linear-gradient(165deg, #fffdf9 0%, #faf8f4 100%);
+    box-shadow: 0 4px 18px rgba(45, 55, 72, 0.06);
+    max-width: 420px;
+}
+
+.message-content .chat-download-hint {
+    margin: 0 0 12px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: #5c6578;
+    font-weight: 400;
+}
+
+.message-content .chat-download-card .download-expiry {
+    margin-bottom: 14px;
+}
+
 .message-content a.download-link {
     display: inline-block;
     margin-top: 4px;
@@ -418,6 +440,25 @@
     font-weight: 600;
     font-size: 13px;
     transition: all 0.2s ease;
+}
+
+.message-content a.download-link.chat-download-button {
+    margin-top: 0;
+    padding: 11px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 8px rgba(181, 156, 97, 0.2);
+}
+
+.message-content a.download-link.chat-download-button::before {
+    content: "\f019";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: 13px;
+    opacity: 0.9;
 }
 
 .message-content a.download-link:hover {
