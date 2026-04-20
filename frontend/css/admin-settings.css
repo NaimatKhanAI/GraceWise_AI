@@ -27,11 +27,12 @@
     color: #6f6758;
 }
 
-#aiPromptForm label {
+.settings-card form label {
     display: block;
     margin-bottom: 8px;
     color: #463b2b;
     font-weight: 600;
+    margin-top: 10px;
 }
 
 #aiPromptInput {
@@ -52,6 +53,7 @@
     box-shadow: 0 0 0 3px rgba(181, 156, 97, 0.15);
 }
 
+.settings-input,
 #openAiApiKeyInput {
     width: 100%;
     border: 1px solid #d8d0c1;
@@ -67,10 +69,18 @@
     align-items: center;
 }
 
+.settings-input:focus,
 #openAiApiKeyInput:focus {
     outline: none;
     border-color: #b59c61;
     box-shadow: 0 0 0 3px rgba(181, 156, 97, 0.15);
+}
+
+.settings-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 4px;
 }
 
 .btn-small {
@@ -131,5 +141,9 @@
     .key-input-row {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .settings-grid-2 {
+        grid-template-columns: 1fr;
     }
 }

@@ -103,6 +103,58 @@
                     <small id="openAiKeyTestResult" class="field-hint"></small>
                 </form>
             </div>
+
+            <div class="settings-card">
+                <div class="settings-header">
+                    <h1>Stripe Connection</h1>
+                    <p>Connect Stripe directly from Super Admin panel.</p>
+                </div>
+                <form id="stripeConfigForm">
+                    <label for="stripeSecretKeyInput">Stripe Secret Key</label>
+                    <div class="key-input-row">
+                        <input id="stripeSecretKeyInput" class="settings-input" type="password" placeholder="sk_live_..." autocomplete="off" required>
+                        <button type="button" class="btn-secondary btn-small" id="toggleStripeSecretBtn">Show</button>
+                    </div>
+
+                    <label for="stripeWebhookSecretInput">Stripe Webhook Secret</label>
+                    <div class="key-input-row">
+                        <input id="stripeWebhookSecretInput" class="settings-input" type="password" placeholder="whsec_..." autocomplete="off" required>
+                        <button type="button" class="btn-secondary btn-small" id="toggleStripeWebhookBtn">Show</button>
+                    </div>
+
+                    <div class="settings-grid-2">
+                        <div>
+                            <label for="stripePlanPriceInput">Plan Price ID</label>
+                            <input id="stripePlanPriceInput" class="settings-input" type="text" placeholder="price_..." required>
+                        </div>
+                        <div>
+                            <label for="stripeThrivePriceInput">Thrive Price ID</label>
+                            <input id="stripeThrivePriceInput" class="settings-input" type="text" placeholder="price_..." required>
+                        </div>
+                    </div>
+
+                    <div class="settings-grid-2">
+                        <div>
+                            <label for="stripeTogetherPriceInput">Together Price ID</label>
+                            <input id="stripeTogetherPriceInput" class="settings-input" type="text" placeholder="price_..." required>
+                        </div>
+                        <div>
+                            <label for="stripeTrialDaysInput">Trial Days (optional)</label>
+                            <input id="stripeTrialDaysInput" class="settings-input" type="number" min="0" step="1" placeholder="0">
+                        </div>
+                    </div>
+
+                    <label for="stripeFrontendUrlInput">Frontend Base URL</label>
+                    <input id="stripeFrontendUrlInput" class="settings-input" type="url" placeholder="https://your-domain.com" required>
+
+                    <small id="stripeConfigStatus" class="field-hint">Checking Stripe config status...</small>
+                    <div class="settings-actions">
+                        <button type="submit" class="btn-primary" id="saveStripeConfigBtn">Save Stripe Config</button>
+                        <button type="button" class="btn-secondary" id="testStripeConfigBtn">Test Connection</button>
+                    </div>
+                    <small id="stripeConfigTestResult" class="field-hint"></small>
+                </form>
+            </div>
         </div>
     </div>
 </body>

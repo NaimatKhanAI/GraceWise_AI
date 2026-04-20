@@ -6,7 +6,7 @@ import stripe
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
-from models import db, User
+from models import AppSetting, db, User
 from services.email_service import (
     send_failed_payment_email,
     send_invoice_receipt_email,
@@ -17,6 +17,14 @@ from utils.access_control import ACTIVE_SUBSCRIPTION_STATUSES, get_effective_tie
 
 billing_bp = Blueprint("billing", __name__)
 
+STRIPE_SECRET_KEY_SETTING = "stripe_secret_key"
+STRIPE_WEBHOOK_SECRET_SETTING = "stripe_webhook_secret"
+STRIPE_PRICE_PLAN_SETTING = "stripe_price_plan_monthly"
+STRIPE_PRICE_THRIVE_SETTING = "stripe_price_thrive_monthly"
+STRIPE_PRICE_TOGETHER_SETTING = "stripe_price_together_monthly"
+STRIPE_TRIAL_DAYS_SETTING = "stripe_trial_days_default"
+STRIPE_FRONTEND_URL_SETTING = "stripe_frontend_base_url"
+
 PLAN_DEFINITIONS = {
     "plan": {
         "id": "plan",
@@ -24,6 +32,7 @@ PLAN_DEFINITIONS = {
         "price_monthly": 9.99,
         "description": "Basic help for weekly homeschool life.",
         "price_env_key": "STRIPE_PRICE_PLAN_MONTHLY",
+        "price_setting_key": STRIPE_PRICE_PLAN_SETTING,
     },
     "thrive": {
         "id": "thrive",
@@ -31,6 +40,7 @@ PLAN_DEFINITIONS = {
         "price_monthly": 19.99,
         "description": "Includes Plan features + deeper child support.",
         "price_env_key": "STRIPE_PRICE_THRIVE_MONTHLY",
+        "price_setting_key": STRIPE_PRICE_THRIVE_SETTING,
     },
     "together": {
         "id": "together",
@@ -38,22 +48,53 @@ PLAN_DEFINITIONS = {
         "price_monthly": 49.00,
         "description": "Includes Plan + Thrive + coaching/community features.",
         "price_env_key": "STRIPE_PRICE_TOGETHER_MONTHLY",
+        "price_setting_key": STRIPE_PRICE_TOGETHER_SETTING,
     },
 }
 
-PRICE_ID_TO_PLAN_ID = {}
-for plan_id, plan in PLAN_DEFINITIONS.items():
-    price_id = os.environ.get(plan["price_env_key"])
-    if price_id:
-        PRICE_ID_TO_PLAN_ID[price_id] = plan_id
-
 
 def get_stripe_client():
-    secret_key = os.environ.get("STRIPE_SECRET_KEY")
+    secret_key = get_setting_value(STRIPE_SECRET_KEY_SETTING, env_fallback_key="STRIPE_SECRET_KEY")
     if not secret_key:
         raise RuntimeError("Missing STRIPE_SECRET_KEY")
     stripe.api_key = secret_key
     return stripe
+
+
+def get_current_user():
+    user_id = get_user_id()
+    return User.query.get(user_id)
+
+
+def is_admin_user(user=None):
+    user = user or get_current_user()
+    return bool(user and user.is_admin)
+
+
+def get_setting_row(setting_key):
+    return AppSetting.query.filter_by(setting_key=setting_key).first()
+
+
+def get_setting_value(setting_key, default="", env_fallback_key=None):
+    row = get_setting_row(setting_key)
+    if row and row.setting_value is not None and str(row.setting_value).strip() != "":
+        return row.setting_value.strip()
+
+    if env_fallback_key:
+        return (os.environ.get(env_fallback_key) or default).strip() if isinstance(default, str) else os.environ.get(env_fallback_key, default)
+
+    return default
+
+
+def upsert_setting_value(setting_key, value):
+    value = "" if value is None else str(value).strip()
+    row = get_setting_row(setting_key)
+    if not row:
+        row = AppSetting(setting_key=setting_key, setting_value=value)
+        db.session.add(row)
+    else:
+        row.setting_value = value
+    return row
 
 
 def get_user_id():
@@ -64,18 +105,28 @@ def get_user_id():
 
 
 def frontend_base_url():
-    return (os.environ.get("FRONTEND_BASE_URL") or "http://localhost:5500").rstrip("/")
+    return (
+        get_setting_value(STRIPE_FRONTEND_URL_SETTING, env_fallback_key="FRONTEND_BASE_URL", default="http://localhost:5500")
+        or "http://localhost:5500"
+    ).rstrip("/")
 
 
 def plan_id_for_price(price_id):
-    return PRICE_ID_TO_PLAN_ID.get(price_id)
+    if not price_id:
+        return None
+    normalized = str(price_id).strip()
+    for plan_id, plan in PLAN_DEFINITIONS.items():
+        configured_price = get_setting_value(plan["price_setting_key"], env_fallback_key=plan["price_env_key"])
+        if configured_price and configured_price == normalized:
+            return plan_id
+    return None
 
 
 def price_id_for_plan(plan_id):
     plan = PLAN_DEFINITIONS.get(normalize_tier(plan_id))
     if not plan:
         return None
-    return os.environ.get(plan["price_env_key"])
+    return get_setting_value(plan["price_setting_key"], env_fallback_key=plan["price_env_key"])
 
 
 def plan_name(plan_id):
@@ -158,11 +209,184 @@ def serialize_user_subscription(user):
     }
 
 
+@billing_bp.route("/admin/stripe-config", methods=["GET"])
+@jwt_required()
+def get_admin_stripe_config():
+    user = get_current_user()
+    if not is_admin_user(user):
+        return jsonify({"message": "Admin access required"}), 403
+
+    key_sources = {}
+    config = {
+        "secret_key": get_setting_value(STRIPE_SECRET_KEY_SETTING, env_fallback_key="STRIPE_SECRET_KEY"),
+        "webhook_secret": get_setting_value(STRIPE_WEBHOOK_SECRET_SETTING, env_fallback_key="STRIPE_WEBHOOK_SECRET"),
+        "price_plan_monthly": get_setting_value(STRIPE_PRICE_PLAN_SETTING, env_fallback_key="STRIPE_PRICE_PLAN_MONTHLY"),
+        "price_thrive_monthly": get_setting_value(STRIPE_PRICE_THRIVE_SETTING, env_fallback_key="STRIPE_PRICE_THRIVE_MONTHLY"),
+        "price_together_monthly": get_setting_value(STRIPE_PRICE_TOGETHER_SETTING, env_fallback_key="STRIPE_PRICE_TOGETHER_MONTHLY"),
+        "trial_days_default": get_setting_value(STRIPE_TRIAL_DAYS_SETTING, env_fallback_key="STRIPE_TRIAL_DAYS_DEFAULT", default="0"),
+        "frontend_base_url": frontend_base_url(),
+    }
+
+    for setting_key, env_key in [
+        (STRIPE_SECRET_KEY_SETTING, "STRIPE_SECRET_KEY"),
+        (STRIPE_WEBHOOK_SECRET_SETTING, "STRIPE_WEBHOOK_SECRET"),
+        (STRIPE_PRICE_PLAN_SETTING, "STRIPE_PRICE_PLAN_MONTHLY"),
+        (STRIPE_PRICE_THRIVE_SETTING, "STRIPE_PRICE_THRIVE_MONTHLY"),
+        (STRIPE_PRICE_TOGETHER_SETTING, "STRIPE_PRICE_TOGETHER_MONTHLY"),
+        (STRIPE_TRIAL_DAYS_SETTING, "STRIPE_TRIAL_DAYS_DEFAULT"),
+        (STRIPE_FRONTEND_URL_SETTING, "FRONTEND_BASE_URL"),
+    ]:
+        key_sources[setting_key] = "database" if get_setting_row(setting_key) else ("env" if os.environ.get(env_key) else "unset")
+
+    configured = all(
+        [
+            bool(config["secret_key"]),
+            bool(config["webhook_secret"]),
+            bool(config["price_plan_monthly"]),
+            bool(config["price_thrive_monthly"]),
+            bool(config["price_together_monthly"]),
+        ]
+    )
+
+    return jsonify(
+        {
+            "configured": configured,
+            "config": config,
+            "sources": key_sources,
+        }
+    ), 200
+
+
+@billing_bp.route("/admin/stripe-config", methods=["PUT"])
+@jwt_required()
+def update_admin_stripe_config():
+    user = get_current_user()
+    if not is_admin_user(user):
+        return jsonify({"message": "Admin access required"}), 403
+
+    data = request.get_json(silent=True) or {}
+
+    mapping = {
+        "secret_key": STRIPE_SECRET_KEY_SETTING,
+        "webhook_secret": STRIPE_WEBHOOK_SECRET_SETTING,
+        "price_plan_monthly": STRIPE_PRICE_PLAN_SETTING,
+        "price_thrive_monthly": STRIPE_PRICE_THRIVE_SETTING,
+        "price_together_monthly": STRIPE_PRICE_TOGETHER_SETTING,
+        "trial_days_default": STRIPE_TRIAL_DAYS_SETTING,
+        "frontend_base_url": STRIPE_FRONTEND_URL_SETTING,
+    }
+
+    updated_fields = []
+    for payload_key, setting_key in mapping.items():
+        if payload_key not in data:
+            continue
+
+        value = data.get(payload_key)
+        if value is None:
+            continue
+
+        value = str(value).strip()
+
+        if payload_key == "trial_days_default":
+            try:
+                parsed = int(value)
+            except (TypeError, ValueError):
+                return jsonify({"message": "trial_days_default must be an integer"}), 400
+            if parsed < 0:
+                return jsonify({"message": "trial_days_default cannot be negative"}), 400
+            value = str(parsed)
+
+        if payload_key == "secret_key" and value and not value.startswith("sk_"):
+            return jsonify({"message": "Stripe secret key should start with sk_"}), 400
+
+        if payload_key == "webhook_secret" and value and not value.startswith("whsec_"):
+            return jsonify({"message": "Stripe webhook secret should start with whsec_"}), 400
+
+        if payload_key.startswith("price_") and value and not value.startswith("price_"):
+            return jsonify({"message": f"{payload_key} should start with price_"}), 400
+
+        upsert_setting_value(setting_key, value)
+        updated_fields.append(payload_key)
+
+    if not updated_fields:
+        return jsonify({"message": "No valid Stripe fields provided"}), 400
+
+    db.session.commit()
+
+    return jsonify(
+        {
+            "message": "Stripe configuration saved successfully",
+            "updated_fields": updated_fields,
+        }
+    ), 200
+
+
+@billing_bp.route("/admin/stripe-config/test", methods=["POST"])
+@jwt_required()
+def test_admin_stripe_config():
+    user = get_current_user()
+    if not is_admin_user(user):
+        return jsonify({"message": "Admin access required"}), 403
+
+    data = request.get_json(silent=True) or {}
+    secret_key = (data.get("secret_key") or "").strip() or get_setting_value(
+        STRIPE_SECRET_KEY_SETTING,
+        env_fallback_key="STRIPE_SECRET_KEY",
+    )
+
+    if not secret_key:
+        return jsonify({"message": "Stripe secret key is required for test"}), 400
+
+    plan_price_ids = {
+        "plan": (data.get("price_plan_monthly") or "").strip() or get_setting_value(STRIPE_PRICE_PLAN_SETTING, env_fallback_key="STRIPE_PRICE_PLAN_MONTHLY"),
+        "thrive": (data.get("price_thrive_monthly") or "").strip() or get_setting_value(STRIPE_PRICE_THRIVE_SETTING, env_fallback_key="STRIPE_PRICE_THRIVE_MONTHLY"),
+        "together": (data.get("price_together_monthly") or "").strip() or get_setting_value(STRIPE_PRICE_TOGETHER_SETTING, env_fallback_key="STRIPE_PRICE_TOGETHER_MONTHLY"),
+    }
+
+    stripe.api_key = secret_key
+
+    try:
+        account = stripe.Account.retrieve()
+        price_checks = {}
+        for plan_id, price_id in plan_price_ids.items():
+            if not price_id:
+                price_checks[plan_id] = {"ok": False, "message": "missing"}
+                continue
+            try:
+                price = stripe.Price.retrieve(price_id)
+                active = bool(price.get("active"))
+                recurring = (price.get("recurring") or {}).get("interval")
+                price_checks[plan_id] = {
+                    "ok": active and recurring == "month",
+                    "message": f"active={active}, interval={recurring or 'none'}",
+                }
+            except Exception as price_exc:
+                price_checks[plan_id] = {"ok": False, "message": str(price_exc)}
+
+        return jsonify(
+            {
+                "working": True,
+                "message": "Stripe credentials are working",
+                "account_id": account.get("id"),
+                "account_email": account.get("email"),
+                "price_checks": price_checks,
+            }
+        ), 200
+    except Exception as exc:
+        return jsonify(
+            {
+                "working": False,
+                "message": "Stripe configuration test failed",
+                "error": str(exc),
+            }
+        ), 400
+
+
 @billing_bp.route("/plans", methods=["GET"])
 def get_plans():
     plans = []
     for _, plan in PLAN_DEFINITIONS.items():
-        price_id = os.environ.get(plan["price_env_key"])
+        price_id = get_setting_value(plan["price_setting_key"], env_fallback_key=plan["price_env_key"])
         plans.append(
             {
                 "id": plan["id"],
@@ -219,7 +443,12 @@ def create_checkout_session():
 
     trial_days = data.get("trial_days")
     if trial_days is None:
-        trial_days = int(os.environ.get("STRIPE_TRIAL_DAYS_DEFAULT", "0") or "0")
+        configured_trial = get_setting_value(
+            STRIPE_TRIAL_DAYS_SETTING,
+            env_fallback_key="STRIPE_TRIAL_DAYS_DEFAULT",
+            default="0",
+        )
+        trial_days = configured_trial
     try:
         trial_days = max(0, int(trial_days))
     except (TypeError, ValueError):
@@ -434,7 +663,10 @@ def stripe_webhook():
 
     payload = request.get_data(as_text=False)
     signature = request.headers.get("Stripe-Signature")
-    webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
+    webhook_secret = get_setting_value(
+        STRIPE_WEBHOOK_SECRET_SETTING,
+        env_fallback_key="STRIPE_WEBHOOK_SECRET",
+    )
 
     try:
         if webhook_secret:
