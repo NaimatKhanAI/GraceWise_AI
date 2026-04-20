@@ -189,12 +189,7 @@ class AuthSystem {
             return;
         }
 
-        if (!this.hasActiveSubscription()) {
-            window.location.href = 'premium-plan.html';
-            return;
-        }
-
-        if (this.needsOnboarding()) {
+        if (this.hasActiveSubscription() && this.needsOnboarding()) {
             window.location.href = 'onboarding.html';
             return;
         }
@@ -249,16 +244,32 @@ class AuthSystem {
             return true;
         }
 
-        const onboardingAllowedPages = ['onboarding.html', 'premium-plan.html', 'settings.html', 'payment-success.html'];
-        const freeAllowedPages = ['premium-plan.html', 'settings.html', 'payment-success.html'];
+        const onboardingAllowedPages = ['onboarding.html', 'premium-plan.html', 'settings.html', 'payment-success.html', 'dashboard.html'];
+        const paidOnlyPages = [
+            'planner.html',
+            'ai-assistant.html',
+            'devotional.html',
+            'progress.html',
+            'curriculum.html'
+        ];
 
-        if (!this.hasActiveSubscription() && !freeAllowedPages.includes(currentPage)) {
+        // Let free users use landing + dashboard; only hard-gate specific paid tools.
+        if (!this.hasActiveSubscription() && paidOnlyPages.includes(currentPage)) {
             window.location.href = 'premium-plan.html';
             return false;
         }
 
         if (this.needsOnboarding() && !onboardingAllowedPages.includes(currentPage)) {
             window.location.href = 'onboarding.html';
+            return false;
+        }
+
+        if (currentPage === 'premium-plan.html' && this.hasActiveSubscription()) {
+            if (this.needsOnboarding()) {
+                window.location.href = 'onboarding.html';
+            } else {
+                window.location.href = 'dashboard.html';
+            }
             return false;
         }
 
