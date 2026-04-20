@@ -1,0 +1,105 @@
+:root {
+    --base-bg: #f7f2e8;
+    --card-bg: #ffffff;
+    --line: #e6dac8;
+    --heading: #1f2b3d;
+    --muted: #667085;
+    --accent: #bd9965;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    background: linear-gradient(150deg, #faf6ef 10%, #f0e6d6 90%);
+    color: var(--heading);
+}
+
+.onboarding-shell {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: 28px 18px 50px;
+}
+
+.onboarding-header {
+    text-align: center;
+    margin-bottom: 18px;
+}
+
+.onboarding-header h1 {
+    margin: 0;
+    font-size: clamp(28px, 5vw, 40px);
+}
+
+.onboarding-header p {
+    margin-top: 10px;
+    color: var(--muted);
+}
+
+.onboarding-form {
+    background: var(--card-bg);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 20px;
+}
+
+.question-group + .question-group {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+}
+
+.question-group h2 {
+    margin: 0 0 14px;
+    font-size: 20px;
+}
+
+.field-wrap {
+    margin-bottom: 14px;
+}
+
+.field-wrap label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.field-wrap input,
+.field-wrap select,
+.field-wrap textarea {
+    width: 100%;
+    border: 1px solid #d9ccb6;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font: inherit;
+    background: #fffcf6;
+}
+
+.field-wrap textarea {
+    min-height: 84px;
+    resize: vertical;
+}
+
+.actions {
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.primary-btn {
+    border: none;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    padding: 12px 18px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.primary-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}

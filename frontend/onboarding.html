@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onboarding - GraceWise</title>
+    <link rel="stylesheet" href="css/onboarding.css">
+    <link rel="stylesheet" href="css/notifications.css">
+    <script src="js/config.js"></script>
+    <script src="js/notifications.js" defer></script>
+    <script src="js/auth.js" defer></script>
+    <script src="js/onboarding.js" defer></script>
+</head>
+<body>
+    <main class="onboarding-shell">
+        <section class="onboarding-header">
+            <h1>Tell GraceWise About Your Family</h1>
+            <p>These answers personalize your dashboard tools and AI coaching.</p>
+        </section>
+
+        <form id="onboardingForm" class="onboarding-form">
+            <section class="question-group">
+                <h2>Core Questions</h2>
+                <div id="coreQuestions"></div>
+            </section>
+
+            <section class="question-group">
+                <h2 id="tierQuestionsTitle">Tier Questions</h2>
+                <div id="tierQuestions"></div>
+            </section>
+
+            <div class="actions">
+                <button type="submit" class="primary-btn">Save and Continue</button>
+            </div>
+        </form>
+    </main>
+</body>
+</html>

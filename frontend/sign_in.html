@@ -9,10 +9,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/signin-style.css">
     <link rel="stylesheet" href="css/notifications.css">
+    <script src="js/config.js"></script>
     <script src="js/notifications.js" defer></script>
     <script src="js/password-toggle.js" defer></script>
     <script src="js/auth.js" defer></script>
-    <script src="js/config.js"></script>
 </head>
 <body>
     <div class="signin-container">
@@ -36,7 +36,7 @@
                     
                     <button type="submit" class="signin-btn">Login</button>
                     
-                    <p class="forgot-link">Forgot Password</p>
+                    <p class="forgot-link"><a href="#" id="forgotPasswordLink">Forgot Password?</a></p>
                     
                     <div class="divider">
                         <span>Or</span>
@@ -69,6 +69,19 @@
                 }, 1000);
             } else {
                 showError(result.message);
+            }
+        });
+
+        document.getElementById('forgotPasswordLink').addEventListener('click', async function (e) {
+            e.preventDefault();
+            const email = prompt('Enter your account email to receive a reset link:');
+            if (!email) return;
+
+            const result = await auth.forgotPassword(email.trim());
+            if (result.success) {
+                showSuccess(result.message);
+            } else {
+                showError(result.message || 'Could not process request right now.');
             }
         });
     </script>

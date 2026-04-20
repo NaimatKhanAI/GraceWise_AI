@@ -148,6 +148,23 @@ grace-wise/
    OPENAI_API_KEY=your_api_key_here
    # or
    GROQ_API_KEY=your_groq_key_here
+
+   # Stripe subscriptions
+   STRIPE_SECRET_KEY=sk_test_...
+   STRIPE_WEBHOOK_SECRET=whsec_...
+   STRIPE_PRICE_PLAN_MONTHLY=price_plan_monthly_id
+   STRIPE_PRICE_THRIVE_MONTHLY=price_thrive_monthly_id
+   STRIPE_PRICE_TOGETHER_MONTHLY=price_together_monthly_id
+   STRIPE_TRIAL_DAYS_DEFAULT=0
+   FRONTEND_BASE_URL=http://127.0.0.1:8000
+
+   # Optional SMTP for welcome/reset/payment emails
+   SMTP_HOST=smtp.your-provider.com
+   SMTP_PORT=587
+   SMTP_USERNAME=your_username
+   SMTP_PASSWORD=your_password
+   SMTP_USE_TLS=true
+   EMAIL_FROM=no-reply@gracewise.ai
    
    LANGCHAIN_TRACING_V2=false
    ```
@@ -261,6 +278,29 @@ Follow these steps if you are running locally with Laragon.
 - `POST /planner/` - Create new plan
 - `PATCH /planner/<plan_id>` - Update plan
 - `DELETE /planner/<plan_id>` - Delete plan
+
+### Authentication
+- `POST /auth/signup` - Register account (welcome email)
+- `POST /auth/login` - Login and get JWT
+- `GET /auth/me` - Current user profile + subscription state
+- `POST /auth/forgot-password` - Request reset link email
+- `GET /auth/reset-password/validate?token=...` - Validate reset token
+- `POST /auth/reset-password` - Reset password with token
+
+### Billing & Subscriptions (Stripe)
+- `GET /billing/plans` - List monthly plans
+- `GET /billing/subscription` - Current subscription status
+- `POST /billing/checkout-session` - Create secure Stripe Checkout session
+- `POST /billing/change-plan` - Upgrade/downgrade subscription
+- `POST /billing/cancel` - Cancel subscription
+- `POST /billing/retry-payment` - Retry failed invoice payment
+- `POST /billing/portal-session` - Open Stripe billing portal (card updates, invoices)
+- `POST /billing/webhook` - Stripe webhook handler
+
+### Onboarding
+- `GET /onboarding/questions` - Get core + tier-specific onboarding questions
+- `GET /onboarding/me` - Get saved onboarding answers
+- `POST /onboarding/me` - Save onboarding answers
 
 ### RAG Chatbot
 - `POST /rag/ask` - Ask question to AI chatbot

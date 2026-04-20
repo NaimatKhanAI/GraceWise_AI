@@ -1612,3 +1612,26 @@ body {
         margin: 5% auto;
     }
 }
+
+.tool-locked {
+    position: relative;
+    opacity: 0.82;
+}
+
+.tool-locked .cc-btn.disabled-link {
+    pointer-events: auto;
+    background: #d9d9d9;
+    color: #5f5f5f;
+}
+
+.lock-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #ffe3ad;
+    color: #6d4f0f;
+    padding: 4px 8px;
+    border-radius: 999px;
+}

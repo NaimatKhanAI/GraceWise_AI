@@ -1,10 +1,12 @@
 from flask import Blueprint, jsonify
 from models import db, Child, Devotional, DevotionalProgress
+from utils.access_control import tier_required
 
 child_progress_bp = Blueprint("child_progress", __name__)
 
 
 @child_progress_bp.route("/children", methods=["GET"])
+@tier_required("plan")
 def list_children():
     """All learners in the system (family hub)."""
     children = Child.query.order_by(Child.id.asc()).all()
@@ -19,6 +21,7 @@ def list_children():
 
 # Add a test child (for testing purposes)
 @child_progress_bp.route("/add_child", methods=["POST"])
+@tier_required("plan")
 def add_child():
     child = Child(name="Test Child")
     db.session.add(child)
@@ -30,6 +33,7 @@ def add_child():
 
 #Get child progress summary
 @child_progress_bp.route("/<int:child_id>", methods=["GET"])
+@tier_required("thrive")
 def get_child_progress(child_id):
     # Check if child exists
     child = Child.query.get_or_404(child_id)
@@ -56,6 +60,7 @@ def get_child_progress(child_id):
 
 # ✅ Get detailed progress for each devotional
 @child_progress_bp.route("/<int:child_id>/details", methods=["GET"])
+@tier_required("thrive")
 def get_child_progress_details(child_id):
     child = Child.query.get_or_404(child_id)
     

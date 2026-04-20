@@ -27,6 +27,8 @@ from models import db  # import db from models.py
 from routes.rag_chatbot import rag_bp 
 from routes.auth import auth_bp
 from routes.quiz import quiz_bp
+from routes.billing import billing_bp
+from routes.onboarding import onboarding_bp
 
 #Create Flask app
 app = Flask(__name__)
@@ -92,6 +94,8 @@ app.register_blueprint(planner_bp, url_prefix="/planner")
 app.register_blueprint(curriculum_bp, url_prefix="/curriculum")
 app.register_blueprint(rag_bp, url_prefix="/rag")
 app.register_blueprint(quiz_bp, url_prefix="/quiz")
+app.register_blueprint(billing_bp, url_prefix="/billing")
+app.register_blueprint(onboarding_bp, url_prefix="/onboarding")
 
 #Create tables (optional, for first run)
 with app.app_context():
@@ -169,6 +173,41 @@ with app.app_context():
                 print("="*50 + "\n")
     except Exception as e:
         print(f"AI session migration note: {str(e)}")
+        db.session.rollback()
+
+    # Migrate user table for subscriptions/onboarding support
+    try:
+        from sqlalchemy import text
+        inspector = db.inspect(db.engine)
+
+        if 'user' in inspector.get_table_names():
+            existing_columns = [col['name'] for col in inspector.get_columns('user')]
+            columns_to_add = []
+
+            if 'subscription_tier' not in existing_columns:
+                columns_to_add.append("ADD COLUMN subscription_tier VARCHAR(20) DEFAULT 'free'")
+            if 'subscription_status' not in existing_columns:
+                columns_to_add.append("ADD COLUMN subscription_status VARCHAR(30) DEFAULT 'inactive'")
+            if 'stripe_customer_id' not in existing_columns:
+                columns_to_add.append("ADD COLUMN stripe_customer_id VARCHAR(120)")
+            if 'stripe_subscription_id' not in existing_columns:
+                columns_to_add.append("ADD COLUMN stripe_subscription_id VARCHAR(120)")
+            if 'trial_ends_at' not in existing_columns:
+                columns_to_add.append("ADD COLUMN trial_ends_at DATETIME")
+            if 'onboarding_completed' not in existing_columns:
+                columns_to_add.append("ADD COLUMN onboarding_completed BOOLEAN DEFAULT 0")
+
+            if columns_to_add:
+                print("\n" + "="*50)
+                print(f"Migrating user table - adding {len(columns_to_add)} columns...")
+                print("="*50)
+                for column_def in columns_to_add:
+                    db.session.execute(text(f"ALTER TABLE user {column_def}"))
+                db.session.commit()
+                print("User table migration completed.")
+                print("="*50 + "\n")
+    except Exception as e:
+        print(f"User migration note: {str(e)}")
         db.session.rollback()
 
     # Initialize admin user

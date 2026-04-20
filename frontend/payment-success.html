@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Complete - GraceWise</title>
+    <link rel="stylesheet" href="css/premium-plan.css">
+    <link rel="stylesheet" href="css/notifications.css">
+    <script src="js/config.js"></script>
+    <script src="js/notifications.js" defer></script>
+    <script src="js/auth.js" defer></script>
+    <script src="js/billing.js" defer></script>
+</head>
+<body>
+    <main class="pricing-shell">
+        <section class="pricing-header">
+            <h1>Payment Confirmed</h1>
+            <p>Your subscription is active. We are preparing your personalized onboarding.</p>
+        </section>
+        <section class="current-plan">
+            <h2>Almost done</h2>
+            <p id="statusText">Verifying your subscription...</p>
+        </section>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            const statusText = document.getElementById('statusText');
+            try {
+                await billingApi.getSubscription(true);
+                await auth.syncCurrentUser();
+                statusText.textContent = 'Subscription verified. Redirecting to onboarding...';
+                setTimeout(() => {
+                    window.location.href = 'onboarding.html';
+                }, 1200);
+            } catch (error) {
+                statusText.textContent = error.message || 'Could not verify payment yet. Please refresh in a few seconds.';
+            }
+        });
+    </script>
+</body>
+</html>

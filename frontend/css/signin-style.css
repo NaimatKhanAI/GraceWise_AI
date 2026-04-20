@@ -159,6 +159,11 @@ body {
     font-weight: 500;
 }
 
+.forgot-link a {
+    color: inherit;
+    text-decoration: none;
+}
+
 .forgot-link:hover {
     text-decoration: underline;
 }

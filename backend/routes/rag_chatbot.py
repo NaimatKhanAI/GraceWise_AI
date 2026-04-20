@@ -8,6 +8,7 @@ import re
 from io import StringIO
 from uuid import uuid4
 from html import escape
+from utils.access_control import tier_required
 
 # Ensure tracing is disabled
 os.environ["LANGCHAIN_TRACING_V2"] = "false"
@@ -94,6 +95,62 @@ def get_ai_system_prompt():
         return merged
 
     return f"{merged}\n\n{MANDATORY_CONTINUITY_RULES}"
+
+
+def _build_personalization_context(user_id):
+    from models import User, OnboardingProfile
+
+    user = User.query.get(user_id)
+    if not user:
+        return ""
+
+    parts = []
+    parts.append(f"Plan tier: {user.effective_tier}.")
+
+    profile = OnboardingProfile.query.filter_by(user_id=user_id).first()
+    if not profile:
+        parts.append(
+            "No completed onboarding profile yet. Keep recommendations broadly practical and ask only one clarifying question when needed."
+        )
+        return "\n".join(parts)
+
+    profile_bits = []
+    if profile.number_of_children is not None:
+        profile_bits.append(f"{profile.number_of_children} children")
+    if profile.ages_grades:
+        profile_bits.append(f"ages/grades: {profile.ages_grades}")
+    if profile.work_schedule:
+        profile_bits.append(f"work schedule: {profile.work_schedule}")
+    if profile.budget_level:
+        profile_bits.append(f"budget: {profile.budget_level}")
+    if profile.homeschool_type:
+        profile_bits.append(f"homeschool type: {profile.homeschool_type}")
+    if profile.main_goals:
+        profile_bits.append(f"goals: {profile.main_goals}")
+
+    if profile_bits:
+        parts.append("Family profile: " + "; ".join(profile_bits) + ".")
+
+    extra_support = []
+    for value in [
+        profile.reading_struggles,
+        profile.focus_adhd,
+        profile.anxiety,
+        profile.autism_sensory,
+        profile.curriculum_problems,
+        profile.accountability_help,
+        profile.high_school_planning,
+    ]:
+        if value:
+            extra_support.append(value)
+
+    if extra_support:
+        parts.append("Special support notes: " + "; ".join(extra_support[:4]) + ".")
+
+    parts.append(
+        "Use this profile naturally in advice without repeating every detail verbatim in each answer."
+    )
+    return "\n".join(parts)
 
 
 def _coach_llm_temperature():
@@ -1715,7 +1772,7 @@ def get_qa_chain():
 
 # ==================== ASK QUESTION ====================
 @rag_bp.route("/ask", methods=["POST"])
-@jwt_required(optional=True)
+@tier_required("plan")
 def ask():
     data = request.json or {}
     question = (data.get("question") or "").strip()
@@ -1741,6 +1798,8 @@ def ask():
 
         from langchain_core.messages import SystemMessage, HumanMessage
 
+        personalization = _build_personalization_context(get_user_id())
+
         if not documents_exist():
             llm = get_llm()
             if llm == "ERROR_NO_KEY":
@@ -1748,7 +1807,11 @@ def ask():
             if llm == "ERROR_IMPORT":
                 return jsonify({"answer": "Server is missing required LLM dependencies."}), 500
 
-            messages = [SystemMessage(content=get_ai_system_prompt())]
+            system_prompt = get_ai_system_prompt()
+            if personalization:
+                system_prompt = f"{system_prompt}\n\nPersonalization context:\n{personalization}"
+
+            messages = [SystemMessage(content=system_prompt)]
             if followup_anchor:
                 messages.append(SystemMessage(content=followup_anchor))
             messages.extend(_build_langchain_history(conversation_history))
@@ -1774,6 +1837,8 @@ def ask():
         )
 
         dynamic_prompt = get_ai_system_prompt()
+        if personalization:
+            dynamic_prompt = f"{dynamic_prompt}\n\nPersonalization context:\n{personalization}"
         if weak_match:
             dynamic_prompt += (
                 "\n\nNote: The uploaded library may only loosely match this question. "
@@ -2060,7 +2125,7 @@ def _retrieve_from_lesson(query, lesson_data, top_k=5):
 
 
 @rag_bp.route("/ask-lesson/<int:lesson_id>", methods=["POST"])
-@jwt_required()
+@tier_required("plan")
 def ask_lesson(lesson_id):
     """Ask a question about a specific lesson and persist chat history."""
     data = request.json or {}
@@ -2148,6 +2213,8 @@ Write 1-3 very short search phrases (keywords) to find the right part of the les
             for r in top_chunks
         ])
 
+        personalization = _build_personalization_context(get_user_id())
+
         system_prompt = f"""You are a warm, human-sounding tutor for the lesson "{lesson.name}".
 
 Sound natural—like a patient teacher or parent, not a textbook. Use clear, plain language. Short questions deserve focused answers; bigger "explain this" questions can use bullets or small sections.
@@ -2156,6 +2223,8 @@ Use the retrieved excerpts below as your first source. If something is not there
 
 Retrieved lesson excerpts:
 {retrieved_context}"""
+        if personalization:
+            system_prompt += f"\n\nPersonalization context:\n{personalization}"
 
         messages = [SystemMessage(content=system_prompt)]
         if followup_anchor:

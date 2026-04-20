@@ -42,6 +42,8 @@ async function loadUserSettings() {
             document.getElementById('displayUserEmail').textContent = 'No email';
         }
 
+        await loadSubscriptionSettings();
+
         // Load notification preference
         const notificationEnabled = localStorage.getItem('notificationsEnabled');
         if (notificationEnabled !== null) {
@@ -51,6 +53,30 @@ async function loadUserSettings() {
         console.error('Error loading user settings:', error);
         document.getElementById('displayUserName').textContent = 'Error loading';
         document.getElementById('displayUserEmail').textContent = 'Error loading';
+    }
+}
+
+async function loadSubscriptionSettings() {
+    const subscriptionLabel = document.getElementById('displaySubscriptionTier');
+    const retryPaymentSetting = document.getElementById('retryPaymentSetting');
+    const manageBillingBtn = document.getElementById('manageBillingBtn');
+
+    if (!subscriptionLabel || !manageBillingBtn || typeof billingApi === 'undefined') return;
+
+    try {
+        const sub = await billingApi.getSubscription(true);
+        const tier = (sub.effective_tier || 'free').toLowerCase();
+        const status = (sub.subscription_status || 'inactive').toLowerCase();
+        const names = { free: 'Free', plan: 'Plan', thrive: 'Thrive', together: 'Together' };
+        const tierLabel = names[tier] || tier;
+
+        subscriptionLabel.textContent = `${tierLabel} (${status})`;
+        retryPaymentSetting.style.display = status === 'past_due' ? 'flex' : 'none';
+
+        manageBillingBtn.textContent = tier === 'free' ? 'View Plans' : 'Manage Billing';
+    } catch (error) {
+        subscriptionLabel.textContent = 'Unavailable';
+        retryPaymentSetting.style.display = 'none';
     }
 }
 
@@ -68,6 +94,43 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         loadUserSettings();
     }, 100);
+
+    const manageBillingBtn = document.getElementById('manageBillingBtn');
+    if (manageBillingBtn) {
+        manageBillingBtn.addEventListener('click', async function () {
+            try {
+                const sub = await billingApi.getSubscription();
+                const tier = (sub.effective_tier || 'free').toLowerCase();
+                if (tier === 'free') {
+                    window.location.href = 'premium-plan.html';
+                    return;
+                }
+                const portalUrl = await billingApi.openPortal('settings.html');
+                window.location.href = portalUrl;
+            } catch (error) {
+                if (typeof showError === 'function') {
+                    showError(error.message || 'Could not open billing portal.');
+                }
+            }
+        });
+    }
+
+    const retryPaymentBtn = document.getElementById('retryPaymentBtn');
+    if (retryPaymentBtn) {
+        retryPaymentBtn.addEventListener('click', async function () {
+            try {
+                await billingApi.retryPayment();
+                if (typeof showSuccess === 'function') {
+                    showSuccess('Payment retry submitted.');
+                }
+                await loadSubscriptionSettings();
+            } catch (error) {
+                if (typeof showError === 'function') {
+                    showError(error.message || 'Could not retry payment.');
+                }
+            }
+        });
+    }
 
     // Set current date
     const currentDateElement = document.getElementById('currentDate');

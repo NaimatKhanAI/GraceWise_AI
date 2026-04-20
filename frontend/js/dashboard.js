@@ -5,6 +5,7 @@ if (typeof window.API_BASE_URL === 'undefined') {
     window.API_BASE_URL = `${window.location.protocol}//${window.location.hostname}:5000`;
 }
 const API_BASE_URL = window.API_BASE_URL;
+let currentToolAccess = null;
 
 // Fetch student dashboard stats
 async function fetchStudentStats() {
@@ -79,6 +80,67 @@ async function fetchNotifications() {
         const alertEl = document.getElementById('dashboardAlertsSummary');
         if (alertEl) alertEl.textContent = 'Could not load alerts. Try again from the bell icon.';
     }
+}
+
+async function fetchToolAccess() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/dashboard/student/tool-access`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${auth.accessToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            console.error('Failed to fetch tool access:', response.statusText);
+            return;
+        }
+
+        const data = await response.json();
+        currentToolAccess = data.tool_access || null;
+        applyToolAccess();
+    } catch (error) {
+        console.error('Error fetching tool access:', error);
+    }
+}
+
+function applyToolAccess() {
+    if (!currentToolAccess) return;
+
+    document.querySelectorAll('[data-tool-key]').forEach((card) => {
+        const key = card.getAttribute('data-tool-key');
+        const allowed = !!currentToolAccess[key];
+        const link = card.querySelector('a');
+
+        card.classList.remove('tool-locked');
+        if (link) {
+            link.classList.remove('disabled-link');
+            link.removeAttribute('aria-disabled');
+        }
+
+        let lockBadge = card.querySelector('.lock-badge');
+        if (lockBadge) lockBadge.remove();
+
+        if (allowed) return;
+
+        card.classList.add('tool-locked');
+        if (link) {
+            link.classList.add('disabled-link');
+            link.setAttribute('aria-disabled', 'true');
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                if (typeof showWarning === 'function') {
+                    showWarning('Upgrade your subscription to unlock this tool.');
+                }
+            });
+        }
+
+        lockBadge = document.createElement('div');
+        lockBadge.className = 'lock-badge';
+        lockBadge.textContent = 'Upgrade required';
+        card.appendChild(lockBadge);
+    });
 }
 
 function updateDashboardAlertsSummary(notifications, unreadCount) {
@@ -355,6 +417,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Fetch data
     fetchStudentStats();
     fetchNotifications();
+    fetchToolAccess();
     
     // Refresh notifications every 30 seconds
     setInterval(fetchNotifications, 30000);

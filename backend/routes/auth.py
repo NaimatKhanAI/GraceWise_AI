@@ -1,7 +1,10 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
-from models import db, User
+from models import db, User, PasswordResetToken
 from datetime import timedelta, datetime
+import secrets
+
+from services.email_service import send_password_reset_email, send_welcome_email
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -51,6 +54,8 @@ def signup():
         
         db.session.add(new_user)
         db.session.commit()
+
+        send_welcome_email(new_user)
         
         return jsonify({
             "message": "User registered successfully!",
@@ -102,6 +107,105 @@ def login():
     
     except Exception as e:
         return jsonify({"message": f"Login error: {str(e)}"}), 500
+
+
+# ==================== FORGOT PASSWORD ====================
+@auth_bp.route("/forgot-password", methods=["POST"])
+def forgot_password():
+    """
+    Generate a reset token and email it to the user.
+    Response is intentionally generic to avoid account enumeration.
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+        email = (data.get("email") or "").strip().lower()
+
+        if not email or "@" not in email:
+            return jsonify({"message": "If this email exists, a reset link has been sent."}), 200
+
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            return jsonify({"message": "If this email exists, a reset link has been sent."}), 200
+
+        # Invalidate active tokens before issuing a new one.
+        active_tokens = PasswordResetToken.query.filter_by(user_id=user.id, used_at=None).all()
+        for tok in active_tokens:
+            tok.used_at = datetime.utcnow()
+
+        token = secrets.token_urlsafe(48)
+        expires_at = datetime.utcnow() + timedelta(hours=1)
+
+        reset_token = PasswordResetToken(
+            user_id=user.id,
+            token=token,
+            expires_at=expires_at,
+        )
+        db.session.add(reset_token)
+        db.session.commit()
+
+        send_password_reset_email(user, token)
+
+        return jsonify({"message": "If this email exists, a reset link has been sent."}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": f"Error processing request: {str(e)}"}), 500
+
+
+# ==================== VALIDATE RESET TOKEN ====================
+@auth_bp.route("/reset-password/validate", methods=["GET"])
+def validate_reset_token():
+    try:
+        token = (request.args.get("token") or "").strip()
+        if not token:
+            return jsonify({"valid": False, "message": "Token is required"}), 400
+
+        reset_token = PasswordResetToken.query.filter_by(token=token).first()
+        if not reset_token or not reset_token.is_valid():
+            return jsonify({"valid": False, "message": "Invalid or expired token"}), 400
+
+        return jsonify({"valid": True}), 200
+    except Exception as e:
+        return jsonify({"valid": False, "message": f"Validation error: {str(e)}"}), 500
+
+
+# ==================== RESET PASSWORD ====================
+@auth_bp.route("/reset-password", methods=["POST"])
+def reset_password():
+    try:
+        data = request.get_json(silent=True) or {}
+        token = (data.get("token") or "").strip()
+        new_password = data.get("new_password") or ""
+
+        if not token or not new_password:
+            return jsonify({"message": "Missing token or new_password"}), 400
+
+        if len(new_password) < 6:
+            return jsonify({"message": "Password must be at least 6 characters long"}), 400
+
+        reset_token = PasswordResetToken.query.filter_by(token=token).first()
+        if not reset_token or not reset_token.is_valid():
+            return jsonify({"message": "Invalid or expired token"}), 400
+
+        user = User.query.get(reset_token.user_id)
+        if not user:
+            return jsonify({"message": "User not found"}), 404
+
+        user.set_password(new_password)
+        reset_token.used_at = datetime.utcnow()
+
+        # Mark any other outstanding tokens as used.
+        siblings = PasswordResetToken.query.filter_by(user_id=user.id, used_at=None).all()
+        for sibling in siblings:
+            if sibling.id != reset_token.id:
+                sibling.used_at = datetime.utcnow()
+
+        db.session.commit()
+        return jsonify({"message": "Password reset successful. Please sign in."}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": f"Error resetting password: {str(e)}"}), 500
 
 
 # ==================== GET CURRENT USER ====================

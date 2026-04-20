@@ -14,7 +14,7 @@
     <script src="js/auth.js" defer></script>
     <script src="js/config.js"></script>
 </head>
-<body>
+<body data-nav="settings">
     <!-- Mobile Menu Toggle -->
     <div class="mobile-menu-toggle">
         <i class="fas fa-bars"></i>
@@ -30,7 +30,7 @@
         </div>
         <nav class="nav-menu" id="parent-nav-menu"></nav>
         <div class="sidebar-bottom">
-            <a href="premium-plan.html" class="upgrade-card" onclick="openPremiumModal()">
+            <a href="premium-plan.html" class="upgrade-card">
                 <i class="fas fa-crown"></i>
                 <span>Upgrade to Pro</span>
             </a>
@@ -105,6 +105,22 @@
                     <div class="setting-value-group">
                         <span class="setting-value">••••••••••••</span>
                         <button class="change-btn" onclick="openChangePasswordModal()">Change</button>
+                    </div>
+                </div>
+                <!-- Subscription -->
+                <div class="setting-item">
+                    <label class="setting-label">Subscription</label>
+                    <div class="setting-value-group">
+                        <span class="setting-value" id="displaySubscriptionTier">Loading...</span>
+                        <button class="change-btn" id="manageBillingBtn" type="button">Manage Billing</button>
+                    </div>
+                </div>
+
+                <div class="setting-item" id="retryPaymentSetting" style="display:none;">
+                    <label class="setting-label">Failed Payment</label>
+                    <div class="setting-value-group">
+                        <span class="setting-value">A recent payment failed.</span>
+                        <button class="change-btn" id="retryPaymentBtn" type="button">Retry Payment</button>
                     </div>
                 </div>
 
@@ -221,6 +237,10 @@
         </div>
     </div>
 
+    <script src="js/billing.js"></script>
     <script src="js/settings.js"></script>
 </body>
 </html>
+
+
+

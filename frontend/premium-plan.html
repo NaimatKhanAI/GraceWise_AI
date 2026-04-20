@@ -3,108 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Get Premium Plan+</title>
+    <title>GraceWise Plans</title>
     <link rel="stylesheet" href="css/premium-plan.css">
+    <link rel="stylesheet" href="css/notifications.css">
+    <script src="js/config.js"></script>
+    <script src="js/notifications.js" defer></script>
+    <script src="js/auth.js" defer></script>
+    <script src="js/billing.js" defer></script>
+    <script src="js/premium-plan.js" defer></script>
 </head>
 <body>
-    <div class="container">
-        <div class="form-section">
-            <h1>Get Premium Plan+</h1>
-            
-            <div class="billing-info">
-                <h2>Billing information</h2>
-                
-                <div class="form-group">
-                    <label for="firstName">First Name</label>
-                    <input type="text" id="firstName" placeholder="Arham hashmi">
-                </div>
-                
-                <div class="form-group">
-                    <label for="country">Country</label>
-                    <select id="country">
-                        <option>Pakistan</option>
-                    </select>
-                </div>
+    <main class="pricing-shell">
+        <section class="pricing-header">
+            <h1>Choose Your GraceWise Plan</h1>
+            <p>Monthly subscriptions with secure Stripe checkout. Upgrade or downgrade anytime.</p>
+            <a href="dashboard.html" class="back-link">Back to Dashboard</a>
+        </section>
+
+        <section class="current-plan" id="currentPlanCard">
+            <h2>Current subscription</h2>
+            <p id="currentPlanText">Loading your subscription...</p>
+            <div class="current-plan-actions">
+                <button id="manageBillingBtn" class="secondary-btn" type="button">Manage Billing</button>
+                <button id="retryPaymentBtn" class="secondary-btn" type="button" style="display:none;">Retry Failed Payment</button>
+                <button id="cancelSubscriptionBtn" class="danger-btn" type="button" style="display:none;">Cancel Subscription</button>
             </div>
-            
-            <div class="payment-method">
-                <h2>Payment Method</h2>
-                
-                <div class="payment-option">
-                    <input type="radio" id="card" name="payment" checked>
-                    <label for="card">Card</label>
-                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAyNCAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjE2IiByeD0iMiIgZmlsbD0iIzAwNTFBNSIvPgo8cGF0aCBkPSJNOC4yNSA5LjVIMTUuNzVWMTAuNUg4LjI1VjkuNVoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik04LjI1IDYuNUgxNS43NVY3LjVIOC4yNVY2LjVaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K" alt="Card">
-                </div>
-                
-                <div class="form-group">
-                    <label for="cardholder">Cardholder</label>
-                    <input type="text" id="cardholder" placeholder="Name on card">
-                </div>
-                
-                <div class="form-group">
-                    <label for="cardNumber">Card number</label>
-                    <input type="text" id="cardNumber" placeholder="0000 0000 0000 0000">
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="expiry">Expiration date</label>
-                        <input type="text" id="expiry" placeholder="MM/YY">
-                    </div>
-                    <div class="form-group">
-                        <label for="cvv">Security Code</label>
-                        <input type="text" id="cvv" placeholder="CVV">
-                    </div>
-                </div>
-                
-                <div class="secure-payment">
-                    <input type="checkbox" id="secure" checked>
-                    <label for="secure">Secure payment with SSL Encryption</label>
-                </div>
-                
-                <p class="payment-trouble">Having trouble with your payment? Please check <a href="#">this article</a></p>
-            </div>
-        </div>
-        
-        <div class="plan-info">
-            <h2>Plan Info</h2>
-            
-            <div class="features">
-                <h3>With Pro you get</h3>
+        </section>
+
+        <section class="plans-grid" id="plansGrid">
+            <article class="plan-card" data-plan="plan">
+                <h3>Plan</h3>
+                <p class="price">$9.99<span>/month</span></p>
+                <p class="description">Basic help for weekly homeschool life.</p>
                 <ul>
-                    <li>Sed ut perspiciatis unde omnis iste natus error sit</li>
-                    <li>Sed ut perspiciatis unde omnis iste natus error sit</li>
-                    <li>Sed ut perspiciatis unde omnis iste natus error sit</li>
-                    <li>Sed ut perspiciatis unde omnis iste natus error sit</li>
-                    <li>Sed ut perspiciatis unde omnis iste natus error sit</li>
-                    <li>Sed ut perspiciatis unde omnis iste natus error sit</li>
+                    <li>Build My Week</li>
+                    <li>Meal Planner</li>
+                    <li>Chat with GraceWise</li>
                 </ul>
-            </div>
-            
-            <div class="billing-section">
-                <h3>Billing</h3>
-                <div class="billing-toggle">
-                    <span>Monthly</span>
-                    <label class="switch">
-                        <input type="checkbox">
-                        <span class="slider"></span>
-                    </label>
-                    <span>Annual</span>
-                    <span class="price">66,000.00 PKR/month</span>
-                </div>
-                
-                <div class="charged-today">
-                    <span>Charged today</span>
-                    <span class="amount">66,000.00 PKR/month</span>
-                </div>
-                
-                <button class="confirm-btn">Confirm and Pay</button>
-                
-                <p class="terms">By clicking "Confirm and pay", you agree to our <a href="#">Terms of use</a>.<br>
-                Automatic monthly renewal. Your subscription will automatically renew every month for a single payment of 66,000.00 PKR.<br>
-                Cancel. You can cancel your renewal anytime from <a href="#">Subscription > Plan</a>.</p>
-            </div>
-        </div>
-    </div>
+                <button class="plan-action" data-action-plan="plan" type="button">Choose Plan</button>
+            </article>
+
+            <article class="plan-card" data-plan="thrive">
+                <h3>Thrive</h3>
+                <p class="price">$19.99<span>/month</span></p>
+                <p class="description">Includes Plan features + deeper child support.</p>
+                <ul>
+                    <li>Everything in Plan</li>
+                    <li>Help My Child tools</li>
+                    <li>Neurodiverse support prompts</li>
+                </ul>
+                <button class="plan-action" data-action-plan="thrive" type="button">Choose Thrive</button>
+            </article>
+
+            <article class="plan-card" data-plan="together">
+                <h3>Together</h3>
+                <p class="price">$49.00<span>/month</span></p>
+                <p class="description">Includes Plan + Thrive + coaching/community features.</p>
+                <ul>
+                    <li>Everything in Thrive</li>
+                    <li>Accountability + coaching workflow</li>
+                    <li>Community-focused support profile</li>
+                </ul>
+                <button class="plan-action" data-action-plan="together" type="button">Choose Together</button>
+            </article>
+        </section>
+
+        <section class="footnote">
+            <p>Optional trial is controlled by backend Stripe settings. Coupons and promotion codes are enabled for future use.</p>
+            <p>Stripe sends recurring invoices and receipts. You can update your card and billing details from Manage Billing.</p>
+        </section>
+    </main>
 </body>
 </html>

@@ -3,37 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gracewise - Dashboard</title>
+    <title>GraceWise - Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/parent-views.css">
     <link rel="stylesheet" href="css/notifications.css">
+    <script src="js/config.js"></script>
     <script src="js/parent-nav.js" defer></script>
     <script src="js/notifications.js" defer></script>
     <script src="js/auth.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="js/config.js"></script>
+    <script src="js/dashboard.js" defer></script>
 </head>
 <body data-nav="dashboard">
-    <!-- Mobile Menu Toggle -->
-    <div class="mobile-menu-toggle">
-        <i class="fas fa-bars"></i>
-    </div>
-    
-    <!-- Mobile Overlay -->
+    <div class="mobile-menu-toggle"><i class="fas fa-bars"></i></div>
     <div class="mobile-overlay"></div>
-    
-    <!-- Sidebar -->
+
     <div class="sidebar">
         <div class="logo">
             <img src="assest/logo/main_logo.png" alt="Gracewise Logo">
         </div>
         <nav class="nav-menu" id="parent-nav-menu"></nav>
         <div class="sidebar-bottom">
-            <a href="premium-plan.html" class="upgrade-card" onclick="openPremiumModal()">
+            <a href="premium-plan.html" class="upgrade-card">
                 <i class="fas fa-crown"></i>
-                <span>Upgrade to Pro</span>
+                <span>Manage Plan</span>
             </a>
             <a href="settings.html" class="nav-item">
                 <i class="fas fa-cog"></i>
@@ -46,19 +40,17 @@
         </div>
     </div>
 
-    <!-- Main Content -->
     <div class="main-content">
-        <!-- Header -->
         <header class="header">
             <div class="search-bar">
                 <i class="fas fa-search"></i>
-                <input type="text" placeholder="What do you want to learn">
+                <input type="text" placeholder="Search GraceWise tools">
             </div>
             <div class="header-right">
                 <div class="notification-wrapper">
                     <div class="notification" id="notificationBell">
                         <i class="fas fa-bell"></i>
-                        <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                        <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
                     </div>
                     <div class="notification-dropdown" id="notificationDropdown">
                         <div class="notification-header">
@@ -70,39 +62,26 @@
                         </div>
                     </div>
                 </div>
-                <div class="avatar" id="avatarBtn">
-                    <i class="fas fa-user-circle"></i>
-                </div>
+                <div class="avatar" id="avatarBtn"><i class="fas fa-user-circle"></i></div>
             </div>
         </header>
 
-        <!-- User Profile Modal -->
         <div class="profile-modal" id="profileModal">
             <div class="profile-modal-content">
-                <button class="modal-close" onclick="closeProfileModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-                
+                <button class="modal-close" onclick="closeProfileModal()"><i class="fas fa-times"></i></button>
                 <div class="profile-header">
-                    <div class="avatar-section">
-                        <div class="avatar-large" id="avatarLarge">
-                            <i class="fas fa-user-circle"></i>
-                        </div>
-                    </div>
+                    <div class="avatar-section"><div class="avatar-large"><i class="fas fa-user-circle"></i></div></div>
                     <h2 id="userNameDisplay">User Name</h2>
                 </div>
-                
                 <div class="profile-form">
                     <div class="form-group">
                         <label>Email</label>
                         <input type="email" id="userEmailDisplay" readonly>
                     </div>
-                    
                     <div class="form-group">
                         <label>Full Name</label>
                         <input type="text" id="userFullNameDisplay" readonly>
                     </div>
-                    
                     <button class="change-password-btn" onclick="openChangePasswordModal()">
                         <i class="fas fa-lock"></i>
                         Change Password
@@ -111,491 +90,66 @@
             </div>
         </div>
 
-        <!-- Change Password Modal -->
         <div class="change-password-modal" id="changePasswordModal">
             <div class="password-modal-content">
-                <button class="modal-close" onclick="closeChangePasswordModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-                
+                <button class="modal-close" onclick="closeChangePasswordModal()"><i class="fas fa-times"></i></button>
                 <h2>Change Password</h2>
-                
                 <form id="passwordForm" onsubmit="handleChangePassword(event)">
                     <div class="form-group">
                         <label>Current Password</label>
                         <input type="password" id="currentPassword" required>
                     </div>
-                    
                     <div class="form-group">
                         <label>New Password</label>
                         <input type="password" id="newPassword" required>
                     </div>
-                    
                     <div class="form-group">
                         <label>Confirm Password</label>
                         <input type="password" id="confirmPassword" required>
                     </div>
-                    
-                    <button type="submit" class="submit-btn">
-                        Update Password
-                    </button>
+                    <button type="submit" class="submit-btn">Update Password</button>
                 </form>
             </div>
         </div>
 
-        <!-- Dashboard Content -->
         <div class="dashboard-content">
-            <!-- Welcome Section -->
             <div class="welcome-section">
                 <h1>Dashboard</h1>
-                <p>Welcome back, <span id="welcomeName">there</span>! Your homeschool command center for today.</p>
+                <p>Welcome back, <span id="welcomeName">there</span>. Choose your next action.</p>
             </div>
 
-            <div class="command-center-grid">
-                <div class="cc-card">
-                    <h3><i class="fas fa-calendar-day"></i> Today's plan</h3>
-                    <p>See this week's schedule and adjust today's blocks in the planner.</p>
-                    <a href="planner.html" class="cc-btn">Open weekly planner <i class="fas fa-arrow-right"></i></a>
+            <div class="command-center-grid" id="mainToolGrid">
+                <div class="cc-card" data-tool-key="build_my_week">
+                    <h3><i class="fas fa-calendar-week"></i> Build My Week</h3>
+                    <p>Plan your homeschool week quickly with practical routines.</p>
+                    <a href="planner.html" class="cc-btn" id="toolBuildWeekLink">Open tool <i class="fas fa-arrow-right"></i></a>
                 </div>
-                <div class="cc-card">
-                    <h3><i class="fas fa-bell"></i> Alerts</h3>
-                    <p id="dashboardAlertsSummary">Loading notifications…</p>
-                    <a href="#" class="cc-btn" id="dashboardOpenNotifications">Open notification bell <i class="fas fa-arrow-right"></i></a>
+
+                <div class="cc-card" data-tool-key="meal_planner">
+                    <h3><i class="fas fa-utensils"></i> Meal Planner</h3>
+                    <p>Build budget-aware meal plans that fit your homeschool rhythm.</p>
+                    <a href="planner.html#meal-planner" class="cc-btn" id="toolMealPlannerLink">Open tool <i class="fas fa-arrow-right"></i></a>
                 </div>
-                <div class="cc-card">
-                    <h3><i class="fas fa-link"></i> Quick links</h3>
-                    <p>
-                        <a href="family.html" class="cc-btn">Family</a>
-                        &nbsp;·&nbsp;
-                        <a href="learning.html" class="cc-btn">Learning</a>
-                        &nbsp;·&nbsp;
-                        <a href="records.html" class="cc-btn">Records</a>
-                        &nbsp;·&nbsp;
-                        <a href="ai-assistant.html" class="cc-btn">AI Coach</a>
-                    </p>
+
+                <div class="cc-card" data-tool-key="help_my_child">
+                    <h3><i class="fas fa-child-reaching"></i> Help My Child</h3>
+                    <p>Get targeted support for reading, focus, and learning roadblocks.</p>
+                    <a href="child-profile.html" class="cc-btn" id="toolHelpChildLink">Open tool <i class="fas fa-arrow-right"></i></a>
                 </div>
-                <div class="cc-card cc-encouragement">
-                    <h3><i class="fas fa-seedling"></i> Encouragement</h3>
-                    <p id="dashboardEncouragement">Small steps today add up to a strong year. You've got this.</p>
+
+                <div class="cc-card" data-tool-key="chat_with_gracewise">
+                    <h3><i class="fas fa-comments"></i> Chat With GraceWise</h3>
+                    <p>Ask for coaching and family-specific help in plain language.</p>
+                    <a href="ai-assistant.html" class="cc-btn" id="toolChatGracewiseLink">Open tool <i class="fas fa-arrow-right"></i></a>
                 </div>
             </div>
 
-            <!-- Stats Cards -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-info">
-                        <div class="stat-number" id="totalQuizzesAttempted">0</div>
-                        <div class="stat-label">Quiz Attempts</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-info">
-                        <div class="stat-number" id="totalHoursSpent">0</div>
-                        <div class="stat-label">Hours Spent Learning</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-info">
-                        <div class="stat-number"><span id="studentRanking">1</span>/<span id="totalStudents">0</span></div>
-                        <div class="stat-label">Your Ranking</div>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-info">
-                        <div class="stat-number" id="averageScore">0%</div>
-                        <div class="stat-label">Average Quiz Score</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tabs -->
-            <div class="tabs-container">
-                <div class="tabs">
-                    <button class="tab active" data-tab="recent-activity">Recent Activity</button>
-                    <button class="tab" data-tab="quiz-performance">Quiz Performance</button>
-                    <button class="tab" data-tab="learning-progress">Learning Progress</button>
-                </div>
-            </div>
-
-            <!-- Tab Content -->
-            <div class="tab-content-wrapper">
-                <!-- Recent Activity Tab -->
-                <div id="recent-activity-tab" class="tab-pane active">
-                    <div class="content-grid">
-                        <!-- Recent Activity -->
-                        <div class="card activity-card">
-                            <div class="card-header">
-                                <h2>Recent Activity</h2>
-                                <a href="#" class="view-all">View All</a>
-                            </div>
-                            <div class="activity-list" id="activityList">
-                                <div class="no-data">No activity yet</div>
-                            </div>
-                        </div>
-
-                        <!-- Quick Actions -->
-                        <div class="card actions-card">
-                            <div class="card-header">
-                                <h2>Quick Actions</h2>
-                                <a href="#" class="view-all">View All</a>
-                            </div>
-                            <div class="actions-list">
-                                <div class="action-item" onclick="window.location.href='family.html'">
-                                    <div class="action-icon">
-                                        <i class="fas fa-users"></i>
-                                    </div>
-                                    <div class="action-content">
-                                        <h4>Family</h4>
-                                        <p>Children & calendar hub</p>
-                                    </div>
-                                    <i class="fas fa-chevron-right"></i>
-                                </div>
-                                <div class="action-item" onclick="window.location.href='learning.html'">
-                                    <div class="action-icon">
-                                        <i class="fas fa-graduation-cap"></i>
-                                    </div>
-                                    <div class="action-content">
-                                        <h4>Learning</h4>
-                                        <p>Curriculum, planner & assignments</p>
-                                    </div>
-                                    <i class="fas fa-chevron-right"></i>
-                                </div>
-                                <div class="action-item" onclick="window.location.href='ai-assistant.html'">
-                                    <div class="action-icon">
-                                        <i class="fas fa-comments"></i>
-                                    </div>
-                                    <div class="action-content">
-                                        <h4>AI Coach</h4>
-                                        <p>Planning help & encouragement</p>
-                                    </div>
-                                    <i class="fas fa-chevron-right"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quiz Performance Tab -->
-                <div id="quiz-performance-tab" class="tab-pane">
-                    <div class="content-grid">
-                        <div class="card performance-card">
-                            <div class="card-header">
-                                <h2>Quiz Performance</h2>
-                            </div>
-                            <div class="performance-stats">
-                                <div class="performance-stat">
-                                    <span class="stat-label">Total Quizzes Taken</span>
-                                    <span class="stat-value" id="totalQuizzesValue">0</span>
-                                </div>
-                                <div class="performance-stat">
-                                    <span class="stat-label">Average Score</span>
-                                    <span class="stat-value" id="avgScoreValue">0%</span>
-                                </div>
-                                <div class="performance-stat">
-                                    <span class="stat-label">Best Score</span>
-                                    <span class="stat-value" id="bestScoreValue">0%</span>
-                                </div>
-                            </div>
-                            <div class="quiz-list" id="quizList">
-                                <div class="no-data">No quiz attempts yet</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Learning Progress Tab -->
-                <div id="learning-progress-tab" class="tab-pane">
-                    <div class="content-grid">
-                        <div class="card progress-card">
-                            <div class="card-header">
-                                <h2>Learning Progress</h2>
-                            </div>
-                            <div class="progress-overview">
-                                <div class="progress-item">
-                                    <h4>Total Learning Time</h4>
-                                    <p class="progress-value" id="totalHoursValue">0 hours</p>
-                                </div>
-                                <div class="progress-item">
-                                    <h4>Ranking</h4>
-                                    <p class="progress-value"><span id="rankingValue">1</span>/<span id="totalStudentsValue">0</span></p>
-                                </div>
-                                <div class="progress-item">
-                                    <h4>Performance Trend</h4>
-                                    <p class="progress-value trending-up">
-                                        <i class="fas fa-arrow-up"></i> On Track
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="recent-achievements">
-                                <h3>Recent Achievements</h3>
-                                <div id="achievementsList">
-                                    <div class="no-data">No achievements yet</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="cc-card cc-encouragement" style="margin-top: 14px;">
+                <h3><i class="fas fa-seedling"></i> More Tools</h3>
+                <p>Need family records, curriculum modules, or extra workflows?</p>
+                <a href="learning.html" class="cc-btn" id="moreToolsBtn">Open More Tools <i class="fas fa-arrow-right"></i></a>
             </div>
         </div>
     </div>
-
-    <!-- Premium Modal -->
-    <div id="premiumModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closePremiumModal()">&times;</span>
-            <div class="premium-container">
-                <div class="premium-form">
-                    <h1>Get Premium Plan+</h1>
-                    
-                    <div class="billing-info">
-                        <h2>Billing information</h2>
-                        
-                        <div class="form-group">
-                            <label for="firstName">First Name</label>
-                            <input type="text" id="firstName" placeholder="Arham hashmi">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="country">Country</label>
-                            <select id="country">
-                                <option>Pakistan</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="payment-method">
-                        <h2>Payment Method</h2>
-                        
-                        <div class="payment-option">
-                            <input type="radio" id="card" name="payment" checked>
-                            <label for="card">Card</label>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="cardholder">Cardholder</label>
-                            <input type="text" id="cardholder" placeholder="Name on card">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="cardNumber">Card number</label>
-                            <input type="text" id="cardNumber" placeholder="0000 0000 0000 0000">
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="expiry">Expiration date</label>
-                                <input type="text" id="expiry" placeholder="MM/YY">
-                            </div>
-                            <div class="form-group">
-                                <label for="cvv">Security Code</label>
-                                <input type="text" id="cvv" placeholder="CVV">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="premium-plan-info">
-                    <h2>Plan Info</h2>
-                    
-                    <div class="features">
-                        <h3>With Pro you get</h3>
-                        <ul>
-                            <li>Sed ut perspiciatis unde omnis iste natus error sit</li>
-                            <li>Sed ut perspiciatis unde omnis iste natus error sit</li>
-                            <li>Sed ut perspiciatis unde omnis iste natus error sit</li>
-                            <li>Sed ut perspiciatis unde omnis iste natus error sit</li>
-                            <li>Sed ut perspiciatis unde omnis iste natus error sit</li>
-                            <li>Sed ut perspiciatis unde omnis iste natus error sit</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="billing-section">
-                        <h3>Billing</h3>
-                        <div class="billing-toggle">
-                            <span>Monthly</span>
-                            <label class="switch">
-                                <input type="checkbox">
-                                <span class="slider"></span>
-                            </label>
-                            <span>Annual</span>
-                            <span class="price">66,000.00 PKR/month</span>
-                        </div>
-                        
-                        <div class="charged-today">
-                            <span>Charged today</span>
-                            <span class="amount">66,000.00 PKR/month</span>
-                        </div>
-                        
-                        <button class="confirm-btn">Confirm and Pay</button>
-                        
-                        <p class="terms">By clicking "Confirm and pay", you agree to our <a href="#">Terms of use</a>.<br>
-                        Automatic monthly renewal. Your subscription will automatically renew every month for a single payment of 66,000.00 PKR.<br>
-                        Cancel. You can cancel your renewal anytime from <a href="#">Subscription > Plan</a>.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="js/dashboard.js"></script>
-    <script>
-
-        // Profile Modal Functions
-        const avatarBtn = document.getElementById('avatarBtn');
-        const profileModal = document.getElementById('profileModal');
-
-        function openProfileModal() {
-            const user = auth.getCurrentUser();
-            if (user) {
-                document.getElementById('userNameDisplay').textContent = [user.first_name, user.last_name].filter(Boolean).join(' ') || 'User';
-                document.getElementById('userEmailDisplay').value = user.email || '';
-                document.getElementById('userFullNameDisplay').value = [user.first_name, user.last_name].filter(Boolean).join(' ') || '';
-            }
-            profileModal.classList.add('active');
-        }
-
-        function closeProfileModal() {
-            profileModal.classList.remove('active');
-        }
-
-        function openChangePasswordModal() {
-            document.getElementById('changePasswordModal').classList.add('active');
-        }
-
-        function closeChangePasswordModal() {
-            document.getElementById('changePasswordModal').classList.remove('active');
-            document.getElementById('passwordForm').reset();
-        }
-
-        async function handleChangePassword(event) {
-            event.preventDefault();
-            const currentPassword = document.getElementById('currentPassword').value;
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-
-            if (newPassword !== confirmPassword) {
-                showError('Passwords do not match');
-                return;
-            }
-
-            if (newPassword.length < 6) {
-                showError('Password must be at least 6 characters long');
-                return;
-            }
-
-            try {
-                const response = await fetch(`${window.API_BASE_URL}/auth/change-password`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${auth.accessToken}`
-                    },
-                    body: JSON.stringify({
-                        current_password: currentPassword,
-                        new_password: newPassword
-                    })
-                });
-
-                const data = await response.json();
-                if (response.ok) {
-                    showSuccess('Password changed successfully');
-                    closeChangePasswordModal();
-                } else {
-                    showError(data.message || 'Failed to change password');
-                }
-            } catch (error) {
-                showError('Error changing password');
-            }
-        }
-
-        avatarBtn.addEventListener('click', openProfileModal);
-        profileModal.addEventListener('click', (e) => {
-            if (e.target === profileModal) closeProfileModal();
-        });
-
-        document.getElementById('changePasswordModal').addEventListener('click', (e) => {
-            if (e.target === document.getElementById('changePasswordModal')) closeChangePasswordModal();
-        });
-
-        // Handle avatar upload
-        if (avatarUploadBtn) {
-            avatarUploadBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                avatarInput.click();
-            });
-        }
-
-        avatarInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const formData = new FormData();
-                formData.append('avatar', file);
-
-                try {
-                    const response = await fetch(`${window.API_BASE_URL}/auth/update-avatar`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${auth.accessToken}`
-                        },
-                        body: formData
-                    });
-
-                    if (response.ok) {
-                        showSuccess('Profile picture updated');
-                        avatarInput.value = '';
-                    } else {
-                        showError('Failed to update profile picture');
-                    }
-                } catch (error) {
-                    showError('Error uploading profile picture');
-                }
-            }
-        });
-        const sidebar = document.querySelector('.sidebar');
-        const overlay = document.querySelector('.mobile-overlay');
-        const body = document.body;
-
-        function toggleMobileMenu() {
-            sidebar.classList.toggle('mobile-open');
-            overlay.classList.toggle('active');
-            body.classList.toggle('menu-open');
-            
-            // Toggle icon between bars and times
-            const icon = mobileToggle.querySelector('i');
-            if (sidebar.classList.contains('mobile-open')) {
-                icon.className = 'fas fa-times';
-            } else {
-                icon.className = 'fas fa-bars';
-            }
-        }
-
-        mobileToggle.addEventListener('click', toggleMobileMenu);
-        overlay.addEventListener('click', toggleMobileMenu);
-
-        // Update date
-        document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-        });
-        
-        // Premium Modal Functions
-        function openPremiumModal() {
-            document.getElementById('premiumModal').style.display = 'block';
-        }
-        
-        function closePremiumModal() {
-            document.getElementById('premiumModal').style.display = 'none';
-        }
-        
-        // Close modal when clicking outside
-        window.onclick = function(event) {
-            const modal = document.getElementById('premiumModal');
-            if (event.target == modal) {
-                modal.style.display = 'none';
-            }
-        }
-    </script>
 </body>
 </html>

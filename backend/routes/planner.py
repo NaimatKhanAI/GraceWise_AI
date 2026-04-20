@@ -1,12 +1,14 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime, timedelta
 from models import db, Planner, Child
+from utils.access_control import tier_required
 
 planner_bp = Blueprint("planner", __name__)
 
 
 # Get all plans for a child
 @planner_bp.route("/<int:child_id>", methods=["GET"])
+@tier_required("plan")
 def get_child_plans(child_id):
     # ✅ Check if child exists
     child = Child.query.get_or_404(child_id)
@@ -31,6 +33,7 @@ def get_child_plans(child_id):
 
 # Get plans for a specific date range
 @planner_bp.route("/<int:child_id>/range", methods=["GET"])
+@tier_required("plan")
 def get_plans_by_range(child_id):
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
@@ -61,6 +64,7 @@ def get_plans_by_range(child_id):
 
 # Add a new plan for a child
 @planner_bp.route("/", methods=["POST"])
+@tier_required("plan")
 def add_plan():
     try:
         data = request.json
@@ -101,6 +105,7 @@ def add_plan():
 
 # Update a plan
 @planner_bp.route("/<int:plan_id>", methods=["PATCH"])
+@tier_required("plan")
 def update_plan(plan_id):
     try:
         plan = Planner.query.get(plan_id)
@@ -130,6 +135,7 @@ def update_plan(plan_id):
 
 # Delete a plan
 @planner_bp.route("/<int:plan_id>", methods=["DELETE"])
+@tier_required("plan")
 def delete_plan(plan_id):
     try:
         plan = Planner.query.get(plan_id)

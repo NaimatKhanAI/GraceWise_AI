@@ -3,6 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, User, Child, DevotionalProgress, Planner, Quiz, QuizResult, Notification, AiSession, AiChatMessage
 from datetime import datetime, timedelta
 from sqlalchemy import func, and_
+from utils.access_control import get_effective_tier, get_tool_access, tier_required
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
@@ -12,6 +13,25 @@ def get_user_id():
     if isinstance(user_id, str):
         user_id = int(user_id)
     return user_id
+
+
+@dashboard_bp.route("/student/tool-access", methods=["GET"])
+@jwt_required()
+def student_tool_access():
+    """Expose tier-based dashboard tool permissions for frontend rendering."""
+    user = User.query.get(get_user_id())
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    return jsonify(
+        {
+            "effective_tier": get_effective_tier(user),
+            "subscription_tier": user.subscription_tier,
+            "subscription_status": user.subscription_status,
+            "onboarding_completed": bool(user.onboarding_completed),
+            "tool_access": get_tool_access(user),
+        }
+    ), 200
 
 # add routes related to dashboard summaries here
 @dashboard_bp.route("/summary", methods=["GET"])
@@ -79,7 +99,7 @@ def dashboard_summary():
 
 # ==================== STUDENT DASHBOARD ====================
 @dashboard_bp.route("/student/stats", methods=["GET"])
-@jwt_required()
+@tier_required("plan")
 def student_dashboard_stats():
     """Get student dashboard statistics"""
     try:
@@ -134,7 +154,7 @@ def student_dashboard_stats():
 
 
 @dashboard_bp.route("/student/notifications", methods=["GET"])
-@jwt_required()
+@tier_required("plan")
 def student_notifications():
     """Get notifications for current student"""
     try:
@@ -155,7 +175,7 @@ def student_notifications():
 
 
 @dashboard_bp.route("/student/notifications/<int:notification_id>/mark-read", methods=["PUT"])
-@jwt_required()
+@tier_required("plan")
 def mark_notification_read(notification_id):
     """Mark a notification as read"""
     try:
@@ -175,7 +195,7 @@ def mark_notification_read(notification_id):
 
 
 @dashboard_bp.route("/student/notifications/mark-all-read", methods=["PUT"])
-@jwt_required()
+@tier_required("plan")
 def mark_all_notifications_read():
     """Mark all notifications as read for the current user"""
     try:
@@ -194,7 +214,7 @@ def mark_all_notifications_read():
 
 # ==================== STUDENT PROGRESS ====================
 @dashboard_bp.route("/student/progress", methods=["GET"])
-@jwt_required()
+@tier_required("plan")
 def student_progress_summary():
     """Get dynamic progress data for the student progress page"""
     try:
@@ -269,7 +289,7 @@ def student_progress_summary():
 
 # ==================== AI SESSION TRACKING ====================
 @dashboard_bp.route("/student/ai-sessions", methods=["GET"])
-@jwt_required()
+@tier_required("plan")
 def list_ai_sessions():
     """List user's AI sessions with a preview for chat history panel"""
     try:
@@ -325,7 +345,7 @@ def list_ai_sessions():
 
 
 @dashboard_bp.route("/student/ai-sessions/<int:session_id>/messages", methods=["GET"])
-@jwt_required()
+@tier_required("plan")
 def get_ai_session_messages(session_id):
     """Get all chat messages for one AI session"""
     try:
@@ -350,7 +370,7 @@ def get_ai_session_messages(session_id):
 
 
 @dashboard_bp.route("/student/ai-sessions/<int:session_id>", methods=["PUT"])
-@jwt_required()
+@tier_required("plan")
 def rename_ai_session(session_id):
     """Rename one AI session (chat title)"""
     try:
@@ -377,7 +397,7 @@ def rename_ai_session(session_id):
 
 
 @dashboard_bp.route("/student/ai-sessions/<int:session_id>", methods=["DELETE"])
-@jwt_required()
+@tier_required("plan")
 def delete_ai_session(session_id):
     """Delete one AI session and all associated messages"""
     try:
@@ -397,7 +417,7 @@ def delete_ai_session(session_id):
 
 
 @dashboard_bp.route("/student/ai-sessions/start", methods=["POST"])
-@jwt_required()
+@tier_required("plan")
 def start_ai_session():
     """Start a new AI assistant session"""
     try:
@@ -441,7 +461,7 @@ def start_ai_session():
 
 
 @dashboard_bp.route("/student/ai-sessions/<int:session_id>/end", methods=["POST"])
-@jwt_required()
+@tier_required("plan")
 def end_ai_session(session_id):
     """End an AI assistant session and compute duration"""
     try:

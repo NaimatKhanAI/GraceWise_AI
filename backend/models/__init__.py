@@ -17,5 +17,7 @@ from models.notification import Notification
 from models.ai_session import AiSession
 from models.ai_chat_message import AiChatMessage
 from models.app_setting import AppSetting
+from models.onboarding_profile import OnboardingProfile
+from models.password_reset_token import PasswordResetToken
 
-__all__ = ['db', 'User', 'Child', 'Devotional', 'DevotionalProgress', 'Planner', 'Curriculum', 'Module', 'Lesson', 'Quiz', 'QuizResult', 'Notification', 'AiSession', 'AiChatMessage', 'AppSetting']
+__all__ = ['db', 'User', 'Child', 'Devotional', 'DevotionalProgress', 'Planner', 'Curriculum', 'Module', 'Lesson', 'Quiz', 'QuizResult', 'Notification', 'AiSession', 'AiChatMessage', 'AppSetting', 'OnboardingProfile', 'PasswordResetToken']
